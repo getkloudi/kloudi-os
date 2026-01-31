@@ -1,0 +1,40 @@
+{
+  "tasks": {
+    "lint": {
+      "cache": false
+    },
+    "format": {
+      "cache": false
+    },
+    "format:check": {
+      "cache": false
+    },
+    "type-check": {
+      "cache": false
+    },
+    "test": {
+      "cache": false,
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:ci": {
+      "cache": false,
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**"]
+    },
+    "test:e2e:run": {
+      "cache": false,
+      "dependsOn": ["build"],
+      "outputs": ["coverage/**"]
+    },
+    "build": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "node_modules/.prisma/client/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}
