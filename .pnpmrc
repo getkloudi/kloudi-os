@@ -1,0 +1,7 @@
+# Auto-approve build scripts for essential packages
+auto-install-peers=true
+enable-pre-post-scripts=true
+
+# Disable build script security check (less secure but functional)
+# Alternative: use pnpm config set store-dir to use a global store
+ignore-scripts=false

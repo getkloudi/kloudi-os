@@ -1,0 +1,15 @@
+node_modules
+npm-debug.log*
+.DS_Store
+.env*
+.git
+.gitignore
+README.md
+docs/
+*.md
+.nyc_output
+coverage/
+.vscode/
+.idea/
+*.log
+.specstory/

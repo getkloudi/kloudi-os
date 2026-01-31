@@ -1,0 +1,50 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug API Server",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev:api"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug CLI",
+      "program": "${workspaceFolder}/apps/cli/kloudi-cli.js",
+      "args": ["${input:fullCommand}"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug CLI - Custom",
+      "program": "${workspaceFolder}/apps/cli/kloudi-cli.js",
+      "args": ["${input:fullCommand}"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Process",
+      "processId": "${command:PickProcess}",
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "fullCommand",
+      "type": "promptString", 
+      "description": "Full command (space-separated, e.g., 'tools execute scan_files --path=./src')",
+      "default": "tools list"
+    }
+  ]
+}
