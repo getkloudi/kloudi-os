@@ -1,0 +1,48 @@
+{
+  "name": "@kloudi/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Universal CLI for all Kloudi agents and tools",
+  "main": "index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "kloudi": "./kloudi-cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./index.js"
+    }
+  },
+  "scripts": {
+    "dev": "node kloudi-cli.js",
+    "build": "tsc",
+    "start": "node kloudi-cli.js",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test:ci": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage --passWithNoTests",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint .",
+    "kloudi": "node kloudi-cli.js"
+  },
+  "dependencies": {
+    "@kloudi/infrastructure": "workspace:*",
+    "@kloudi/shared": "workspace:*",
+    "chalk": "^5.6.2",
+    "commander": "^14.0.2",
+    "glob": "^13.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "jest": "30.2.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "cli",
+    "agents",
+    "tools",
+    "ai",
+    "auto-discovery"
+  ],
+  "author": "nitishmehrotra@gmail.com",
+  "license": "SEE LICENSE IN ../../LICENSE"
+}

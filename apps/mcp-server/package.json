@@ -1,0 +1,17 @@
+{
+  "name": "@kloudi/mcp-server",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@kloudi/core": "workspace:*",
+    "@kloudi/infrastructure": "workspace:*",
+    "@kloudi/shared": "workspace:*",
+    "zod": "^3.25.0"
+  }
+}
