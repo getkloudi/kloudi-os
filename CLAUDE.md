@@ -295,6 +295,55 @@ jest --testNamePattern="failing test name"
 - [ ] Capability classes match domain naming
 - [ ] Core entity file exists
 
+## 🌐 Deployment
+
+### Platform Layout
+
+| Workload | Platform | URL |
+|---|---|---|
+| **Web** (Next.js) | Vercel | `kloudi-os-web` project |
+| **API** (Express) | Railway | TBD |
+| **MCP server** | Railway | TBD |
+| **CLI** | npm publish | TBD |
+
+### Vercel (Web)
+
+- **Project**: `kloudi-os-web` on team `nitish-mehrotras-projects-cd0dbf7d`
+- **Root Directory**: `apps/web`
+- **Build Command**: `turbo run build` (auto-detected)
+- **GitHub repo**: `nitishMehrotra/kloudi-os` (private)
+- **PR previews**: Automatic — every push gets a unique preview URL
+- **Production**: Deploys on push to `main`
+
+### MCP Access (for agents)
+
+Vercel MCP is configured for Claude Code. Agents can use `mcp__vercel__*` tools
+to check deployments, read build logs, and search Vercel docs.
+
+```bash
+# Already configured:
+claude mcp add --transport http vercel https://mcp.vercel.com
+# Authenticate with: /mcp inside a Claude Code session
+```
+
+## ⚙️ Configuration System
+
+Configuration lives in `packages/shared/config/`. The resolution hierarchy
+(highest priority first):
+
+```
+.env                              # Secrets & connection strings (gitignored)
+custom-environment-variables.yml  # Maps env vars → config keys
+local-development.yml             # Per-developer overrides (gitignored)
+development.yml                   # Environment-specific defaults
+default.yml                       # Base defaults (production-safe)
+```
+
+- **`.env`** is the single source of truth for secrets (`DATABASE_URL`, `JWT_SECRET`, etc.)
+- The Config module auto-loads `.env` from the monorepo root before `node-config` initializes
+- `populateProcessEnv()` pushes resolved config values back to `process.env` for external tools (Prisma CLI, etc.)
+- New developers: `cp .env.example .env` and fill in values
+
 ## 🔍 Key Files to Understand
 
 - `package.json` - Root package configuration and scripts
@@ -303,7 +352,10 @@ jest --testNamePattern="failing test name"
 - `turbo.json` - Build system configuration
 - `GUIDELINES.md` - Detailed development guidelines and decision framework
 - `apps/api/` - Main API application
+- `apps/web/` - Next.js web UI (deployed on Vercel)
+- `packages/shared/config/` - Configuration system with YAML hierarchy
 - `packages/infrastructure/` - Shared infrastructure components
+- `.env.example` - Template for local environment variables
 
 ## Landing the Plane (Session Completion)
 
