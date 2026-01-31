@@ -1,0 +1,66 @@
+{
+  "name": "@kloudi/infrastructure",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Production-grade infrastructure components for domain-driven development",
+  "main": "index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./index.js"
+    },
+    "./database": {
+      "types": "./dist/database/index.d.ts",
+      "import": "./database/index.js"
+    },
+    "./cache": {
+      "types": "./dist/cache/index.d.ts",
+      "import": "./cache/index.js"
+    },
+    "./ai": {
+      "types": "./dist/ai/index.d.ts",
+      "import": "./ai/index.js"
+    },
+    "./events": {
+      "types": "./dist/events/index.d.ts",
+      "import": "./events/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test:ci": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage --passWithNoTests",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.29",
+    "@ai-sdk/openai": "^3.0.21",
+    "@kloudi/shared": "workspace:*",
+    "@prisma/adapter-pg": "^7.3.0",
+    "@prisma/client": "^7.3.0",
+    "ai": "^6.0.59",
+    "handlebars": "^4.7.8",
+    "ioredis": "^5.9.2",
+    "yaml": "^2.8.2",
+    "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "prisma": "^7.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "jest": "30.2.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "infrastructure",
+    "database",
+    "cache",
+    "ai",
+    "production"
+  ],
+  "author": "nitishmehrotra@gmail.com",
+  "license": "SEE LICENSE IN ../../LICENSE"
+}
