@@ -1,0 +1,54 @@
+{
+  "name": "@kloudi/api",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "REST API server for the Kloudi platform",
+  "main": "index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./index.js"
+    }
+  },
+  "scripts": {
+    "dev": "nodemon index.js",
+    "build": "tsc",
+    "start": "node index.js",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest --testPathIgnorePatterns='e2e'",
+    "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch --testPathIgnorePatterns='e2e'",
+    "test:ci": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage --passWithNoTests",
+    "test:e2e:run": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules' jest --testMatch='**/*.e2e.test.js' --runInBand --forceExit",
+    "test:e2e:watch": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules' jest --testMatch='**/*.e2e.test.js' --watch --runInBand",
+    "test:all": "pnpm test && pnpm test:e2e:run",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@kloudi/auth": "workspace:*",
+    "@kloudi/core": "workspace:*",
+    "@kloudi/infrastructure": "workspace:*",
+    "@kloudi/shared": "workspace:*",
+    "@prisma/client": "^7.3.0",
+    "express": "5.2.1",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "ioredis": "^5.9.2",
+    "jest": "30.2.0",
+    "nodemon": "3.1.11",
+    "pg": "^8.17.2",
+    "supertest": "7.2.2",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "api",
+    "rest",
+    "server",
+    "express",
+    "backend"
+  ],
+  "author": "nitishmehrotra@gmail.com",
+  "license": "SEE LICENSE IN ../../LICENSE"
+}
