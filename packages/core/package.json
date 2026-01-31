@@ -1,0 +1,55 @@
+{
+  "name": "@kloudi/core",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Core business logic for Decision and Pattern domains",
+  "main": "index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./index.js"
+    },
+    "./decisions": {
+      "types": "./dist/decisions/index.d.ts",
+      "import": "./decisions/index.js"
+    },
+    "./patterns": {
+      "types": "./dist/patterns/index.d.ts",
+      "import": "./patterns/index.js"
+    },
+    "./procedures": {
+      "types": "./dist/procedures/index.d.ts",
+      "import": "./procedures/index.js"
+    },
+    "./workspace": {
+      "types": "./dist/workspace/index.d.ts",
+      "import": "./workspace/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test:ci": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage --passWithNoTests",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@kloudi/infrastructure": "workspace:*",
+    "@kloudi/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "jest": "30.2.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "core",
+    "decisions",
+    "patterns",
+    "business-logic",
+    "domain-driven"
+  ],
+  "author": "nitishmehrotra@gmail.com",
+  "license": "SEE LICENSE IN ../../LICENSE"
+}
