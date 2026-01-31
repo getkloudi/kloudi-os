@@ -1,0 +1,270 @@
+/**
+ * Common TypeScript types and interfaces for the Kloudi platform
+ */
+
+// Base entity types
+export interface BaseEntity {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// User and organization types
+export interface User extends BaseEntity {
+  email: string;
+  name: string;
+  avatar?: string;
+  role: UserRole;
+  organizationId: string;
+}
+
+export interface Organization extends BaseEntity {
+  name: string;
+  slug: string;
+  domain?: string;
+  settings: OrganizationSettings;
+}
+
+export interface Team extends BaseEntity {
+  name: string;
+  slug: string;
+  organizationId: string;
+  memberIds: string[];
+}
+
+export interface Project extends BaseEntity {
+  name: string;
+  slug: string;
+  description?: string;
+  organizationId: string;
+  teamId: string;
+  status: ProjectStatus;
+  settings: ProjectSettings;
+}
+
+// Decision and Pattern types
+export interface Decision extends BaseEntity {
+  title: string;
+  description: string;
+  context: string;
+  outcome?: string;
+  status: DecisionStatus;
+  priority: Priority;
+  authorId: string;
+  projectId: string;
+  sourceIds: string[];
+  tagIds: string[];
+}
+
+export interface DecisionSource extends BaseEntity {
+  name: string;
+  type: SourceType;
+  url?: string;
+  content?: string;
+  metadata: Record<string, any>;
+}
+
+export interface DecisionTag extends BaseEntity {
+  name: string;
+  slug: string;
+  color?: string;
+  organizationId: string;
+}
+
+export interface DecisionOutcome extends BaseEntity {
+  decisionId: string;
+  result: OutcomeResult;
+  impact: ImpactLevel;
+  lessons?: string;
+  metrics?: Record<string, number>;
+}
+
+// Pattern types
+export interface Pattern extends BaseEntity {
+  name: string;
+  description: string;
+  category: PatternCategory;
+  authorId: string;
+  organizationId: string;
+  fileIds: string[];
+  variableIds: string[];
+}
+
+export interface PatternFile extends BaseEntity {
+  name: string;
+  path: string;
+  content: string;
+  language: string;
+  patternId: string;
+}
+
+export interface PatternVariable extends BaseEntity {
+  name: string;
+  type: VariableType;
+  defaultValue?: string;
+  description?: string;
+  patternId: string;
+}
+
+export interface PatternUsage extends BaseEntity {
+  patternId: string;
+  userId: string;
+  projectId: string;
+  context: string;
+  success: boolean;
+}
+
+// Workspace types
+export interface Workspace extends BaseEntity {
+  name: string;
+  type: WorkspaceType;
+  mountPath: string;
+  organizationId: string;
+  projectIds: string[];
+  settings: WorkspaceSettings;
+}
+
+export interface WorkspaceFile extends BaseEntity {
+  path: string;
+  content: string;
+  hash: string;
+  workspaceId: string;
+  lastSyncedAt: Date;
+}
+
+// Integration types
+export interface IntegrationInstallation extends BaseEntity {
+  type: IntegrationType;
+  organizationId: string;
+  config: IntegrationConfig;
+  status: IntegrationStatus;
+}
+
+export interface WebhookSubscription extends BaseEntity {
+  integrationId: string;
+  eventType: string;
+  endpoint: string;
+  secret?: string;
+  active: boolean;
+}
+
+// Cache types
+export interface FilesystemCache extends BaseEntity {
+  path: string;
+  content: string;
+  hash: string;
+  expiresAt: Date;
+  metadata: Record<string, any>;
+}
+
+// Enums and constants
+export enum UserRole {
+  ADMIN = 'admin',
+  MEMBER = 'member',
+  VIEWER = 'viewer',
+}
+
+export enum ProjectStatus {
+  ACTIVE = 'active',
+  ARCHIVED = 'archived',
+  ON_HOLD = 'on_hold',
+}
+
+export enum DecisionStatus {
+  DRAFT = 'draft',
+  PROPOSED = 'proposed',
+  APPROVED = 'approved',
+  REJECTED = 'rejected',
+  IMPLEMENTED = 'implemented',
+}
+
+export enum Priority {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical',
+}
+
+export enum SourceType {
+  DOCUMENT = 'document',
+  URL = 'url',
+  CONVERSATION = 'conversation',
+  MEETING = 'meeting',
+  EMAIL = 'email',
+}
+
+export enum OutcomeResult {
+  SUCCESS = 'success',
+  PARTIAL = 'partial',
+  FAILURE = 'failure',
+}
+
+export enum ImpactLevel {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  CRITICAL = 'critical',
+}
+
+export enum PatternCategory {
+  ARCHITECTURE = 'architecture',
+  CODE = 'code',
+  PROCESS = 'process',
+  TEMPLATE = 'template',
+}
+
+export enum VariableType {
+  STRING = 'string',
+  NUMBER = 'number',
+  BOOLEAN = 'boolean',
+  ARRAY = 'array',
+  OBJECT = 'object',
+}
+
+export enum WorkspaceType {
+  FUSE = 'fuse',
+  VIRTUAL = 'virtual',
+  MAPPED = 'mapped',
+}
+
+export enum IntegrationType {
+  GITHUB = 'github',
+  SLACK = 'slack',
+  NOTION = 'notion',
+  JIRA = 'jira',
+}
+
+export enum IntegrationStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  ERROR = 'error',
+}
+
+// Configuration types
+export interface OrganizationSettings {
+  defaultUserRole: UserRole;
+  allowPublicDecisions: boolean;
+  requireApproval: boolean;
+}
+
+export interface ProjectSettings {
+  autoSync: boolean;
+  syncInterval: number;
+  allowedFileTypes: string[];
+}
+
+export interface WorkspaceSettings {
+  autoMount: boolean;
+  syncOnStart: boolean;
+  cacheEnabled: boolean;
+  cacheTTL: number;
+}
+
+export interface IntegrationConfig {
+  clientId?: string;
+  clientSecret?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  webhookUrl?: string;
+  settings: Record<string, any>;
+}
