@@ -1,0 +1,66 @@
+# Base Defaults (lowest priority)
+#
+# Production-safe, conservative values. No secrets here.
+# These apply to ALL environments unless overridden by a more specific file.
+#
+# Override hierarchy (highest → lowest):
+#   .env → custom-environment-variables.yml → local-{env}.yml → {env}.yml → default.yml
+
+database:
+  # URL must come from environment variable DATABASE_URL
+  # No default URL - force explicit configuration per environment
+  maxConnections: 20
+  connectionTimeout: 30000
+
+cache:
+  type: 'memory'
+  defaultTtl: 3600
+
+auth:
+  # JWT secret MUST come from environment variable
+  jwtExpiresIn: '2h'
+  bcryptRounds: 12 # Balanced - not too slow for dev, secure enough
+
+environment:
+  logLevel: 'info'
+
+events:
+  enabled: true
+  retryAttempts: 3
+
+application:
+  port: 3000
+  host: '0.0.0.0'
+
+# CORS Configuration
+cors:
+  allowedOrigins: '' # Must be explicitly configured
+  allowedMethods: 'GET,POST,PUT,DELETE'
+  allowedHeaders: 'Content-Type,Authorization'
+  allowCredentials: false
+
+# AI Configuration - Simple Defaults
+ai:
+  # Core AI settings
+  provider: 'openai'
+  model: 'gpt-4'
+  temperature: 0.3
+
+  # API Keys must come from environment variables
+  # See environment-variables.yml for variable names
+
+  # Domain configurations - keep simple, extend when needed
+  domains:
+    default:
+      # Standard production settings
+      temperature: 0.3
+      provider: 'openai'
+      model: 'gpt-4'
+
+    # Add more domains here as your project grows:
+    # testing:
+    #   provider: "anthropic"
+    #   model: "claude-3-haiku-20240307"
+    #   usageProvider: "mock"
+    #   complianceLevel: "standard"
+    #   costCenter: "QA_TESTING"

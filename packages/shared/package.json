@@ -1,0 +1,67 @@
+{
+  "name": "@kloudi/shared",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Shared types, utilities, and constants for the Kloudi platform",
+  "main": "index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.js"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "import": "./dist/utils/index.js"
+    },
+    "./constants": {
+      "types": "./dist/constants/index.d.ts",
+      "import": "./dist/constants/index.js"
+    },
+    "./config": {
+      "types": "./config/index.d.ts",
+      "import": "./config/index.js"
+    },
+    "./logger": {
+      "types": "./dist/logger/index.d.ts",
+      "import": "./dist/logger/index.js"
+    },
+    "./events": {
+      "types": "./dist/events/index.d.ts",
+      "import": "./dist/events/index.js"
+    },
+    "./prompt-manager": {
+      "types": "./dist/prompt-manager/index.d.ts",
+      "import": "./dist/prompt-manager/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test:ci": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage --passWithNoTests",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "config": "^4.2.0",
+    "js-yaml": "^4.1.1",
+    "yaml": "^2.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.1.0",
+    "jest": "30.2.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "shared",
+    "types",
+    "utilities",
+    "constants"
+  ],
+  "author": "nitishmehrotra@gmail.com",
+  "license": "SEE LICENSE IN ../../LICENSE"
+}
