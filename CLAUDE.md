@@ -302,8 +302,8 @@ jest --testNamePattern="failing test name"
 | Workload | Platform | URL |
 |---|---|---|
 | **Web** (Next.js) | Vercel | `kloudi-os-web` project |
-| **API** (Express) | Railway | TBD |
-| **MCP server** | Railway | TBD |
+| **API** (Express) | Railway | `https://kloudiapi-production.up.railway.app` |
+| **MCP server** | Railway | `https://kloudimcp-server-production.up.railway.app` |
 | **CLI** | npm publish | TBD |
 
 ### Vercel (Web)
@@ -315,15 +315,28 @@ jest --testNamePattern="failing test name"
 - **PR previews**: Automatic — every push gets a unique preview URL
 - **Production**: Deploys on push to `main`
 
+### Railway (API + MCP Server)
+
+- **Project**: `energetic-reprieve` (ID: `8aac04af-3f5d-41da-8279-f5381800087d`)
+- **Services**:
+  - `@kloudi/api` → `https://kloudiapi-production.up.railway.app`
+  - `@kloudi/mcp-server` → `https://kloudimcp-server-production.up.railway.app`
+  - `Postgres` — managed PostgreSQL 15 (internal: `postgres.railway.internal:5432`)
+  - `Redis` — managed Redis 7 (internal: `redis.railway.internal:6379`)
+- **Environment**: `production`
+- **GitHub repo**: `nitishMehrotra/kloudi-os` (connect in Railway dashboard for auto-deploys)
+
 ### MCP Access (for agents)
 
-Vercel MCP is configured for Claude Code. Agents can use `mcp__vercel__*` tools
-to check deployments, read build logs, and search Vercel docs.
+Vercel and Railway MCP servers are configured for Claude Code. Agents can use
+`mcp__vercel__*` and `mcp__Railway__*` tools to manage deployments.
 
 ```bash
 # Already configured:
 claude mcp add --transport http vercel https://mcp.vercel.com
-# Authenticate with: /mcp inside a Claude Code session
+claude mcp add Railway -- npx @railway/mcp-server
+# Authenticate Vercel with: /mcp inside a Claude Code session
+# Authenticate Railway with: railway login (one-time)
 ```
 
 ## ⚙️ Configuration System
