@@ -8,12 +8,11 @@
     "declarationMap": true,
     "noEmit": false
   },
-  "include": ["**/*", "**/*.ts", "**/*.js"],
+  "include": ["**/*.ts"],
   "exclude": [
-    "**/*.test.js",
-    "**/*.spec.js",
     "**/*.test.ts",
     "**/*.spec.ts",
-    "dist"
+    "dist",
+    "node_modules"
   ]
 }

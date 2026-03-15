@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Shared types, utilities, and constants for the Kloudi platform",
-  "main": "index.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./index.js"
+      "import": "./dist/index.js"
     },
     "./types": {
       "types": "./dist/types/index.d.ts",
@@ -23,16 +23,12 @@
       "import": "./dist/constants/index.js"
     },
     "./config": {
-      "types": "./config/index.d.ts",
-      "import": "./config/index.js"
+      "types": "./dist/config/index.d.ts",
+      "import": "./dist/config/index.js"
     },
     "./logger": {
       "types": "./dist/logger/index.d.ts",
       "import": "./dist/logger/index.js"
-    },
-    "./events": {
-      "types": "./dist/events/index.d.ts",
-      "import": "./dist/events/index.js"
     },
     "./prompt-manager": {
       "types": "./dist/prompt-manager/index.d.ts",
@@ -48,10 +44,13 @@
   },
   "dependencies": {
     "config": "^4.2.0",
+    "handlebars": "^4.7.8",
+    "braintrust": "^0.0.189",
     "js-yaml": "^4.1.1",
     "yaml": "^2.8.2"
   },
   "devDependencies": {
+    "@types/config": "^3.3.5",
     "@types/node": "^25.1.0",
     "jest": "30.2.0",
     "typescript": "^5.9.3"

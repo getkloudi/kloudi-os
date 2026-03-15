@@ -3,18 +3,18 @@
   "version": "0.1.0",
   "type": "module",
   "description": "REST API server for the Kloudi platform",
-  "main": "index.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./index.js"
+      "import": "./dist/index.js"
     }
   },
   "scripts": {
-    "dev": "nodemon index.js",
+    "dev": "nodemon dist/index.js",
     "build": "tsc",
-    "start": "node index.js",
+    "start": "node dist/index.js",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest --testPathIgnorePatterns='e2e'",
     "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch --testPathIgnorePatterns='e2e'",
     "test:ci": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage --passWithNoTests",

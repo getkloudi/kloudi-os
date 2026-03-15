@@ -1,9 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "allowSyntheticDefaultImports": true,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "esModuleInterop": true,
     "allowJs": true,
     "strict": true,
@@ -32,6 +31,7 @@
   "exclude": [
     "node_modules",
     "dist",
+    "apps/web",
     "**/*.test.js",
     "**/*.spec.js",
     "**/coverage"
@@ -39,8 +39,12 @@
   "references": [
     { "path": "./apps/api" },
     { "path": "./apps/cli" },
+    { "path": "./apps/mcp-server" },
+    { "path": "./packages/agent" },
+    { "path": "./packages/auth" },
     { "path": "./packages/shared" },
     { "path": "./packages/core" },
-    { "path": "./packages/infrastructure" }
+    { "path": "./packages/infrastructure" },
+    { "path": "./packages/tools" }
   ]
 }

@@ -3,20 +3,20 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Tool registry and built-in tool adapters for lore.dev",
-  "main": "index.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./index.js"
+      "import": "./dist/index.js"
     },
     "./registry": {
       "types": "./dist/registry.d.ts",
-      "import": "./registry.js"
+      "import": "./dist/registry.js"
     },
     "./builtin": {
       "types": "./dist/builtin/index.d.ts",
-      "import": "./builtin/index.js"
+      "import": "./dist/builtin/index.js"
     }
   },
   "scripts": {

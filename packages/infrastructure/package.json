@@ -3,28 +3,28 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Production-grade infrastructure components for domain-driven development",
-  "main": "index.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./index.js"
+      "import": "./dist/index.js"
     },
     "./database": {
       "types": "./dist/database/index.d.ts",
-      "import": "./database/index.js"
+      "import": "./dist/database/index.js"
     },
     "./cache": {
       "types": "./dist/cache/index.d.ts",
-      "import": "./cache/index.js"
+      "import": "./dist/cache/index.js"
     },
     "./ai": {
       "types": "./dist/ai/index.d.ts",
-      "import": "./ai/index.js"
+      "import": "./dist/ai/index.js"
     },
     "./events": {
       "types": "./dist/events/index.d.ts",
-      "import": "./events/index.js"
+      "import": "./dist/events/index.js"
     }
   },
   "scripts": {

@@ -37,9 +37,35 @@ model Procedure {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  executions  Execution[]
+
   @@unique([workspaceId, slug])
   @@index([workspaceId])
   @@index([level])
   @@index([maturity])
   @@map("procedures")
+}
+
+model Execution {
+  id            String   @id @default(cuid())
+  procedureId   String
+  procedureSlug String
+  procedureName String
+  params        Json     @default("{}")
+  status        String   @default("pending")  // pending, running, completed, failed
+  progress      Int      @default(0)
+  steps         Json     @default("[]")
+  logs          Json     @default("[]")
+  result        Json?
+  error         String?
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  workspaceId   String
+
+  procedure     Procedure @relation(fields: [procedureId], references: [id], onDelete: Cascade)
+
+  @@index([procedureId])
+  @@index([workspaceId])
+  @@index([status])
+  @@map("executions")
 }

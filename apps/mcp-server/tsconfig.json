@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "noEmit": false
+  },
+  "include": ["**/*.ts"],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "dist",
+    "node_modules"
+  ],
+  "references": [
+    { "path": "../../packages/shared" },
+    { "path": "../../packages/infrastructure" },
+    { "path": "../../packages/core" }
+  ]
+}

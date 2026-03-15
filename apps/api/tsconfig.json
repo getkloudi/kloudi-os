@@ -8,13 +8,17 @@
     "declarationMap": true,
     "noEmit": false
   },
-  "include": ["**/*", "**/*.ts", "**/*.js"],
+  "include": ["**/*.ts"],
   "exclude": [
-    "**/*.test.js",
-    "**/*.spec.js",
     "**/*.test.ts",
     "**/*.spec.ts",
     "dist",
     "node_modules"
+  ],
+  "references": [
+    { "path": "../../packages/shared" },
+    { "path": "../../packages/auth" },
+    { "path": "../../packages/infrastructure" },
+    { "path": "../../packages/core" }
   ]
 }

@@ -88,7 +88,9 @@ async function run() {
     const health = JSON.parse(body);
     console.log(`  ✓ Status: ${health.status}`);
     for (const [name, info] of Object.entries(health.components || {})) {
-      console.log(`    ${info.status === 'healthy' ? '✓' : '✗'} ${name}: ${info.status}`);
+      console.log(
+        `    ${info.status === 'healthy' ? '✓' : '✗'} ${name}: ${info.status}`
+      );
     }
 
     // Back to web app

@@ -3,24 +3,24 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Agent runtime for executing SOPs (Standard Operating Procedures) in lore.dev",
-  "main": "index.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./index.js"
+      "import": "./dist/index.js"
     },
     "./runtime": {
       "types": "./dist/runtime.d.ts",
-      "import": "./runtime.js"
+      "import": "./dist/runtime.js"
     },
     "./context": {
       "types": "./dist/context.d.ts",
-      "import": "./context.js"
+      "import": "./dist/context.js"
     },
     "./executor": {
       "types": "./dist/executor.d.ts",
-      "import": "./executor.js"
+      "import": "./dist/executor.js"
     }
   },
   "scripts": {

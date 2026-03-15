@@ -3,28 +3,28 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Core business logic for Decision and Pattern domains",
-  "main": "index.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./index.js"
+      "import": "./dist/index.js"
     },
     "./decisions": {
       "types": "./dist/decisions/index.d.ts",
-      "import": "./decisions/index.js"
+      "import": "./dist/decisions/index.js"
     },
     "./patterns": {
       "types": "./dist/patterns/index.d.ts",
-      "import": "./patterns/index.js"
+      "import": "./dist/patterns/index.js"
     },
     "./procedures": {
       "types": "./dist/procedures/index.d.ts",
-      "import": "./procedures/index.js"
+      "import": "./dist/procedures/index.js"
     },
     "./workspace": {
       "types": "./dist/workspace/index.d.ts",
-      "import": "./workspace/index.js"
+      "import": "./dist/workspace/index.js"
     }
   },
   "scripts": {

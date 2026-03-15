@@ -16,6 +16,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
+    "verbatimModuleSyntax": false,
     "incremental": true,
     "plugins": [
       {

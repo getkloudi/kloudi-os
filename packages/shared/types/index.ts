@@ -157,6 +157,169 @@ export interface FilesystemCache extends BaseEntity {
   metadata: Record<string, any>;
 }
 
+// Graph and Node types for SOP execution
+export interface GraphNode {
+  id: string;
+  type: 'start' | 'end' | 'llm_generate' | 'tool_call' | 'sub_entity' | 'interpolative';
+  name?: string;
+  prompt?: string;
+  tool?: string;
+  params?: Record<string, unknown>;
+  entityId?: string;
+  paths?: InterpolativePath[];
+  outputVariable?: string;
+  stopOnError?: boolean;
+}
+
+export interface GraphEdge {
+  source: string;
+  target: string;
+  condition?: string;
+}
+
+export interface Graph {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  startNode?: string;
+}
+
+export interface InterpolativePath {
+  id: string;
+  label: string;
+  targetNode: string;
+  condition?: string;
+}
+
+// Procedure/Entity types
+export interface ProcedureEntity {
+  id: string;
+  slug: string;
+  name: string;
+  description?: string;
+  level: 'guide' | 'project' | 'task' | 'skill';
+  maturity: 'draft' | 'curated' | 'validated';
+  graph: Graph;
+  parameters: Record<string, ParameterDefinition>;
+  constraints: Record<string, string>;
+  workspaceId: string;
+  systemPrompt?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface ParameterDefinition {
+  type: 'string' | 'number' | 'boolean' | 'array' | 'object';
+  required?: boolean;
+  default?: unknown;
+  description?: string;
+}
+
+// Execution types
+export interface ExecutionState {
+  entityId: string;
+  entityName: string;
+  executionId: string;
+  params: Record<string, unknown>;
+  variables: Record<string, unknown>;
+  nodeResults: Map<string, NodeResult>;
+  visitedNodes: Set<string>;
+  currentNode: string | null;
+  status: string;
+  startTime: number;
+}
+
+export interface NodeResult {
+  success: boolean;
+  nodeId: string;
+  nodeType: string;
+  output?: unknown;
+  error?: string;
+  chosenPath?: InterpolativePath;
+}
+
+export interface ExecutionResult {
+  success: boolean;
+  executionId: string;
+  entityId: string;
+  entityName: string;
+  output?: unknown;
+  error?: string;
+  variables: Record<string, unknown>;
+  nodeResults: Record<string, NodeResult>;
+  duration: number;
+  status: string;
+  lastNode?: string;
+}
+
+// Tool types
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  parameters: ToolParameters;
+  execute: (params: Record<string, unknown>, context: ToolContext) => Promise<unknown>;
+}
+
+export interface ToolParameters {
+  type?: string;
+  properties?: Record<string, ToolParameterProperty>;
+  required?: string[];
+}
+
+export interface ToolParameterProperty {
+  type: string;
+  description?: string;
+  default?: unknown;
+}
+
+export interface ToolContext {
+  workspaceId?: string;
+  userId?: string;
+  tokens?: Record<string, string>;
+  [key: string]: unknown;
+}
+
+// AI Client types
+export interface AIClientConfig {
+  context: string;
+  provider?: string;
+  model?: string;
+  businessDomain?: string;
+  costCenter?: string;
+}
+
+export interface AIMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+export interface AIGenerateOptions {
+  temperature?: number;
+  maxTokens?: number;
+  stopSequences?: string[];
+}
+
+// Logger types
+export interface LoggerInstance {
+  debug(message: string, meta?: Record<string, unknown>): void;
+  info(message: string, meta?: Record<string, unknown>): void;
+  warn(message: string, meta?: Record<string, unknown>): void;
+  error(message: string, error?: Error | unknown, meta?: Record<string, unknown>): void;
+  time(label: string): { end: (meta?: Record<string, unknown>) => void };
+}
+
+// Context Manager types
+export interface ContextItem {
+  id: string;
+  type: string;
+  content: string;
+  priority: number;
+  tokens?: number;
+}
+
+export interface ContextManagerConfig {
+  maxTokens?: number;
+}
+
 // Enums and constants
 export enum UserRole {
   ADMIN = 'admin',

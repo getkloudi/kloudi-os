@@ -3,26 +3,26 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Universal CLI for all Kloudi agents and tools",
-  "main": "index.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "kloudi": "./kloudi-cli.js"
+    "kloudi": "./dist/kloudi-cli.js"
   },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./index.js"
+      "import": "./dist/index.js"
     }
   },
   "scripts": {
-    "dev": "node kloudi-cli.js",
+    "dev": "node dist/kloudi-cli.js",
     "build": "tsc",
-    "start": "node kloudi-cli.js",
+    "start": "node dist/kloudi-cli.js",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "test:ci": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage --passWithNoTests",
     "type-check": "tsc --noEmit",
     "lint": "eslint .",
-    "kloudi": "node kloudi-cli.js"
+    "kloudi": "node dist/kloudi-cli.js"
   },
   "dependencies": {
     "@kloudi/infrastructure": "workspace:*",
