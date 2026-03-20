@@ -2,6 +2,24 @@
 
 This file contains essential information for agentic coding agents working in this JS monorepo boilerplate repository.
 
+## gstack
+
+Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
+
+Available skills:
+- `/plan-ceo-review` — Founder/CEO mode: rethink the problem, find the 10-star product
+- `/plan-eng-review` — Eng manager mode: lock in architecture, data flow, edge cases, tests
+- `/plan-design-review` — Designer mode: 80-item design audit with letter grades
+- `/review` — Paranoid staff engineer code review
+- `/ship` — Sync main, run tests, push, open PR
+- `/browse` — Give the agent eyes: log in, click through app, take screenshots
+- `/qa` — Test app, find bugs, fix them, re-verify
+- `/qa-only` — Report-only QA testing (no fixes)
+- `/qa-design-review` — Design audit + fix what it finds
+- `/setup-browser-cookies` — Import cookies from your browser for authenticated testing
+- `/retro` — Engineering retrospective with per-person feedback
+- `/document-release` — Update docs to match what you just shipped
+
 ## 🖥️ Environment Setup
 
 This project uses `fnm` for Node version management. Before running any command, you must activate the correct Node version in your shell:
