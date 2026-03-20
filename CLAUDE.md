@@ -20,6 +20,19 @@ Available skills:
 - `/retro` — Engineering retrospective with per-person feedback
 - `/document-release` — Update docs to match what you just shipped
 
+## 🏗️ Current Build: ExecutionEngine (Phase 1)
+
+**READ FIRST:** `docs/specs/execution-engine-plan.md` contains all locked architecture decisions, PR breakdown, file plan, error handling, state machine, and UI design from CEO/eng/design reviews.
+
+**Key rules for implementation:**
+- Engine-first build order — don't build CRUD for tables the engine doesn't use yet
+- Async execution — POST /procedures/:id/run returns 202, graph runs via setImmediate
+- Node revisit guard — any node visited >1 triggers waiting_input + WebSocket human approval
+- Engine owns AIClient, passes to executors via context
+- SubEntityExecutor receives engine at call time (not construction) to avoid circular dep
+- All relative imports need .js extensions (nodenext ESM)
+- Single-line conventional commits, no co-author branding
+
 ## 🖥️ Environment Setup
 
 This project uses `fnm` for Node version management. Before running any command, you must activate the correct Node version in your shell:
