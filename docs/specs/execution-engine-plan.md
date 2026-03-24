@@ -115,10 +115,11 @@ model ExecutionNode {
 ## PR 2: ExecutionEngine + ContextManager
 
 **Branch:** `feat/execution-engine`
-**New files (4):**
+**New files (5):**
 - `packages/core/execution/execution-engine.ts`
 - `packages/core/execution/context-manager.ts`
 - `packages/core/execution/types.ts`
+- `packages/core/execution/resolve-path.ts`
 - `packages/core/execution/index.ts`
 
 **Modified files (2):**
@@ -213,21 +214,10 @@ export interface ExecutionContext {
   workspaceId: string;
 }
 
-// Use the existing ProcedureRecord type from procedure-repository.ts
-export interface ProcedureRecord {
-  id: string;
-  slug: string;
-  name: string;
-  description: string | null;
-  level: string;
-  maturity: string;
-  graph: unknown;       // cast to Graph when needed
-  parameters: unknown;
-  constraints: unknown;
-  workspaceId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// DO NOT redefine ProcedureRecord here — import from existing code:
+// import type { ProcedureRecord } from '../procedures/procedure-repository.js';
+// Re-export it from types.ts for convenience:
+export type { ProcedureRecord } from '../procedures/procedure-repository.js';
 
 export interface NodeExecutor {
   execute(
@@ -356,8 +346,24 @@ private async findNextNode(
 // Throws InterpolationError if variable not found.
 private resolveInputs(node: GraphNode, ctx: ExecutionContext): Record<string, unknown>
 
+// Like execute(), but awaits the graph traversal instead of using setImmediate.
+// Used by SubEntityExecutor so child executions complete before the parent continues.
+async executeAndWait(
+  procedureId: string,
+  params: Record<string, unknown>,
+  workspaceId: string,
+  callbacks?: ExecutionCallbacks,
+): Promise<{ executionId: string; result: unknown; status: string }>
+```
+
+**Utility function (separate file `packages/core/execution/resolve-path.ts`):**
+```typescript
 // Walks a dotted path like "analyze.auth_type" through ctx.variables and ctx.parameters.
-private getNestedValue(ctx: ExecutionContext, path: string): unknown
+// Extracted as a utility so both ExecutionEngine and SubEntityExecutor can use it.
+export function getNestedValue(
+  ctx: { variables: Record<string, unknown>; parameters: Record<string, unknown> },
+  path: string,
+): unknown
 ```
 
 **Cycle guard logic (inside runGraph):**
@@ -431,6 +437,7 @@ Eviction algorithm:
 ```typescript
 export { ExecutionEngine } from './execution-engine.js';
 export { ContextManager } from './context-manager.js';
+export { getNestedValue } from './resolve-path.js';
 export type {
   ExecutionContext, NodeExecutor, NodeResult, DecisionTrace,
   GraphNode, GraphEdge, Graph, NodeType,
@@ -660,33 +667,24 @@ async execute(node, ctx, engine?): Promise<NodeResult> {
   );
 
   // Map parameters from parent context to child
+  // Uses getNestedValue utility (imported from resolve-path.ts)
   const childParams: Record<string, unknown> = {};
   for (const [childKey, contextPath] of Object.entries(config.parameter_mapping)) {
-    childParams[childKey] = engine.getNestedValue(ctx, contextPath);
+    childParams[childKey] = getNestedValue(ctx, contextPath);
   }
 
-  // Execute child — this is a SYNCHRONOUS call (waits for child to complete)
-  // The child gets its own Execution record
-  const { executionId } = await engine.execute(
+  // Execute child synchronously using executeAndWait (no polling)
+  const { result, status } = await engine.executeAndWait(
     childProcedure.id,
     childParams,
     ctx.workspaceId,
   );
 
-  // Wait for child to complete (poll database)
-  // TODO: Replace with event-based approach in Phase 2
-  let childExecution;
-  for (let i = 0; i < 300; i++) {  // max 5 min (300 * 1s)
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    childExecution = await db.execution.findUnique({ where: { id: executionId } });
-    if (childExecution?.status === 'completed' || childExecution?.status === 'failed') break;
+  if (status === 'completed') {
+    return { status: 'completed', output: result };
   }
 
-  if (childExecution?.status === 'completed') {
-    return { status: 'completed', output: childExecution.result };
-  }
-
-  return { status: 'failed', output: childExecution?.error ?? 'Child execution failed or timed out' };
+  return { status: 'failed', output: result ?? 'Child execution failed' };
 }
 ```
 
@@ -833,6 +831,10 @@ describe('ExecutionEngine')
     ✓ second visit calls onHumanApprovalNeeded
     ✓ human approves → execution continues
     ✓ human aborts → execution fails
+
+  describe('executeAndWait')
+    ✓ resolves with result when graph completes
+    ✓ resolves with error when graph fails
 
   describe('error handling')
     ✓ node executor failure → execution status=failed
