@@ -53,12 +53,12 @@ The "choice" MUST be exactly one of the option values listed above.`;
 
       let decision: { reasoning?: string; choice: string };
       try {
-        decision = JSON.parse(result.text);
+        decision = this.extractJson(result.text);
       } catch {
-        // Retry once on JSON parse failure
-        logger.warn('JSON parse failed, retrying LLM call', { nodeId: node.id });
+        // Retry once on parse failure
+        logger.warn('JSON extraction failed, retrying LLM call', { nodeId: node.id });
         const retry = await this.aiClient.generateText(messages);
-        decision = JSON.parse(retry.text); // If this throws, it propagates
+        decision = this.extractJson(retry.text);
       }
 
       // Validate choice is in options
@@ -89,5 +89,41 @@ The "choice" MUST be exactly one of the option values listed above.`;
       });
       return { status: 'failed', output: null, error: errorMsg };
     }
+  }
+
+  /**
+   * Extract JSON from LLM response text.
+   * Handles: raw JSON, markdown code blocks, JSON embedded in prose.
+   */
+  private extractJson(text: string): { reasoning?: string; choice: string } {
+    // Try raw parse first
+    try {
+      return JSON.parse(text);
+    } catch {
+      // continue
+    }
+
+    // Strip markdown code blocks: ```json ... ``` or ``` ... ```
+    const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (codeBlockMatch?.[1]) {
+      try {
+        return JSON.parse(codeBlockMatch[1].trim());
+      } catch {
+        // continue
+      }
+    }
+
+    // Find first { ... } in the text
+    const braceStart = text.indexOf('{');
+    const braceEnd = text.lastIndexOf('}');
+    if (braceStart !== -1 && braceEnd > braceStart) {
+      try {
+        return JSON.parse(text.slice(braceStart, braceEnd + 1));
+      } catch {
+        // continue
+      }
+    }
+
+    throw new Error(`Could not extract JSON from LLM response: ${text.slice(0, 200)}`);
   }
 }

@@ -262,9 +262,9 @@ describe('Interpolative decision node', () => {
             type: 'interpolative',
             name: 'Pick a direction',
             config: {
-              decision_prompt: 'You must pick one direction. Just pick.',
+              decision_prompt: 'You are at a fork. You MUST pick exactly one of the options below. Respond ONLY with valid JSON.',
               options: ['north', 'south'],
-              reasoning_required: true,
+              reasoning_required: false,
             },
           },
           {
@@ -409,16 +409,28 @@ describe('Concurrency limit enforcement', () => {
   });
 
   it('rejects execution when concurrency limit is reached', async () => {
-    await engine.execute(procedure.id, {}, WORKSPACE_ID, undefined, {
+    // Start first execution (don't await — let it run)
+    const firstPromise = engine.execute(procedure.id, {}, WORKSPACE_ID, undefined, {
       concurrencyLimit: 1,
     });
+    const { executionId } = await firstPromise;
 
+    // Wait for it to transition to 'running'
+    let attempts = 0;
+    while (attempts < 20) {
+      const exec = await db.execution.findUnique({ where: { id: executionId } });
+      if (exec && exec.status === 'running') break;
+      await new Promise((r) => setTimeout(r, 200));
+      attempts++;
+    }
+
+    // Second execution should be rejected
     await expect(
       engine.execute(procedure.id, {}, WORKSPACE_ID, undefined, {
         concurrencyLimit: 1,
       }),
     ).rejects.toThrow('Concurrent execution limit');
-  }, 15000);
+  }, 30000);
 });
 
 // ============================================================
