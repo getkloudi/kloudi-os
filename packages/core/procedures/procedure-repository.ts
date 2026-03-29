@@ -16,7 +16,7 @@ const logger = Logger.getInstance('procedures');
 /**
  * Database procedure record type
  */
-interface ProcedureRecord {
+export interface ProcedureRecord {
   id: string;
   slug: string;
   name: string;

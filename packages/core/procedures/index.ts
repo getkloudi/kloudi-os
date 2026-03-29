@@ -15,6 +15,7 @@ export type {
 } from './procedure-entity.js';
 
 export { ProcedureRepository } from './procedure-repository.js';
+export type { ProcedureRecord } from './procedure-repository.js';
 
 export { ProcedureService } from './procedure-service.js';
 
