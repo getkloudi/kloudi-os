@@ -9,7 +9,6 @@ COPY apps/api/package.json ./apps/api/
 COPY apps/cli/package.json ./apps/cli/
 COPY apps/mcp-server/package.json ./apps/mcp-server/
 COPY apps/web/package.json ./apps/web/
-COPY packages/agent/package.json ./packages/agent/
 COPY packages/auth/package.json ./packages/auth/
 COPY packages/core/package.json ./packages/core/
 COPY packages/infrastructure/package.json ./packages/infrastructure/

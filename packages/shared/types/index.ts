@@ -158,36 +158,55 @@ export interface FilesystemCache extends BaseEntity {
 }
 
 // Graph and Node types for SOP execution
+// Unified with execution engine types (from/to edges, config-based nodes)
+export type NodeType =
+  | 'llm_generate'
+  | 'tool_call'
+  | 'sub_entity'
+  | 'interpolative'
+  | 'condition'
+  | 'parallel'
+  | 'loop'
+  | 'transform';
+
 export interface GraphNode {
   id: string;
-  type: 'start' | 'end' | 'llm_generate' | 'tool_call' | 'sub_entity' | 'interpolative';
-  name?: string;
-  prompt?: string;
-  tool?: string;
-  params?: Record<string, unknown>;
-  entityId?: string;
-  paths?: InterpolativePath[];
-  outputVariable?: string;
-  stopOnError?: boolean;
+  type: NodeType;
+  name: string;
+  description?: string;
+  config: Record<string, unknown>;  // type-specific config (LLMConfig, ToolConfig, etc.)
+  constraints?: Constraint[];
+  timeout_ms?: number;
+  retry_count?: number;
 }
 
 export interface GraphEdge {
-  source: string;
-  target: string;
+  from: string;
+  to: string;
   condition?: string;
+  label?: string;
 }
 
 export interface Graph {
   nodes: GraphNode[];
   edges: GraphEdge[];
-  startNode?: string;
 }
 
+/** @deprecated Use InterpolativeConfig.options in execution engine types instead */
 export interface InterpolativePath {
   id: string;
   label: string;
   targetNode: string;
   condition?: string;
+}
+
+export interface Constraint {
+  id: string;
+  level: 'MUST' | 'SHOULD' | 'MAY';
+  scope: 'entity' | 'node';
+  node_id?: string;
+  description: string;
+  enforcement: 'block' | 'warn' | 'log';
 }
 
 // Procedure/Entity types
@@ -203,6 +222,9 @@ export interface ProcedureEntity {
   constraints: Record<string, string>;
   workspaceId: string;
   systemPrompt?: string;
+  parentEntityId?: string;
+  tags?: string[];
+  metadata?: Record<string, unknown>;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -234,7 +256,7 @@ export interface NodeResult {
   nodeType: string;
   output?: unknown;
   error?: string;
-  chosenPath?: InterpolativePath;
+  chosenOption?: string;  // for interpolative nodes — the chosen next node ID
 }
 
 export interface ExecutionResult {

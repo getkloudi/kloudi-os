@@ -114,6 +114,9 @@ importers:
       '@kloudi/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@kloudi/tools':
+        specifier: workspace:*
+        version: link:../../packages/tools
       '@prisma/client':
         specifier: ^7.3.0
         version: 7.3.0(prisma@7.3.0(@types/react@19.2.10)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3))(typescript@5.9.3)
@@ -233,31 +236,6 @@ importers:
         version: 3.4.19(tsx@4.21.0)(yaml@2.8.2)
       typescript:
         specifier: ^5.7.0
-        version: 5.9.3
-
-  packages/agent:
-    dependencies:
-      '@kloudi/core':
-        specifier: workspace:*
-        version: link:../core
-      '@kloudi/infrastructure':
-        specifier: workspace:*
-        version: link:../infrastructure
-      '@kloudi/shared':
-        specifier: workspace:*
-        version: link:../shared
-      '@kloudi/tools':
-        specifier: workspace:*
-        version: link:../tools
-    devDependencies:
-      '@types/node':
-        specifier: ^25.1.0
-        version: 25.1.0
-      jest:
-        specifier: 30.2.0
-        version: 30.2.0(@types/node@25.1.0)
-      typescript:
-        specifier: ^5.9.3
         version: 5.9.3
 
   packages/auth:

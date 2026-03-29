@@ -183,9 +183,9 @@ export class ProceduralEntity {
     if (!this.graph.edges || !this.graph.nodes) return [];
 
     const outgoingEdges = this.graph.edges.filter(
-      (edge: GraphEdge) => edge.source === nodeId
+      (edge: GraphEdge) => edge.from === nodeId
     );
-    const nextNodeIds = outgoingEdges.map((edge: GraphEdge) => edge.target);
+    const nextNodeIds = outgoingEdges.map((edge: GraphEdge) => edge.to);
 
     return this.graph.nodes.filter((node: GraphNode) =>
       nextNodeIds.includes(node.id)
@@ -199,7 +199,7 @@ export class ProceduralEntity {
     if (!this.graph.nodes || !this.graph.edges) return [];
 
     const nodesWithIncoming = new Set(
-      this.graph.edges.map((edge: GraphEdge) => edge.target)
+      this.graph.edges.map((edge: GraphEdge) => edge.to)
     );
 
     return this.graph.nodes.filter(
