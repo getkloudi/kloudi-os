@@ -63,7 +63,7 @@ export interface NodeResult {
   status: 'completed' | 'failed' | 'waiting_input';
   output: unknown;
   error?: string;
-  tokensUsed?: number;
+  tokensUsed?: number | undefined;
   decisionTrace?: DecisionTrace;
   chosenOption?: string;
 }
