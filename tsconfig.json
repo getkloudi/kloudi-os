@@ -40,7 +40,6 @@
     { "path": "./apps/api" },
     { "path": "./apps/cli" },
     { "path": "./apps/mcp-server" },
-    { "path": "./packages/agent" },
     { "path": "./packages/auth" },
     { "path": "./packages/shared" },
     { "path": "./packages/core" },

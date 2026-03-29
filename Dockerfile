@@ -24,8 +24,8 @@ COPY . .
 # Generate Prisma client from schema
 RUN npx prisma generate
 
-# Clean any stale builds and build TypeScript to JavaScript
-RUN rm -rf packages/*/dist apps/*/dist && pnpm exec tsc --build
+# Build all packages (turbo handles dependency order)
+RUN pnpm exec turbo run build --filter=@kloudi/api...
 
 EXPOSE 3001
 CMD ["pnpm", "--filter", "@kloudi/api", "start"]
