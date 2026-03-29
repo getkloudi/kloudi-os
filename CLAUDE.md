@@ -388,6 +388,12 @@ default.yml                       # Base defaults (production-safe)
 - `populateProcessEnv()` pushes resolved config values back to `process.env` for external tools (Prisma CLI, etc.)
 - New developers: `cp .env.example .env` and fill in values
 
+## Design System
+Always read `DESIGN.md` before making any visual or UI decisions.
+All font choices, colors, spacing, and aesthetic direction are defined there.
+Do not deviate without explicit user approval.
+In QA mode, flag any code that doesn't match DESIGN.md.
+
 ## 🔍 Key Files to Understand
 
 - `package.json` - Root package configuration and scripts

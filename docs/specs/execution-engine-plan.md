@@ -64,6 +64,7 @@ model Execution {
   startedAt     DateTime  @default(now())
   completedAt   DateTime?
   workspaceId   String
+  userId        String?           // who triggered this execution (for activity feed)
 
   procedure     Procedure       @relation(fields: [procedureId], references: [id], onDelete: Cascade)
   executionNodes ExecutionNode[]
@@ -786,6 +787,25 @@ const nodes = await db.executionNode.findMany({
 });
 ```
 
+6. `GET /api/activity` — NEW endpoint (activity feed for Home space):
+
+```typescript
+// Returns recent executions + procedure edits across the workspace
+// Used by the Home activity feed — social-media-style post stream
+const activity = await db.execution.findMany({
+  where: { workspaceId },
+  include: {
+    procedure: { select: { name: true, slug: true } },
+    executionNodes: { orderBy: { startedAt: 'asc' } },
+  },
+  orderBy: { startedAt: 'desc' },
+  take: limit || 20,
+  skip: offset || 0,
+});
+// Response shape: array of execution records with procedure name and node progress
+// Frontend renders each as a feed post with avatar (from userId), status, node dots
+```
+
 ### DO NOT:
 - Keep the old setTimeout-based fake execution
 - Import DbModel type casts — use Prisma client directly
@@ -930,3 +950,74 @@ pnpm schema:validate               # (PR 1 only) validate schema
 pnpm db:generate                   # (PR 1 only) regenerate Prisma client
 pnpm test                          # (PR 5) all tests pass
 ```
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | CLEAN | 7 proposals, 6 accepted, 1 deferred |
+| Eng Review | `/plan-eng-review` | Architecture & tests (required) | 1 | CLEAN | 4 issues, 0 critical gaps |
+| Outside Voice | Claude subagent | Independent 2nd opinion | 1 | ISSUES_FOUND | 11 findings, 2 accepted into scope |
+| Design Review | `/plan-design-review` | UI/UX gaps | 2 | CLEAN | score: 2/10 → 8/10, 3 decisions made |
+
+**VERDICT:** CEO + ENG + DESIGN CLEARED — ready to implement.
+
+### Accepted Additions (from CEO + Eng + Outside Voice reviews)
+
+**CEO Review (6 accepted):**
+1. Zod input validation for execution routes (PR 4)
+2. Structured execution metrics via Logger (PR 2-3)
+3. Execution timeout guard, 10 min default (PR 2)
+4. Cancel API — POST /executions/:id/cancel (PR 2+4)
+5. Per-workspace concurrent execution limit, default 5 (PR 2+4)
+6. Execution history retention/cleanup (PR 1+2)
+
+**CEO Review — Error Handling Fixes (mandatory):**
+1. LLM 429 rate limit: exponential backoff + retry
+2. LLM empty response → `{ status: 'failed' }`
+3. LLM refusal → `{ status: 'failed' }`
+4. ToolCallExecutor: wrap `registry.execute()` in try/catch
+5. SubEntityExecutor: wrap `getProcedure()` in try/catch
+6. ContextManager.countTokens(null) → return 0
+
+**CEO Review — Security Fix:**
+- All execution queries must filter by workspaceId (IDOR prevention)
+
+**CEO Review — Deployment:**
+- Merge PRs 1-4 sequentially, deploy as single unit
+
+**CEO Review — New Status:**
+- Add `cancelled` to execution status enum
+
+**Eng Review (2 findings):**
+1. Add `error?: string` to `NodeResult` interface
+2. Unify graph types — migrate `@kloudi/shared/types` GraphNode/GraphEdge to match engine types (from/to, config) in PR 1
+
+**Outside Voice (2 accepted):**
+1. Configurable cycle guard threshold (default: 3 instead of 1) — prevents false positives on legitimate revisits
+2. Child execution concurrency counting + cancel propagation — sub-entity executions count against workspace limit, cancelling parent cancels children
+
+**Eng Review — Test Expansion:**
+- 22 additional test cases added to PR 5 requirements (total: 48 paths covered)
+
+**Design Review (3 decisions):**
+1. Empty states use system-prompt style (monospace, minimal) — matches terminal-to-OS trajectory
+2. Running nodes show pulsing dot (compact) + expandable streaming output (detail) — A+B combined
+3. Activity feed uses infinite scroll with virtual list — social feed pattern
+
+**Design Review — Backend Requirements Surfaced:**
+1. Add `userId` field to Execution model (PR 1) — feed needs "who ran what"
+2. Add `GET /api/activity` endpoint (PR 4) — historical activity feed query (join executions + users, ordered by time)
+
+**Design Review — Interaction States:**
+All execution-related UI states (loading, empty, error, success, partial) documented for:
+POST /run, GET /:id, activity feed, cancel, node progress, human approval, concurrency limit, browse, store.
+See DESIGN.md for full component specs.
+
+**Design Review — UX Specifications:**
+- Node card: pulsing blue dot while running, click to expand streaming output
+- Feed: infinite scroll, virtual list, 20 posts per load
+- Feed post click: navigates to Editor space for that procedure
+- Approval requests: inline Continue/Abort buttons on feed card (not modal)
+- Empty states: system-prompt style — monospace, no illustrations, CTA as text link
+- Responsive: editor full-width on mobile, agent panel collapses to overlay, stats grid 2-col
