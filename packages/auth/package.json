@@ -11,6 +11,9 @@
       "import": "./dist/index.js"
     }
   },
+  "scripts": {
+    "build": "tsc"
+  },
   "dependencies": {
     "@kloudi/shared": "workspace:*",
     "bcrypt": "^6.0.0",
