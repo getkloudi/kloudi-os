@@ -43,14 +43,12 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "config": "^4.2.0",
     "handlebars": "^4.7.8",
     "braintrust": "^0.0.189",
     "js-yaml": "^4.1.1",
     "yaml": "^2.8.2"
   },
   "devDependencies": {
-    "@types/config": "^3.3.5",
     "@types/node": "^25.1.0",
     "jest": "30.2.0",
     "typescript": "^5.9.3"

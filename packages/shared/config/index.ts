@@ -2,27 +2,31 @@
 import { readFileSync, existsSync } from 'fs';
 import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import type { IConfig } from 'config';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-/** Configuration value types */
-type ConfigValue = string | number | boolean | null | undefined | Record<string, unknown>;
+type ConfigValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | Record<string, unknown>;
 
 /**
  * Load .env file from the nearest ancestor directory into process.env.
  * Walks up from this package's directory to find the monorepo root .env.
- * Does NOT override existing environment variables — explicit env vars
- * (e.g., from the shell or CI) always take precedence.
- *
- * This runs before node-config initializes, so custom-environment-variables.yml
- * can correctly resolve env var mappings like DATABASE_URL, JWT_SECRET, etc.
+ * Does NOT override existing environment variables.
  */
-function loadEnvFile(): void {
+function loadEnvFile(filename = '.env'): void {
   let dir = __dirname;
+  // When running from dist/, start from the package root
+  if (dir.includes('/dist/')) {
+    dir = dir.replace(/\/dist\/.*$/, '');
+  }
   const root = resolve('/');
   while (dir !== root) {
-    const envPath = join(dir, '.env');
+    const envPath = join(dir, filename);
     if (existsSync(envPath)) {
       const content = readFileSync(envPath, 'utf8');
       for (const line of content.split('\n')) {
@@ -48,45 +52,154 @@ function loadEnvFile(): void {
   }
 }
 
-loadEnvFile();
-
-// Set config directory before importing node-config
-// When running from dist/, config files are in the source config/ directory
-// __dirname is dist/config, so we go up two levels and into config/
-const configDir = __dirname.includes('/dist/')
-  ? join(__dirname, '../../config')
-  : __dirname;
-process.env['NODE_CONFIG_DIR'] = configDir;
-
-// Import node-config after .env is loaded and config dir is set
-const config: IConfig = (await import('config')).default;
+// Load environment-specific .env file first (higher priority values),
+// then base .env (fills in anything not already set)
+const nodeEnv = process.env['NODE_ENV'] ?? 'development';
+if (nodeEnv === 'test') {
+  loadEnvFile('.env.test');
+}
+loadEnvFile('.env');
 
 /**
- * Configuration management using node-config
+ * Read an env var, returning undefined if missing.
+ */
+function env(key: string): string | undefined {
+  return process.env[key];
+}
+
+/**
+ * Build the full config object from environment variables + defaults.
  *
- * Loads configuration from YAML files in this priority order:
- * 1. Environment variables (via custom-environment-variables.yml)
- * 2. local.yml (local overrides, gitignored)
- * 3. {NODE_ENV}.yml (development.yml, production.yml, test.yml)
- * 4. default.yml (base defaults)
+ * Priority: env var > default value
+ * No YAML, no merge hierarchy, no node-config.
+ */
+function buildConfig() {
+  const isProduction = nodeEnv === 'production';
+  const isDevelopment = nodeEnv === 'development';
+
+  return {
+    database: {
+      url: env('DATABASE_URL'),
+      maxConnections: Number(
+        env('DATABASE_MAX_CONNECTIONS') ?? (isProduction ? 50 : isDevelopment ? 5 : 10)
+      ),
+      connectionTimeout: Number(
+        env('DATABASE_CONNECTION_TIMEOUT') ?? (isProduction ? 60000 : 30000)
+      ),
+      ssl: env('DB_SSL_ENABLED') === 'true',
+    },
+    cache: {
+      type: env('CACHE_TYPE') ?? 'redis',
+      redisUrl: env('REDIS_URL'),
+      defaultTtl: Number(
+        env('CACHE_DEFAULT_TTL') ?? (isProduction ? 7200 : isDevelopment ? 1800 : 300)
+      ),
+      maxMemory: env('CACHE_MAX_MEMORY'),
+    },
+    auth: {
+      jwtSecret: env('JWT_SECRET'),
+      jwtExpiresIn: env('JWT_EXPIRES_IN') ?? (isProduction ? '24h' : isDevelopment ? '12h' : '15m'),
+      bcryptRounds: Number(env('BCRYPT_ROUNDS') ?? (isProduction ? 14 : 10)),
+      sessionSecret: env('SESSION_SECRET'),
+    },
+    environment: {
+      nodeEnv,
+      logLevel:
+        env('LOG_LEVEL') ?? (isProduction ? 'warn' : isDevelopment ? 'debug' : 'error'),
+    },
+    events: {
+      enabled: env('EVENTS_ENABLED') !== 'false',
+      retryAttempts: Number(env('EVENTS_RETRY_ATTEMPTS') ?? (isProduction ? 5 : 3)),
+    },
+    application: {
+      port: Number(env('PORT') ?? (isProduction ? 8080 : isDevelopment ? 3001 : 3002)),
+      host: env('HOST') ?? (isDevelopment ? 'localhost' : '0.0.0.0'),
+    },
+    cors: {
+      allowedOrigins: env('CORS_ALLOWED_ORIGINS') ?? '',
+      allowedMethods: env('CORS_ALLOWED_METHODS') ?? 'GET,POST,PUT,DELETE',
+      allowedHeaders:
+        env('CORS_ALLOWED_HEADERS') ?? 'Content-Type,Authorization',
+      allowCredentials:
+        env('CORS_ALLOW_CREDENTIALS') === 'true' || false,
+    },
+    ai: {
+      provider: env('AI_PROVIDER') ?? 'openai',
+      model: env('AI_MODEL') ?? (isDevelopment ? 'gpt-3.5-turbo' : 'gpt-4'),
+      temperature: Number(env('AI_TEMPERATURE') ?? (isDevelopment ? 0.8 : 0.3)),
+      apiKeys: {
+        openai: env('OPENAI_API_KEY'),
+        anthropic: env('ANTHROPIC_API_KEY'),
+        azure: env('AZURE_OPENAI_API_KEY'),
+        google: env('GOOGLE_AI_API_KEY'),
+      },
+      endpoints: {
+        openai: env('OPENAI_API_BASE_URL'),
+        azure: env('AZURE_OPENAI_ENDPOINT'),
+      },
+      models: {
+        defaultModel: env('AI_DEFAULT_MODEL'),
+        fallbackModel: env('AI_FALLBACK_MODEL'),
+      },
+    },
+    services: {
+      stripe: {
+        secretKey: env('STRIPE_SECRET_KEY'),
+        webhookSecret: env('STRIPE_WEBHOOK_SECRET'),
+      },
+      aws: {
+        accessKeyId: env('AWS_ACCESS_KEY_ID'),
+        secretAccessKey: env('AWS_SECRET_ACCESS_KEY'),
+        region: env('AWS_REGION'),
+      },
+      sendgrid: {
+        apiKey: env('SENDGRID_API_KEY'),
+      },
+    },
+    promptManagement: {
+      braintrust: {
+        projectName: env('BRAINTRUST_PROJECT_NAME'),
+        apiKey: env('BRAINTRUST_API_KEY'),
+      },
+    },
+  };
+}
+
+type NestedRecord = Record<string, unknown>;
+
+/**
+ * Resolve a dot-notation path against a nested object.
+ * e.g. getByPath(config, 'database.url') → config.database.url
+ */
+function getByPath(obj: NestedRecord, path: string): unknown {
+  const parts = path.split('.');
+  let current: unknown = obj;
+  for (const part of parts) {
+    if (current === null || current === undefined || typeof current !== 'object') {
+      return undefined;
+    }
+    current = (current as NestedRecord)[part];
+  }
+  return current;
+}
+
+/**
+ * Configuration — backed by env vars + sensible defaults.
  *
- * @description Simplified config wrapper around node-config
+ * Same API as before: Config.get('database.url'), Config.isDevelopment(), etc.
+ * No YAML files, no node-config, no merge hierarchy.
  */
 class Environment {
   private static instance: Environment;
-  private config: IConfig;
+  private data: ReturnType<typeof buildConfig>;
 
   constructor() {
-    this.config = config;
-    this.populateProcessEnv();
+    this.data = buildConfig();
     console.info(
-      `✅ [config] Configuration loaded (env: ${this.get('environment.nodeEnv', process.env['NODE_ENV'] ?? 'development')})`
+      `✅ [config] Configuration loaded (env: ${this.data.environment.nodeEnv})`
     );
   }
 
-  /**
-   * Get singleton instance
-   */
   static getInstance(): Environment {
     if (!Environment.instance) {
       Environment.instance = new Environment();
@@ -95,84 +208,37 @@ class Environment {
   }
 
   /**
-   * Populate process.env from config for external tools (Prisma, etc.)
-   * Only sets values that aren't already in process.env
+   * Get configuration value using dot notation.
+   * e.g. Config.get('database.url'), Config.get('cache.defaultTtl', 3600)
    */
-  populateProcessEnv(): void {
-    const envMappings = {
-      DATABASE_URL: 'database.url',
-      DATABASE_MAX_CONNECTIONS: 'database.maxConnections',
-      REDIS_URL: 'cache.redisUrl',
-      CACHE_TYPE: 'cache.type',
-      CACHE_DEFAULT_TTL: 'cache.defaultTtl',
-      JWT_SECRET: 'auth.jwtSecret',
-      JWT_EXPIRES_IN: 'auth.jwtExpiresIn',
-      BCRYPT_ROUNDS: 'auth.bcryptRounds',
-      NODE_ENV: 'environment.nodeEnv',
-      LOG_LEVEL: 'environment.logLevel',
-      PORT: 'application.port',
-      HOST: 'application.host',
-      EVENTS_ENABLED: 'events.enabled',
-      EVENTS_RETRY_ATTEMPTS: 'events.retryAttempts',
-      CORS_ALLOWED_ORIGINS: 'cors.allowedOrigins',
-      CORS_ALLOW_CREDENTIALS: 'cors.allowCredentials',
-    };
-
-    let count = 0;
-    for (const [envKey, configPath] of Object.entries(envMappings)) {
-      if (process.env[envKey] === undefined) {
-        const value = this.get(configPath);
-        if (value !== null && value !== undefined) {
-          process.env[envKey] = String(value);
-          count++;
-        }
-      }
-    }
-
-    if (count > 0) {
-      console.info(`✅ [config] Populated ${count} environment variables`);
-    }
-  }
-  /**
-   * Get configuration value using dot notation
-   * @param key - Config key (e.g., 'database.url')
-   * @param defaultValue - Default value if key doesn't exist
-   */
-  get<T extends ConfigValue = ConfigValue>(key: string, defaultValue: T | null = null): T | null {
-    try {
-      if (this.config.has(key)) {
-        return this.config.get(key) as T;
-      }
-      return defaultValue;
-    } catch {
+  get<T extends ConfigValue = ConfigValue>(
+    key: string,
+    defaultValue: T | null = null
+  ): T | null {
+    const value = getByPath(this.data as unknown as NestedRecord, key);
+    if (value === undefined || value === null) {
       return defaultValue;
     }
+    return value as T;
   }
 
-  // Convenience methods
   isDevelopment(): boolean {
-    return this.get<string>('environment.nodeEnv') === 'development';
+    return this.data.environment.nodeEnv === 'development';
   }
 
   isProduction(): boolean {
-    return this.get<string>('environment.nodeEnv') === 'production';
+    return this.data.environment.nodeEnv === 'production';
   }
 
-  getCorsConfig(): {
-    allowedOrigins: ConfigValue;
-    allowedMethods: ConfigValue;
-    allowedHeaders: ConfigValue;
-    allowCredentials: ConfigValue;
-  } {
+  getCorsConfig() {
     return {
-      allowedOrigins: this.get('cors.allowedOrigins'),
-      allowedMethods: this.get('cors.allowedMethods'),
-      allowedHeaders: this.get('cors.allowedHeaders'),
-      allowCredentials: this.get('cors.allowCredentials'),
+      allowedOrigins: this.data.cors.allowedOrigins,
+      allowedMethods: this.data.cors.allowedMethods,
+      allowedHeaders: this.data.cors.allowedHeaders,
+      allowCredentials: this.data.cors.allowCredentials,
     };
   }
 }
 
-// Export singleton instance
 const Config = Environment.getInstance();
 export { Config };
