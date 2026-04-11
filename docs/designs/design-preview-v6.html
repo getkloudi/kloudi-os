@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lore.dev — v6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  [data-theme="dark"] {
+    --bg-0: #0a0b0e;
+    --bg-1: #101114;
+    --bg-2: #161719;
+    --bg-3: #1c1d21;
+    --bg-4: #242529;
+    --bg-5: #2e3035;
+    --text-1: #f0f1f4;
+    --text-2: #a0a4b4;
+    --text-3: #636678;
+    --text-4: #3e4050;
+    --accent: #636bff;
+    --accent-s: rgba(99,107,255,0.12);
+    --accent-h: #7b82ff;
+    --green: #36d89a;
+    --green-s: rgba(54,216,154,0.12);
+    --amber: #e8a63e;
+    --amber-s: rgba(232,166,62,0.12);
+    --red: #e85b5b;
+    --red-s: rgba(232,91,91,0.12);
+    --blue: #4fa0e8;
+    --blue-s: rgba(79,160,232,0.12);
+    --border: #1e2024;
+    --glow: rgba(99,107,255,0.04);
+    --rail-bg: rgba(16,17,20,0.92);
+  }
+  [data-theme="light"] {
+    --bg-0: #f5f6f8;
+    --bg-1: #ffffff;
+    --bg-2: #f0f1f4;
+    --bg-3: #e8e9ee;
+    --bg-4: #dfe0e6;
+    --bg-5: #d3d5dc;
+    --text-1: #131520;
+    --text-2: #5c5f70;
+    --text-3: #9a9dac;
+    --text-4: #c4c6d0;
+    --accent: #4a52e0;
+    --accent-s: rgba(74,82,224,0.08);
+    --accent-h: #5b63f0;
+    --green: #1a9960;
+    --green-s: rgba(26,153,96,0.08);
+    --amber: #c48a1a;
+    --amber-s: rgba(196,138,26,0.08);
+    --red: #c93d3d;
+    --red-s: rgba(201,61,61,0.08);
+    --blue: #2b7cc9;
+    --blue-s: rgba(43,124,201,0.08);
+    --border: #e4e5ea;
+    --glow: rgba(74,82,224,0.03);
+    --rail-bg: rgba(255,255,255,0.92);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'DM Sans',-apple-system,sans-serif;
+    background:var(--bg-0);color:var(--text-1);
+    font-size:14px;line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+    height:100vh;overflow:hidden;
+    display:flex;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;font-size:10px;font-weight:500;font-family:'JetBrains Mono',monospace;border-radius:12px;}
+  .badge-g{background:var(--green-s);color:var(--green);}
+  .badge-r{background:var(--red-s);color:var(--red);}
+  .badge-a{background:var(--amber-s);color:var(--amber);}
+  .badge-b{background:var(--blue-s);color:var(--blue);}
+  .badge-n{background:var(--bg-4);color:var(--text-3);}
+  .badge-ac{background:var(--accent-s);color:var(--accent);}
+  .btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.15s;border-radius:8px;font-family:'DM Sans',sans-serif;border:none;}
+  .btn-p{background:var(--accent);color:#fff;}
+  .btn-p:hover{background:var(--accent-h);transform:translateY(-1px);}
+  .btn-s{background:var(--bg-3);color:var(--text-2);}
+  .btn-s:hover{background:var(--bg-4);}
+  .btn-d{background:var(--red);color:#fff;border-radius:8px;}
+  .live{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;display:inline-block;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+  .progress{height:2px;background:var(--bg-3);border-radius:1px;overflow:hidden;}
+  .progress-f{height:100%;border-radius:1px;transition:width 0.3s;}
+
+  /* === NAV RAIL (left edge, minimal) === */
+  .rail{
+    width:56px;flex-shrink:0;
+    background:var(--rail-bg);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border-right:1px solid var(--border);
+    display:flex;flex-direction:column;
+    align-items:center;padding:12px 0;
+    gap:4px;z-index:100;
+  }
+  .rail-logo{
+    font-weight:700;font-size:16px;
+    margin-bottom:16px;color:var(--accent);
+    width:32px;height:32px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--accent-s);border-radius:8px;
+  }
+  .rail-item{
+    width:36px;height:36px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:17px;cursor:pointer;
+    transition:all 0.12s;position:relative;
+    color:var(--text-3);
+  }
+  .rail-item:hover{background:var(--bg-3);color:var(--text-2);}
+  .rail-item.active{background:var(--accent-s);color:var(--accent);}
+  .rail-item .rail-badge{
+    position:absolute;top:2px;right:2px;
+    width:8px;height:8px;border-radius:50%;
+    background:var(--red);
+  }
+  .rail-spacer{flex:1;}
+  .rail-bottom{display:flex;flex-direction:column;gap:4px;align-items:center;}
+  .rail-avatar{
+    width:28px;height:28px;border-radius:50%;
+    background:var(--bg-4);display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:600;color:var(--text-2);cursor:pointer;
+  }
+
+  /* === MAIN AREA === */
+  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+  /* === SPACES (views) === */
+  .space{display:none;flex:1;overflow:hidden;}
+  .space.visible{display:flex;flex-direction:column;}
+
+  /* ============ SPACE: HOME (feed + search merged) ============ */
+  .home{overflow-y:auto;}
+  .home-hero{
+    padding:48px 40px 32px;
+    background:linear-gradient(180deg, var(--glow) 0%, transparent 100%);
+  }
+  .home-greeting{font-size:28px;font-weight:700;letter-spacing:-0.03em;margin-bottom:4px;}
+  .home-sub{font-size:14px;color:var(--text-3);margin-bottom:24px;}
+  .home-search{
+    display:flex;align-items:center;gap:10px;
+    background:var(--bg-2);border:1px solid var(--border);
+    border-radius:12px;padding:14px 18px;
+    max-width:560px;
+    transition:all 0.15s;
+  }
+  .home-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-s);background:var(--bg-1);}
+  .home-search input{
+    flex:1;background:transparent;border:none;outline:none;
+    font-size:15px;color:var(--text-1);font-family:'DM Sans',sans-serif;
+  }
+  .home-search input::placeholder{color:var(--text-4);}
+  .home-search .kbd{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-4);background:var(--bg-3);padding:3px 7px;border-radius:4px;}
+
+  /* Quick access row */
+  .quick-row{
+    display:flex;gap:10px;padding:0 40px 28px;
+    overflow-x:auto;
+  }
+  .quick-card{
+    min-width:180px;
+    background:var(--bg-1);border:1px solid var(--border);
+    border-radius:10px;padding:14px 16px;
+    cursor:pointer;transition:all 0.15s;flex-shrink:0;
+  }
+  .quick-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.15);}
+  .qc-name{font-size:13px;font-weight:600;margin-bottom:3px;}
+  .qc-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-3);}
+  .qc-bar{margin-top:8px;}
+
+  /* Feed */
+  .feed{padding:0 40px 40px;max-width:640px;}
+  .feed-head{
+    display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:16px;
+  }
+  .feed-title{font-size:14px;font-weight:600;color:var(--text-2);}
+  .feed-filters{display:flex;gap:4px;}
+  .feed-filter{
+    font-size:11px;padding:4px 10px;border-radius:6px;
+    background:transparent;color:var(--text-3);cursor:pointer;
+    border:none;font-family:'DM Sans',sans-serif;transition:all 0.1s;
+  }
+  .feed-filter.active{background:var(--accent-s);color:var(--accent);}
+  .feed-filter:hover:not(.active){background:var(--bg-3);}
+
+  .post{
+    padding:16px 0;border-bottom:1px solid var(--border);
+  }
+  .post:last-child{border-bottom:none;}
+  .post-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .avatar{
+    width:30px;height:30px;border-radius:50%;
+    background:var(--bg-4);display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:600;color:var(--text-2);flex-shrink:0;
+  }
+  .post-who{font-size:13px;font-weight:500;}
+  .post-what{font-size:12px;color:var(--text-3);}
+  .post-time{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-4);margin-left:auto;}
+
+  .post-card{
+    background:var(--bg-1);border:1px solid var(--border);
+    border-radius:10px;padding:14px 16px;
+    margin-left:40px;cursor:pointer;
+    transition:all 0.12s;
+  }
+  .post-card:hover{border-color:var(--bg-5);background:var(--bg-2);}
+  .pc-name{font-size:13px;font-weight:600;margin-bottom:4px;}
+  .pc-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-3);display:flex;gap:8px;align-items:center;margin-bottom:8px;}
+  .pc-nodes{display:flex;flex-direction:column;gap:3px;}
+  .pc-node{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-2);}
+  .pc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .pc-dur{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-3);margin-left:auto;}
+
+  .post-actions{display:flex;gap:16px;margin-left:40px;margin-top:10px;}
+  .post-action{font-size:12px;color:var(--text-4);cursor:pointer;display:flex;align-items:center;gap:4px;transition:color 0.1s;}
+  .post-action:hover{color:var(--text-2);}
+
+  .approval-block{
+    margin-top:8px;padding:12px;
+    background:var(--amber-s);border-radius:8px;
+    font-size:12px;color:var(--text-2);
+  }
+  .approval-q{color:var(--amber);margin-bottom:8px;font-style:italic;}
+
+  /* ============ SPACE: BROWSE (Finder as content, not window) ============ */
+  .browse{overflow-y:auto;}
+  .browse-header{
+    padding:32px 40px 24px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .browse-title{font-size:20px;font-weight:700;letter-spacing:-0.02em;}
+  .browse-path{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-3);margin-top:4px;}
+  .browse-search{
+    display:flex;align-items:center;gap:8px;
+    background:var(--bg-2);border:1px solid var(--border);
+    border-radius:8px;padding:8px 14px;width:240px;
+  }
+  .browse-search input{
+    flex:1;background:transparent;border:none;outline:none;
+    font-size:13px;color:var(--text-1);font-family:'DM Sans',sans-serif;
+  }
+  .browse-search input::placeholder{color:var(--text-4);}
+
+  .browse-content{display:flex;padding:0 40px 40px;gap:24px;}
+  .browse-sidebar{width:180px;flex-shrink:0;}
+  .bs-head{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-4);margin-bottom:6px;margin-top:16px;}
+  .bs-head:first-child{margin-top:0;}
+  .bs-item{
+    display:flex;align-items:center;gap:8px;
+    padding:6px 10px;border-radius:6px;
+    font-size:13px;color:var(--text-2);cursor:pointer;
+    transition:all 0.1s;
+  }
+  .bs-item:hover{background:var(--bg-3);}
+  .bs-item.active{background:var(--accent-s);color:var(--accent);}
+  .bs-icon{width:16px;text-align:center;font-size:13px;}
+
+  .browse-grid{flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;align-content:start;}
+  .browse-file{
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    padding:16px 10px;border-radius:10px;cursor:pointer;
+    transition:all 0.12s;text-align:center;
+  }
+  .browse-file:hover{background:var(--bg-3);}
+  .browse-file.selected{background:var(--accent-s);}
+  .bf-icon{font-size:32px;line-height:1;}
+  .bf-name{font-size:11px;color:var(--text-2);line-height:1.3;word-break:break-all;}
+
+  /* ============ SPACE: EDITOR (full canvas, not a window) ============ */
+  .editor-space{flex-direction:row !important;}
+  .editor-main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+
+  .editor-topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 20px;background:var(--bg-1);
+    border-bottom:1px solid var(--border);flex-shrink:0;
+  }
+  .et-left{display:flex;align-items:center;gap:12px;}
+  .et-breadcrumb{font-size:12px;color:var(--text-3);display:flex;align-items:center;gap:6px;}
+  .et-breadcrumb span{cursor:pointer;}
+  .et-breadcrumb span:hover{color:var(--text-2);}
+  .et-breadcrumb .et-current{color:var(--text-1);font-weight:500;}
+  .mode-toggle{display:flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;}
+  .mt-btn{
+    font-size:11px;padding:4px 12px;
+    background:transparent;border:none;
+    color:var(--text-3);cursor:pointer;font-family:'DM Sans',sans-serif;
+    transition:all 0.1s;
+  }
+  .mt-btn.active{background:var(--accent-s);color:var(--accent);}
+  .mt-btn:hover:not(.active){background:var(--bg-3);}
+
+  .editor-canvas{
+    flex:1;overflow-y:auto;
+    background:var(--bg-0);
+    padding:32px 48px;
+  }
+  .ec h1{font-size:26px;font-weight:700;letter-spacing:-0.03em;margin-bottom:6px;}
+  .ec-meta{
+    font-family:'JetBrains Mono',monospace;font-size:12px;
+    color:var(--text-3);display:flex;gap:10px;align-items:center;
+    margin-bottom:24px;
+  }
+  .ec p{color:var(--text-2);line-height:1.7;margin-bottom:20px;max-width:600px;font-size:15px;}
+  .ec-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-4);margin-bottom:8px;margin-top:28px;}
+
+  .node-card{
+    background:var(--bg-1);border:1px solid var(--border);
+    border-radius:8px;padding:12px 16px;margin-bottom:6px;
+    display:flex;align-items:center;justify-content:space-between;
+    transition:all 0.12s;cursor:pointer;
+  }
+  .node-card:hover{border-color:var(--bg-5);transform:translateX(2px);}
+  .nc-l{display:flex;align-items:center;gap:10px;}
+  .nc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .nc-name{font-size:13px;font-weight:500;}
+  .nc-type{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-3);}
+  .nc-r{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-3);display:flex;gap:12px;}
+
+  .stats-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+    margin-top:28px;
+  }
+  .stat-card{
+    background:var(--bg-1);border:1px solid var(--border);
+    border-radius:8px;padding:14px 16px;
+  }
+  .stat-label{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-4);margin-bottom:4px;}
+  .stat-val{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:600;}
+
+  .run-strip{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 20px;background:var(--bg-1);
+    border-top:1px solid var(--border);flex-shrink:0;
+  }
+  .rs-l{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text-3);}
+  .rs-r{display:flex;gap:6px;}
+
+  /* Agent panel (right side, slides in) */
+  .agent-panel{
+    width:320px;flex-shrink:0;
+    background:var(--bg-0);
+    border-left:1px solid var(--border);
+    display:flex;flex-direction:column;
+    transition:width 0.2s;
+  }
+  .agent-panel.collapsed{width:0;overflow:hidden;border:none;}
+  .ap-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:12px 16px;background:var(--bg-1);
+    border-bottom:1px solid var(--border);flex-shrink:0;
+  }
+  .ap-title{font-size:13px;font-weight:600;}
+  .ap-close{cursor:pointer;color:var(--text-3);font-size:16px;background:none;border:none;}
+  .ap-close:hover{color:var(--text-1);}
+  .ap-tabs{
+    display:flex;background:var(--bg-1);
+    border-bottom:1px solid var(--border);flex-shrink:0;
+  }
+  .ap-tab{
+    font-family:'JetBrains Mono',monospace;font-size:11px;
+    padding:6px 14px;color:var(--text-3);cursor:pointer;
+    position:relative;
+  }
+  .ap-tab.active{color:var(--text-1);}
+  .ap-tab.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--accent);}
+  .ap-output{
+    flex:1;overflow-y:auto;padding:14px 16px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;line-height:1.8;color:var(--text-2);
+    background:var(--bg-0);
+  }
+  .ap-msg{margin-bottom:14px;}
+  .ap-msg-head{display:flex;align-items:center;gap:6px;margin-bottom:3px;}
+  .ap-msg-who{font-size:10px;font-weight:600;}
+  .ap-msg-time{font-size:9px;color:var(--text-4);}
+  .ap-msg-body{font-size:12px;line-height:1.7;color:var(--text-2);}
+  .ap-msg-body code{background:var(--bg-3);padding:1px 5px;border-radius:3px;font-size:11px;}
+  .ap-input{
+    display:flex;align-items:center;gap:8px;
+    padding:10px 16px;background:var(--bg-1);
+    border-top:1px solid var(--border);flex-shrink:0;
+  }
+  .ap-prompt{color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:13px;}
+  .ap-input input{
+    flex:1;background:transparent;border:none;outline:none;
+    font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-1);
+  }
+  .ap-input input::placeholder{color:var(--text-4);}
+
+  .t-s{color:var(--green);}.t-r{color:var(--red);}
+  .t-b{color:var(--blue);}.t-a{color:var(--accent);}
+  .t-m{color:var(--text-4);}.t-w{color:var(--amber);}
+
+  /* ============ SPACE: STORE ============ */
+  .store{overflow-y:auto;}
+  .store-hero{
+    padding:48px 40px 32px;
+    background:linear-gradient(180deg, var(--glow) 0%, transparent 100%);
+  }
+  .store-title{font-size:24px;font-weight:700;letter-spacing:-0.02em;margin-bottom:4px;}
+  .store-sub{font-size:14px;color:var(--text-3);margin-bottom:24px;}
+  .store-search{
+    display:flex;align-items:center;gap:10px;
+    background:var(--bg-2);border:1px solid var(--border);
+    border-radius:10px;padding:12px 16px;max-width:480px;
+  }
+  .store-search input{
+    flex:1;background:transparent;border:none;outline:none;
+    font-size:14px;color:var(--text-1);font-family:'DM Sans',sans-serif;
+  }
+  .store-search input::placeholder{color:var(--text-4);}
+
+  .store-cats{display:flex;gap:6px;padding:0 40px 20px;}
+  .store-cat{
+    font-size:12px;padding:6px 14px;border-radius:8px;
+    background:var(--bg-2);border:1px solid var(--border);
+    color:var(--text-3);cursor:pointer;font-family:'DM Sans',sans-serif;
+    transition:all 0.1s;
+  }
+  .store-cat.active{background:var(--accent-s);color:var(--accent);border-color:var(--accent);}
+  .store-cat:hover:not(.active){background:var(--bg-3);}
+
+  .store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;padding:0 40px 40px;}
+  .store-app{
+    background:var(--bg-1);border:1px solid var(--border);
+    border-radius:12px;padding:18px;cursor:pointer;
+    transition:all 0.15s;
+  }
+  .store-app:hover{border-color:var(--bg-5);transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.15);}
+  .sa-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .sa-icon{
+    width:40px;height:40px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:20px;flex-shrink:0;
+  }
+  .sa-name{font-size:14px;font-weight:600;}
+  .sa-by{font-size:11px;color:var(--text-3);}
+  .sa-desc{font-size:12px;color:var(--text-2);line-height:1.5;margin-bottom:12px;}
+  .sa-footer{display:flex;align-items:center;justify-content:space-between;}
+  .sa-tag{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-4);}
+  .sa-install{
+    font-size:11px;padding:6px 14px;border-radius:6px;
+    background:var(--accent);color:#fff;border:none;
+    cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;
+    transition:all 0.1s;
+  }
+  .sa-install:hover{background:var(--accent-h);}
+  .sa-install.done{background:var(--bg-3);color:var(--text-3);}
+
+  /* Theme controls */
+  .theme-pills{display:flex;gap:0;border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-top:auto;margin-bottom:8px;}
+  .tp{
+    font-size:12px;padding:4px 0;width:36px;text-align:center;
+    background:transparent;border:none;
+    color:var(--text-4);cursor:pointer;
+  }
+  .tp.active{background:var(--accent-s);color:var(--accent);}
+
+  @media(max-width:768px){
+    .rail{width:0;overflow:hidden;}
+    .agent-panel{width:0;overflow:hidden;}
+    .browse-sidebar{display:none;}
+    .browse-grid{grid-template-columns:repeat(3,1fr);}
+    .store-grid{grid-template-columns:1fr;}
+    .stats-grid{grid-template-columns:1fr 1fr;}
+    .home-hero{padding:32px 20px 24px;}
+    .feed,.quick-row{padding-left:20px;padding-right:20px;}
+    .editor-canvas{padding:24px 20px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV RAIL -->
+<div class="rail">
+  <div class="rail-logo" style="font-size:14px;">l</div>
+
+  <div class="rail-item active" onclick="showSpace('home')" title="Home">
+    🏠
+    <div class="rail-badge"></div>
+  </div>
+  <div class="rail-item" onclick="showSpace('browse')" title="Browse">📁</div>
+  <div class="rail-item" onclick="showSpace('editor')" title="Editor">📝</div>
+  <div class="rail-item" onclick="showSpace('store')" title="Store">🏪</div>
+
+  <div class="rail-spacer"></div>
+
+  <div class="rail-bottom">
+    <div class="theme-pills">
+      <button class="tp" onclick="setTheme('light')">☀</button>
+      <button class="tp active" onclick="setTheme('dark')">☾</button>
+      <button class="tp" onclick="setTheme('auto')">⊕</button>
+    </div>
+    <div class="rail-avatar">N</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ============ SPACE: HOME ============ -->
+  <div class="space visible" id="space-home">
+    <div class="home">
+      <div class="home-hero">
+        <div class="home-greeting">Good evening, Nitish</div>
+        <div class="home-sub">3 procedures ran today · 1 awaiting approval</div>
+        <div class="home-search">
+          <span style="color:var(--text-4)">⌕</span>
+          <input placeholder="Search procedures, runs, people...">
+          <span class="kbd">⌘K</span>
+        </div>
+      </div>
+
+      <div class="quick-row">
+        <div class="quick-card" onclick="showSpace('editor')">
+          <div class="qc-name">⚡ analyze-codebase</div>
+          <div class="qc-meta">completed · 2m ago</div>
+          <div class="qc-bar"><div class="progress"><div class="progress-f" style="width:100%;background:var(--green)"></div></div></div>
+        </div>
+        <div class="quick-card">
+          <div class="qc-name">⚡ deploy-auth-flow</div>
+          <div class="qc-meta"><span class="live"></span> running · 2/4 nodes</div>
+          <div class="qc-bar"><div class="progress"><div class="progress-f" style="width:55%;background:var(--blue)"></div></div></div>
+        </div>
+        <div class="quick-card">
+          <div class="qc-name">🎯 onboard-user</div>
+          <div class="qc-meta">completed · 3h ago</div>
+          <div class="qc-bar"><div class="progress"><div class="progress-f" style="width:100%;background:var(--green)"></div></div></div>
+        </div>
+        <div class="quick-card">
+          <div class="qc-name">⚡ security-review</div>
+          <div class="qc-meta" style="color:var(--amber)">⚠ awaiting approval</div>
+          <div class="qc-bar"><div class="progress"><div class="progress-f" style="width:60%;background:var(--amber)"></div></div></div>
+        </div>
+      </div>
+
+      <div class="feed">
+        <div class="feed-head">
+          <div class="feed-title">Activity</div>
+          <div class="feed-filters">
+            <button class="feed-filter active">All</button>
+            <button class="feed-filter">Mine</button>
+            <button class="feed-filter">Failed</button>
+            <button class="feed-filter">Approvals</button>
+          </div>
+        </div>
+
+        <div class="post">
+          <div class="post-head">
+            <div class="avatar">S</div>
+            <div><span class="post-who">sarah</span> <span class="post-what">ran a procedure</span></div>
+            <span class="post-time"><span class="live"></span> now</span>
+          </div>
+          <div class="post-card">
+            <div class="pc-name">deploy-auth-flow</div>
+            <div class="pc-meta"><span class="badge badge-b">running</span> exec_9kp2 · 2/4</div>
+            <div class="pc-nodes">
+              <div class="pc-node"><div class="pc-dot" style="background:var(--green)"></div>Validate Config<span class="pc-dur">0.4s</span></div>
+              <div class="pc-node"><div class="pc-dot" style="background:var(--green)"></div>Generate Auth Module<span class="pc-dur">2.1s</span></div>
+              <div class="pc-node"><div class="pc-dot" style="background:var(--blue);animation:pulse 1.5s infinite"></div><strong>Deploy to Staging</strong><span class="pc-dur" style="color:var(--blue)">running</span></div>
+              <div class="pc-node"><div class="pc-dot" style="background:var(--bg-4)"></div><span style="color:var(--text-4)">Verify Health</span></div>
+            </div>
+            <div class="progress" style="margin-top:8px;"><div class="progress-f" style="width:55%;background:var(--blue)"></div></div>
+          </div>
+          <div class="post-actions"><span class="post-action">👀 2</span><span class="post-action">💬 Reply</span></div>
+        </div>
+
+        <div class="post">
+          <div class="post-head">
+            <div class="avatar">N</div>
+            <div><span class="post-who">nitish</span> <span class="post-what">completed a run</span></div>
+            <span class="post-time">2m ago</span>
+          </div>
+          <div class="post-card" onclick="showSpace('editor')">
+            <div class="pc-name">analyze-codebase</div>
+            <div class="pc-meta"><span class="badge badge-g">completed</span> 3 nodes · 4.2s · 2,847 tk</div>
+            <div class="progress" style="margin-top:6px;"><div class="progress-f" style="width:100%;background:var(--green)"></div></div>
+          </div>
+          <div class="post-actions"><span class="post-action">✅ 1</span><span class="post-action">💬 Reply</span></div>
+        </div>
+
+        <div class="post">
+          <div class="post-head">
+            <div class="avatar">A</div>
+            <div><span class="post-who">alex</span> <span class="post-what">execution failed</span></div>
+            <span class="post-time">18m ago</span>
+          </div>
+          <div class="post-card" style="border-color:var(--red)">
+            <div class="pc-name">migrate-database</div>
+            <div class="pc-meta"><span class="badge badge-r">failed</span> node 2/4 · LLM timeout</div>
+            <div class="progress" style="margin-top:6px;"><div class="progress-f" style="width:25%;background:var(--red)"></div></div>
+          </div>
+          <div class="post-actions"><span class="post-action">🔄 Retry</span><span class="post-action">💬 3</span></div>
+        </div>
+
+        <div class="post">
+          <div class="post-head">
+            <div class="avatar">S</div>
+            <div><span class="post-who">sarah</span> <span class="post-what">needs your approval</span></div>
+            <span class="post-time">42m ago</span>
+          </div>
+          <div class="post-card" style="border-color:var(--amber)">
+            <div class="pc-name">security-review</div>
+            <div class="pc-meta"><span class="badge badge-a">waiting</span> cycle guard</div>
+            <div class="approval-block">
+              <div class="approval-q">"Node 'deep-scan' about to run again (visit #3). Continue?"</div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-p" style="font-size:11px;padding:6px 14px;">Continue</button>
+                <button class="btn btn-d" style="font-size:11px;padding:6px 14px;">Abort</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="post">
+          <div class="post-head">
+            <div class="avatar">N</div>
+            <div><span class="post-who">nitish</span> <span class="post-what">updated a procedure</span></div>
+            <span class="post-time">1h ago</span>
+          </div>
+          <div class="post-card">
+            <div class="pc-name">analyze-codebase</div>
+            <div class="pc-meta"><span class="badge badge-n">edited</span> added "security-scan" node</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SPACE: BROWSE ============ -->
+  <div class="space" id="space-browse">
+    <div class="browse">
+      <div class="browse-header">
+        <div>
+          <div class="browse-title">Browse</div>
+          <div class="browse-path">procedures / engineering</div>
+        </div>
+        <div class="browse-search">
+          <span style="color:var(--text-4);font-size:14px;">⌕</span>
+          <input placeholder="Filter...">
+        </div>
+      </div>
+      <div class="browse-content">
+        <div class="browse-sidebar">
+          <div class="bs-head">favorites</div>
+          <div class="bs-item active"><span class="bs-icon">📁</span> procedures</div>
+          <div class="bs-item"><span class="bs-icon">📂</span> shared</div>
+          <div class="bs-item"><span class="bs-icon">🕐</span> recent</div>
+          <div class="bs-head">workspaces</div>
+          <div class="bs-item"><span class="bs-icon">🏠</span> default</div>
+          <div class="bs-item"><span class="bs-icon">🧪</span> staging</div>
+          <div class="bs-head">tags</div>
+          <div class="bs-item"><span class="bs-icon" style="color:var(--green)">●</span> production</div>
+          <div class="bs-item"><span class="bs-icon" style="color:var(--amber)">●</span> draft</div>
+        </div>
+        <div class="browse-grid">
+          <div class="browse-file" ondblclick="showSpace('editor')"><div class="bf-icon">⚡</div><div class="bf-name">analyze-codebase</div></div>
+          <div class="browse-file"><div class="bf-icon">⚡</div><div class="bf-name">deploy-auth-flow</div></div>
+          <div class="browse-file"><div class="bf-icon">⚡</div><div class="bf-name">migrate-database</div></div>
+          <div class="browse-file"><div class="bf-icon">🎯</div><div class="bf-name">onboard-user</div></div>
+          <div class="browse-file"><div class="bf-icon">📖</div><div class="bf-name">team-setup-guide</div></div>
+          <div class="browse-file"><div class="bf-icon">⚡</div><div class="bf-name">security-review</div></div>
+          <div class="browse-file"><div class="bf-icon">📁</div><div class="bf-name">onboarding/</div></div>
+          <div class="browse-file"><div class="bf-icon">📁</div><div class="bf-name">security/</div></div>
+          <div class="browse-file"><div class="bf-icon">📁</div><div class="bf-name">templates/</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SPACE: EDITOR ============ -->
+  <div class="space editor-space" id="space-editor">
+    <div class="editor-main">
+      <div class="editor-topbar">
+        <div class="et-left">
+          <div class="et-breadcrumb">
+            <span onclick="showSpace('browse')">procedures</span>
+            <span style="color:var(--text-4)">/</span>
+            <span onclick="showSpace('browse')">engineering</span>
+            <span style="color:var(--text-4)">/</span>
+            <span class="et-current">analyze-codebase</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="mode-toggle">
+            <button class="mt-btn" onclick="setMode('edit')">Edit</button>
+            <button class="mt-btn active" onclick="setMode('view')">View</button>
+          </div>
+          <button class="btn btn-p" style="padding:6px 14px;">▶ Run</button>
+          <button class="btn btn-s" style="padding:6px;font-size:14px;width:32px;justify-content:center;" onclick="toggleAgent()">⌨</button>
+        </div>
+      </div>
+
+      <!-- View Mode -->
+      <div class="editor-canvas" id="mode-view">
+        <div class="ec">
+          <h1>analyze-codebase</h1>
+          <div class="ec-meta">
+            <span class="badge badge-g">completed</span>
+            <span>task · curated</span>
+            <span>·</span>
+            <span>exec_clx8k2m</span>
+          </div>
+          <p>Analyzes repository structure, determines authentication strategy, and runs security scanning. Outputs a structured report with actionable recommendations.</p>
+
+          <div class="ec-label">execution graph</div>
+          <div class="node-card">
+            <div class="nc-l"><div class="nc-dot" style="background:var(--green)"></div><div><div class="nc-name">Analyze Repository Structure</div><div class="nc-type">llm_generate</div></div></div>
+            <div class="nc-r"><span>1,204 tk</span><span>1.8s</span></div>
+          </div>
+          <div class="node-card">
+            <div class="nc-l"><div class="nc-dot" style="background:var(--green)"></div><div><div class="nc-name">Determine Auth Strategy</div><div class="nc-type">interpolative → "jwt-based"</div></div></div>
+            <div class="nc-r"><span>847 tk</span><span>0.9s</span></div>
+          </div>
+          <div class="node-card">
+            <div class="nc-l"><div class="nc-dot" style="background:var(--green)"></div><div><div class="nc-name">Run Security Scanner</div><div class="nc-type">tool_call → security-scan</div></div></div>
+            <div class="nc-r"><span>796 tk</span><span>1.5s</span></div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">duration</div><div class="stat-val">4.2s</div></div>
+            <div class="stat-card"><div class="stat-label">tokens</div><div class="stat-val">2,847</div></div>
+            <div class="stat-card"><div class="stat-label">nodes</div><div class="stat-val">3/3</div></div>
+            <div class="stat-card"><div class="stat-label">status</div><div class="stat-val" style="color:var(--green)">done</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Mode -->
+      <div class="editor-canvas" id="mode-edit" style="display:none;">
+        <div class="ec" contenteditable="true" style="outline:none;">
+          <h1>analyze-codebase</h1>
+          <p>Analyzes repository structure, determines authentication strategy, and runs security scanning. Outputs a structured report with actionable recommendations.</p>
+          <div class="ec-label" contenteditable="false">nodes</div>
+          <p>
+            <code style="background:var(--bg-3);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;">node: analyze</code>
+            <span style="color:var(--text-3)"> — llm_generate</span><br>
+            prompt: "Analyze the repository structure at {{repo_path}}..."<br><br>
+            <code style="background:var(--bg-3);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;">node: decide</code>
+            <span style="color:var(--text-3)"> — interpolative</span><br>
+            decision: "Which auth strategy fits?"<br>
+            options: [jwt-based, session-based, oauth-only]<br><br>
+            <code style="background:var(--bg-3);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:12px;">node: execute</code>
+            <span style="color:var(--text-3)"> — tool_call</span><br>
+            tool: security-scan
+          </p>
+        </div>
+        <div style="position:fixed;bottom:60px;right:340px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-4);background:var(--bg-2);padding:4px 8px;border-radius:4px;">
+          editing · ln 14
+        </div>
+      </div>
+
+      <div class="run-strip">
+        <div class="rs-l">
+          <span class="mono" style="font-size:11px;">exec_clx8k2m</span>
+          <span class="badge badge-g">completed</span>
+          <span class="mono" style="font-size:11px;">4.2s · 2,847 tk</span>
+        </div>
+        <div class="rs-r">
+          <button class="btn btn-p" style="font-size:11px;">▶ Run</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AGENT PANEL -->
+    <div class="agent-panel" id="agent-panel">
+      <div class="ap-header">
+        <span class="ap-title">Agent</span>
+        <button class="ap-close" onclick="toggleAgent()">×</button>
+      </div>
+      <div class="ap-tabs">
+        <div class="ap-tab active">terminal</div>
+        <div class="ap-tab">context</div>
+        <div class="ap-tab">history</div>
+      </div>
+      <div class="ap-output">
+        <div class="ap-msg">
+          <div class="ap-msg-head">
+            <span class="ap-msg-who" style="color:var(--accent)">agent</span>
+            <span class="ap-msg-time">12:04:22</span>
+          </div>
+          <div class="ap-msg-body">
+Starting <code>analyze-codebase</code><br>
+Workspace: default · Timeout: 600s
+          </div>
+        </div>
+        <div class="ap-msg">
+          <div class="ap-msg-head">
+            <span class="ap-msg-who" style="color:var(--accent)">agent</span>
+            <span class="ap-msg-time">12:04:22</span>
+          </div>
+          <div class="ap-msg-body">
+<span class="t-a">▸</span> node/analyze <span class="t-m">llm_generate</span><br>
+<span class="t-m">  "Analyze the repository at {{repo_path}}..."</span><br>
+<span class="t-s">✓</span> 1.8s · 1,204 tk<br>
+<span class="t-m">  → { language: "typescript", auth: "jwt" }</span>
+          </div>
+        </div>
+        <div class="ap-msg">
+          <div class="ap-msg-head">
+            <span class="ap-msg-who" style="color:var(--accent)">agent</span>
+            <span class="ap-msg-time">12:04:24</span>
+          </div>
+          <div class="ap-msg-body">
+<span class="t-a">▸</span> node/decide <span class="t-m">interpolative</span><br>
+<span class="t-s">✓</span> chose <code>jwt-based</code> <span class="t-m">(0.92)</span><br>
+<span class="t-m">  "Existing JWT manager found"</span>
+          </div>
+        </div>
+        <div class="ap-msg">
+          <div class="ap-msg-head">
+            <span class="ap-msg-who" style="color:var(--accent)">agent</span>
+            <span class="ap-msg-time">12:04:25</span>
+          </div>
+          <div class="ap-msg-body">
+<span class="t-a">▸</span> node/execute <span class="t-m">tool_call</span><br>
+<span class="t-s">✓</span> 1.5s · 0 critical, 2 warnings
+          </div>
+        </div>
+        <div class="ap-msg">
+          <div class="ap-msg-head">
+            <span class="ap-msg-who" style="color:var(--green)">agent</span>
+            <span class="ap-msg-time">12:04:27</span>
+          </div>
+          <div class="ap-msg-body">
+<span class="t-s">✓</span> <strong>Done</strong> — 3/3 · 2,847 tk · 4.2s
+          </div>
+        </div>
+      </div>
+      <div class="ap-input">
+        <span class="ap-prompt">❯</span>
+        <input placeholder="Ask, run, or command...">
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SPACE: STORE ============ -->
+  <div class="space" id="space-store">
+    <div class="store">
+      <div class="store-hero">
+        <div class="store-title">Store</div>
+        <div class="store-sub">Apps, integrations, and extensions for your workspace</div>
+        <div class="store-search">
+          <span style="color:var(--text-4);font-size:16px;">⌕</span>
+          <input placeholder="Search apps...">
+        </div>
+      </div>
+      <div class="store-cats">
+        <span class="store-cat active">All</span>
+        <span class="store-cat">Workspace</span>
+        <span class="store-cat">Agent</span>
+        <span class="store-cat">Analytics</span>
+        <span class="store-cat">Integrations</span>
+      </div>
+      <div class="store-grid">
+        <div class="store-app">
+          <div class="sa-head">
+            <div class="sa-icon" style="background:var(--blue-s);">📊</div>
+            <div><div class="sa-name">Analytics Dashboard</div><div class="sa-by">lore.dev</div></div>
+          </div>
+          <div class="sa-desc">Execution metrics, token trends, success rates. Real-time procedure health monitoring.</div>
+          <div class="sa-footer">
+            <span class="sa-tag">workspace · free</span>
+            <button class="sa-install done">Installed</button>
+          </div>
+        </div>
+        <div class="store-app">
+          <div class="sa-head">
+            <div class="sa-icon" style="background:var(--green-s);">🔗</div>
+            <div><div class="sa-name">Slack Notifier</div><div class="sa-by">community</div></div>
+          </div>
+          <div class="sa-desc">Push execution results, failures, and approval requests to any Slack channel.</div>
+          <div class="sa-footer">
+            <span class="sa-tag">integration · free</span>
+            <button class="sa-install">Install</button>
+          </div>
+        </div>
+        <div class="store-app">
+          <div class="sa-head">
+            <div class="sa-icon" style="background:var(--amber-s);">🔍</div>
+            <div><div class="sa-name">Audit Trail</div><div class="sa-by">lore.dev</div></div>
+          </div>
+          <div class="sa-desc">Full history of who ran what, when. Diffs, approval chains, compliance exports.</div>
+          <div class="sa-footer">
+            <span class="sa-tag">workspace · pro</span>
+            <button class="sa-install">Install</button>
+          </div>
+        </div>
+        <div class="store-app">
+          <div class="sa-head">
+            <div class="sa-icon" style="background:var(--red-s);">🛡</div>
+            <div><div class="sa-name">Security Tools</div><div class="sa-by">community</div></div>
+          </div>
+          <div class="sa-desc">SAST, dependency audit, secret scanning — available as agent tools in your terminal.</div>
+          <div class="sa-footer">
+            <span class="sa-tag">agent · free</span>
+            <button class="sa-install done">Installed</button>
+          </div>
+        </div>
+        <div class="store-app">
+          <div class="sa-head">
+            <div class="sa-icon" style="background:var(--accent-s);">🤖</div>
+            <div><div class="sa-name">GitHub Actions Bridge</div><div class="sa-by">lore.dev</div></div>
+          </div>
+          <div class="sa-desc">Trigger procedures from GitHub events. Map CI/CD workflows to SOP executions.</div>
+          <div class="sa-footer">
+            <span class="sa-tag">integration · free</span>
+            <button class="sa-install">Install</button>
+          </div>
+        </div>
+        <div class="store-app">
+          <div class="sa-head">
+            <div class="sa-icon" style="background:var(--green-s);">📋</div>
+            <div><div class="sa-name">Approval Workflows</div><div class="sa-by">lore.dev</div></div>
+          </div>
+          <div class="sa-desc">Custom approval chains, role-based gates, escalation policies for sensitive SOPs.</div>
+          <div class="sa-footer">
+            <span class="sa-tag">workspace · pro</span>
+            <button class="sa-install">Install</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function showSpace(id) {
+  document.querySelectorAll('.space').forEach(s => s.classList.remove('visible'));
+  document.getElementById('space-' + id).classList.add('visible');
+  document.querySelectorAll('.rail-item').forEach(r => r.classList.remove('active'));
+  const idx = {home:0,browse:1,editor:2,store:3}[id];
+  document.querySelectorAll('.rail-item')[idx].classList.add('active');
+}
+function setTheme(t) {
+  document.querySelectorAll('.tp').forEach(b => b.classList.remove('active'));
+  if (t === 'auto') {
+    const p = window.matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', p);
+    document.querySelectorAll('.tp')[2].classList.add('active');
+    window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change', e => {
+      if (document.querySelector('.tp:last-child').classList.contains('active'))
+        document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+    });
+  } else {
+    document.documentElement.setAttribute('data-theme', t);
+    document.querySelectorAll('.tp')[t==='light'?0:1].classList.add('active');
+  }
+}
+function setMode(m) {
+  document.querySelectorAll('.mt-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.mt-btn')[m==='edit'?0:1].classList.add('active');
+  document.getElementById('mode-view').style.display = m==='view' ? 'block' : 'none';
+  document.getElementById('mode-edit').style.display = m==='edit' ? 'block' : 'none';
+}
+function toggleAgent() {
+  document.getElementById('agent-panel').classList.toggle('collapsed');
+}
+</script>
+</body>
+</html>
