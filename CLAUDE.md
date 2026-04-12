@@ -330,12 +330,16 @@ jest --testNamePattern="failing test name"
 
 ### Platform Layout
 
-| Workload | Platform | URL |
-|---|---|---|
-| **Web** (Next.js) | Vercel | `kloudi-os-web` project |
-| **API** (Express) | Railway | `https://kloudiapi-production.up.railway.app` |
-| **MCP server** | Railway | `https://kloudimcp-server-production.up.railway.app` |
-| **CLI** | npm publish | TBD |
+| Workload | Platform | Region | URL |
+|---|---|---|---|
+| **Web** (Next.js) | Vercel | auto | `kloudi-os-web` project |
+| **API** (Express) | Render | Virginia (US East) | `https://kloudi-os.onrender.com` |
+| **Database** | Neon | us-east-1 | Neon project `kloudi-os` |
+| **Cache** | Upstash Redis | us-east-1 | `kloudios-beta-redis` |
+| **MCP server** | TBD | — | — |
+| **CLI** | npm publish | — | TBD |
+
+All production services are in **us-east** for low latency. All free tier.
 
 ### Vercel (Web)
 
@@ -346,47 +350,65 @@ jest --testNamePattern="failing test name"
 - **PR previews**: Automatic — every push gets a unique preview URL
 - **Production**: Deploys on push to `main`
 
-### Railway (API + MCP Server)
+### Render (API)
 
-- **Project**: `energetic-reprieve` (ID: `8aac04af-3f5d-41da-8279-f5381800087d`)
-- **Services**:
-  - `@kloudi/api` → `https://kloudiapi-production.up.railway.app`
-  - `@kloudi/mcp-server` → `https://kloudimcp-server-production.up.railway.app`
-  - `Postgres` — managed PostgreSQL 15 (internal: `postgres.railway.internal:5432`)
-  - `Redis` — managed Redis 7 (internal: `redis.railway.internal:6379`)
-- **Environment**: `production`
-- **GitHub repo**: `nitishMehrotra/kloudi-os` (connect in Railway dashboard for auto-deploys)
+- **Service**: `kloudi-os` (ID: `srv-d7dnq267r5hc73d4rksg`)
+- **Workspace**: `KloudiOS Beta` (ID: `tea-d7dnd8vaqgkc73fomlmg`)
+- **Runtime**: Docker (uses `./Dockerfile`)
+- **Plan**: Free (spins down after 15min inactivity, cold starts ~30s)
+- **Auto-deploy**: On push to `main`
+- **URL**: `https://kloudi-os.onrender.com`
+- **Health check**: `GET /health`
 
-### MCP Access (for agents)
+### Neon (PostgreSQL)
 
-Vercel and Railway MCP servers are configured for Claude Code. Agents can use
-`mcp__vercel__*` and `mcp__Railway__*` tools to manage deployments.
+- **Project**: `kloudi-os` (ID: `dry-fog-30866369`)
+- **Region**: `aws-us-east-1`
+- **Postgres version**: 17
+- **Plan**: Free (0.5GB storage, auto-suspend)
+- **CLI**: `neonctl` (authenticated as `nitishmehrotra@gmail.com`)
+
+### Upstash (Redis)
+
+- **Database**: `kloudios-beta-redis`
+- **Region**: `us-east-1` (global)
+- **Plan**: Free (10K commands/day)
+- **CLI**: `npx @upstash/cli` (authenticated)
+
+### CLI Tools
 
 ```bash
-# Already configured:
+# Render
+render login
+render deploys list srv-d7dnq267r5hc73d4rksg --output text
+
+# Neon
+neonctl projects list
+neonctl connection-string --project-id dry-fog-30866369
+
+# Upstash
+npx @upstash/cli redis list --json
+
+# Vercel (MCP configured)
 claude mcp add --transport http vercel https://mcp.vercel.com
-claude mcp add Railway -- npx @railway/mcp-server
-# Authenticate Vercel with: /mcp inside a Claude Code session
-# Authenticate Railway with: railway login (one-time)
 ```
 
 ## ⚙️ Configuration System
 
-Configuration lives in `packages/shared/config/`. The resolution hierarchy
-(highest priority first):
+Configuration uses **env vars only** — no YAML files, no `node-config`.
 
 ```
-.env                              # Secrets & connection strings (gitignored)
-custom-environment-variables.yml  # Maps env vars → config keys
-local-development.yml             # Per-developer overrides (gitignored)
-development.yml                   # Environment-specific defaults
-default.yml                       # Base defaults (production-safe)
+.env              # Local dev secrets (gitignored)
+.env.test         # Test env overrides (gitignored)
+.env.example      # Template — commit to git
+Dashboard         # Production values (Render, Vercel, etc.)
 ```
 
-- **`.env`** is the single source of truth for secrets (`DATABASE_URL`, `JWT_SECRET`, etc.)
-- The Config module auto-loads `.env` from the monorepo root before `node-config` initializes
-- `populateProcessEnv()` pushes resolved config values back to `process.env` for external tools (Prisma CLI, etc.)
+- `packages/shared/config/index.ts` loads `.env`, builds a typed config object with per-environment defaults
+- Access via `Config.get('database.url')`, `Config.isDevelopment()`, `Config.getCorsConfig()`
+- Env vars always win over defaults. No merge hierarchy.
 - New developers: `cp .env.example .env` and fill in values
+- Production: set env vars in the hosting dashboard (Render, Vercel, etc.)
 
 ## Design System
 Always read `DESIGN.md` before making any visual or UI decisions.
@@ -403,7 +425,7 @@ In QA mode, flag any code that doesn't match DESIGN.md.
 - `GUIDELINES.md` - Detailed development guidelines and decision framework
 - `apps/api/` - Main API application
 - `apps/web/` - Next.js web UI (deployed on Vercel)
-- `packages/shared/config/` - Configuration system with YAML hierarchy
+- `packages/shared/config/` - Configuration system (env vars + defaults)
 - `packages/infrastructure/` - Shared infrastructure components
 - `.env.example` - Template for local environment variables
 
