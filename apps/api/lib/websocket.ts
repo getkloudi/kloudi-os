@@ -277,6 +277,43 @@ export function requestUserInput(clientId: string, question: string, options: As
 }
 
 /**
+ * Request trust gate approval from all clients subscribed to an execution.
+ * Broadcasts user.ask to subscribers and waits for any response.
+ */
+export function requestTrustGateApproval(
+  executionId: string,
+  gateContext: Record<string, unknown>,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const askId = generateAskId();
+    const timeout = 300000; // 5 min
+
+    pendingAsks.set(askId, { resolve, reject });
+
+    const message = JSON.stringify({
+      type: 'user.ask',
+      askId,
+      question: `Trust gate: ${gateContext['action'] ?? 'Approval needed'}`,
+      options: gateContext,
+      timestamp: new Date().toISOString(),
+    });
+
+    clients.forEach((ws: ExtendedWebSocket) => {
+      if (ws.subscriptions?.has(executionId) && ws.readyState === WebSocket.OPEN) {
+        ws.send(message);
+      }
+    });
+
+    setTimeout(() => {
+      if (pendingAsks.has(askId)) {
+        pendingAsks.delete(askId);
+        reject(new Error('Trust gate approval timeout'));
+      }
+    }, timeout);
+  });
+}
+
+/**
  * Broadcast to all connected clients
  */
 export function broadcast(message: BroadcastMessage): void {

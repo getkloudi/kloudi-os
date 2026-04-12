@@ -24,6 +24,7 @@ import { Logger } from '@kloudi/shared/logger';
 import {
   emitExecutionProgress,
   emitExecutionComplete,
+  requestTrustGateApproval,
 } from '../lib/websocket.js';
 
 const logger = Logger.getInstance('executions-routes');
@@ -88,9 +89,16 @@ export function setupRoutes(app: Application): void {
             emitExecutionComplete(execId, result),
           onExecutionFailed: (execId, error) =>
             emitExecutionProgress(execId, { type: 'execution:failed', error } as any),
-          onHumanApprovalNeeded: async (_execId, _nodeId, _question) => {
-            // TODO: wire to WebSocket requestUserInput in Phase 1.5
-            return 'continue';
+          onTrustGateTriggered: async (gateContext) => {
+            try {
+              const response = await requestTrustGateApproval(
+                gateContext.executionId,
+                gateContext as unknown as Record<string, unknown>,
+              );
+              return response === 'approve' ? 'approve' : 'reject';
+            } catch {
+              return 'reject';
+            }
           },
         },
       );
