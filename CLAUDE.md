@@ -361,9 +361,10 @@ All services in **us-east / Virginia**. All free tier. Each environment has full
 | | Beta | Prod |
 |---|---|---|
 | **Workspace** | KloudiOS Beta (tea-d7dq40jeo5us73fr9ve0) | KloudiOS Prod (tea-d7dnd8vaqgkc73fomlmg) |
-| **Service** | `kloudi-api-beta` (srv-d7dqddt7vvec73fog8ng) | `kloudi-api-prod` (srv-d7dqhre7r5hc73d5regg) |
+| **Product API** | `kloudi-api-beta` (srv-d7dqddt7vvec73fog8ng) | `kloudi-api-prod` (srv-d7dqhre7r5hc73d5regg) |
+| **Internal API** | `kloudi-internal-api-beta` (srv-d7dvdke7r5hc73a4faog) | `kloudi-internal-api-prod` (srv-d7dtopkvikkc73ed2sag) |
 | **Branch** | `develop` | `main` |
-| **Runtime** | Docker | Docker |
+| **Runtime** | Docker (`Dockerfile` / `Dockerfile.internal-api`) | Docker |
 | **Region** | Virginia | Virginia |
 | **Plan** | Free | Free |
 | **Health** | `GET /health` | `GET /health` |
@@ -399,14 +400,18 @@ All Vercel projects are on the **kloudi** team (`team_7bbzc2nIu43AyJHvuR2rk3VD`)
 ### Internal Dashboard
 
 **Internal API** (Render):
-- **Service**: `kloudi-internal-api` (srv-d7dtopkvikkc73ed2sag)
-- **URL**: https://kloudi-internal-api.onrender.com
-- **Runtime**: Docker (root-dir: `apps/internal-api`)
-- **Branch**: `develop`
+
+| | Beta | Prod |
+|---|---|---|
+| **Service** | `kloudi-internal-api-beta` (srv-d7dvdke7r5hc73a4faog) | `kloudi-internal-api-prod` (srv-d7dtopkvikkc73ed2sag) |
+| **URL** | https://kloudi-internal-api-beta.onrender.com | https://kloudi-internal-api-prod.onrender.com |
+| **Branch** | `develop` | `main` |
+
+- **Dockerfile**: `Dockerfile.internal-api` (at repo root, no root-directory)
 - **Port**: 3002
 - **Health**: `GET /health`
 - **Auth**: Google OAuth + email allowlist (`OPS_ALLOWED_EMAILS`)
-- **DB**: Same Neon beta instance (shared `DATABASE_URL`)
+- **DB**: Same Neon instance per environment (shared `DATABASE_URL`)
 
 **Ops Dashboard** (Vercel):
 - **Project**: `kloudi-internal-web-beta` / `kloudi-internal-web-prod`
