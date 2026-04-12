@@ -154,6 +154,9 @@ importers:
       '@kloudi/infrastructure':
         specifier: workspace:*
         version: link:../../packages/infrastructure
+      '@kloudi/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@kloudi/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -185,6 +188,9 @@ importers:
       '@kloudi/infrastructure':
         specifier: workspace:*
         version: link:../../packages/infrastructure
+      '@kloudi/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@kloudi/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -311,6 +317,15 @@ importers:
       jest:
         specifier: 30.2.0
         version: 30.2.0(@types/node@25.1.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/sdk:
+    devDependencies:
+      '@types/node':
+        specifier: ^25.1.0
+        version: 25.1.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
