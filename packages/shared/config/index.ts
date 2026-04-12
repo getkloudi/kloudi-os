@@ -74,7 +74,8 @@ function env(key: string): string | undefined {
  * No YAML, no merge hierarchy, no node-config.
  */
 function buildConfig() {
-  const isProduction = nodeEnv === 'production';
+  const isBeta = nodeEnv === 'beta';
+  const isProduction = nodeEnv === 'production' || isBeta;
   const isDevelopment = nodeEnv === 'development';
 
   return {
@@ -105,7 +106,7 @@ function buildConfig() {
     environment: {
       nodeEnv,
       logLevel:
-        env('LOG_LEVEL') ?? (isProduction ? 'warn' : isDevelopment ? 'debug' : 'error'),
+        env('LOG_LEVEL') ?? (isBeta ? 'info' : isProduction ? 'warn' : isDevelopment ? 'debug' : 'error'),
     },
     events: {
       enabled: env('EVENTS_ENABLED') !== 'false',
