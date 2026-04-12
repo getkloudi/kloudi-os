@@ -14,6 +14,8 @@
 
 **Why now:** AI coding agents (Claude Code, Cursor, Copilot) have proven that AI can execute complex workflows. But their productivity is trapped in engineering. Product managers, designers, leaders don't get the same leverage. The opportunity: extend AI leverage to the whole org via executable procedures. The window: 12-18 months before an incumbent (Cursor, Linear, GitHub Copilot) absorbs the core idea. The architectural insight is 6-12 months ahead. The implementation is 6-12 months behind. These cancel out. Ship now.
 
+**The flywheel:** Agent executes SOPs → generates traces (reasoning, tool calls, approvals) → traces reveal what works and what doesn't → SOPs improve → agent gets better → more trust → more autonomy → more SOPs → more traces. The compound value: every execution makes the next one better. This is why extraction (deferred) is the eventually-defensible moat — it closes the loop from "agent follows SOPs" to "agent writes SOPs from observed work." Sprint 1 traces are the foundation.
+
 ---
 
 ## WHAT — The Product
@@ -552,7 +554,7 @@ POST /api/executions/:id/approve
 
 |Section|WHY|WHAT|WHO|HOW (Design)|HOW (Eng)|Status|
 |---|---|---|---|---|---|---|
-|Core insight|✓|✓|✓|—|—|ALMOST: WHO sharpened with JTBD story|
+|Core insight|✓|✓|✓|—|—|LOCKED: insight, worldview, timing, flywheel all defined|
 |7 workflows|✓|✓|—|—|✓|LOCKED: mapped to gstack skills, sprint assignment, taxonomy role|
 |Everything is SOP|✓|✓|✓|?|✓|ALMOST: PRDs-as-SOPs clarified|
 |Filesystem-first|✓|✓|✓|?|✓|ALMOST: 3 defaults locked|
