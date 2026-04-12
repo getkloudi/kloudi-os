@@ -21,3 +21,4 @@ export * from './patterns/index.js';
 export * from './procedures/index.js';
 export * from './workspace/index.js';
 export * from './execution/index.js';
+export * from './projection/index.js';
