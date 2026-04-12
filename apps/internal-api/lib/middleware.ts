@@ -17,17 +17,30 @@ export async function setupMiddleware(app: Application): Promise<void> {
   });
 
   // CORS — ops dashboard origin only
-  const allowedOrigins = (process.env['OPS_CORS_ORIGINS'] ?? 'http://localhost:3003').split(',').map(o => o.trim());
+  const allowedOrigins = (
+    process.env['OPS_CORS_ORIGINS'] ?? 'http://localhost:3003'
+  )
+    .split(',')
+    .map((o) => o.trim());
 
   app.use((req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers['origin'];
 
-    if (origin && (allowedOrigins.includes(origin) || allowedOrigins.includes('*'))) {
+    if (
+      origin &&
+      (allowedOrigins.includes(origin) || allowedOrigins.includes('*'))
+    ) {
       res.setHeader('Access-Control-Allow-Origin', origin);
     }
 
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader(
+      'Access-Control-Allow-Methods',
+      'GET, POST, PUT, DELETE, OPTIONS'
+    );
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Authorization'
+    );
     res.setHeader('Access-Control-Allow-Credentials', 'true');
 
     if (req.method === 'OPTIONS') {
@@ -66,10 +79,16 @@ export async function setupErrorHandling(app: Application): Promise<void> {
 
   // eslint-disable-next-line no-unused-vars
   app.use((error: Error, req: Request, res: Response, _next: NextFunction) => {
-    logger.error('Unhandled error', error, { method: req.method, path: req.path });
+    logger.error('Unhandled error', error, {
+      method: req.method,
+      path: req.path,
+    });
     res.status(500).json({
       error: 'Internal Server Error',
-      message: process.env['NODE_ENV'] === 'development' ? error.message : 'Something went wrong',
+      message:
+        process.env['NODE_ENV'] === 'development'
+          ? error.message
+          : 'Something went wrong',
     });
   });
 }

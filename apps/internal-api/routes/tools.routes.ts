@@ -17,7 +17,10 @@ export function setupToolRoutes(app: Application): void {
         { name: 'github', configured: !!process.env['GITHUB_TOKEN'] },
         { name: 'jira', configured: !!process.env['JIRA_API_TOKEN'] },
         { name: 'slack', configured: !!process.env['SLACK_BOT_TOKEN'] },
-        { name: 'confluence', configured: !!process.env['CONFLUENCE_API_TOKEN'] },
+        {
+          name: 'confluence',
+          configured: !!process.env['CONFLUENCE_API_TOKEN'],
+        },
       ];
 
       res.json({
@@ -25,7 +28,11 @@ export function setupToolRoutes(app: Application): void {
         note: 'Tool registry is in-memory on the product API. This shows integration config status.',
       });
     } catch (error) {
-      logger.error('Failed to list tools', error instanceof Error ? error : null, {});
+      logger.error(
+        'Failed to list tools',
+        error instanceof Error ? error : null,
+        {}
+      );
       res.status(500).json({ error: 'Failed to list tools' });
     }
   });

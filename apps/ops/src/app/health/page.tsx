@@ -39,15 +39,21 @@ export default function HealthPage() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   return (
     <AuthGuard>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Database Health</h1>
-            <p className="text-sm text-muted-foreground">Live health check against the database</p>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Database Health
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Live health check against the database
+            </p>
           </div>
           <Button variant="outline" size="sm" onClick={load} disabled={loading}>
             Refresh
@@ -64,40 +70,78 @@ export default function HealthPage() {
           <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Status</CardTitle></CardHeader>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">Status</CardTitle>
+                </CardHeader>
                 <CardContent>
-                  <Badge variant={health.status === 'healthy' ? 'success' : 'destructive'} className="text-base">
+                  <Badge
+                    variant={
+                      health.status === 'healthy' ? 'success' : 'destructive'
+                    }
+                    className="text-base"
+                  >
                     {health.status}
                   </Badge>
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Database Type</CardTitle></CardHeader>
-                <CardContent><div className="text-lg font-bold">{health.database.database}</div></CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Active Transactions</CardTitle></CardHeader>
-                <CardContent><div className="text-lg font-bold">{health.database.activeTransactions}</div></CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">API Uptime</CardTitle></CardHeader>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Database Type
+                  </CardTitle>
+                </CardHeader>
                 <CardContent>
-                  <div className="text-lg font-bold">{Math.floor(health.uptime / 3600)}h {Math.floor((health.uptime % 3600) / 60)}m</div>
+                  <div className="text-lg font-bold">
+                    {health.database.database}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Active Transactions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-lg font-bold">
+                    {health.database.activeTransactions}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    API Uptime
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-lg font-bold">
+                    {Math.floor(health.uptime / 3600)}h{' '}
+                    {Math.floor((health.uptime % 3600) / 60)}m
+                  </div>
                 </CardContent>
               </Card>
             </div>
 
             <Card>
-              <CardHeader><CardTitle className="text-sm font-medium">Table Counts</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">
+                  Table Counts
+                </CardTitle>
+              </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <p className="text-xs text-muted-foreground">Procedures</p>
-                    <p className="text-lg font-bold">{health.stats.procedures}</p>
+                    <p className="text-lg font-bold">
+                      {health.stats.procedures}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Executions</p>
-                    <p className="text-lg font-bold">{health.stats.executions}</p>
+                    <p className="text-lg font-bold">
+                      {health.stats.executions}
+                    </p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Running</p>
@@ -111,7 +155,9 @@ export default function HealthPage() {
               </CardContent>
             </Card>
 
-            <p className="text-xs text-muted-foreground">Last checked: {health.timestamp}</p>
+            <p className="text-xs text-muted-foreground">
+              Last checked: {health.timestamp}
+            </p>
           </div>
         )}
       </div>

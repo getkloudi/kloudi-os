@@ -32,7 +32,9 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="text-sm text-muted-foreground">kloudi.os internal operations</p>
+          <p className="text-sm text-muted-foreground">
+            kloudi.os internal operations
+          </p>
         </div>
 
         {error && (
@@ -45,29 +47,43 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Procedures</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Procedures
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{health.stats.procedures}</div>
+                <div className="text-2xl font-bold">
+                  {health.stats.procedures}
+                </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Executions</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Executions
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{health.stats.executions}</div>
+                <div className="text-2xl font-bold">
+                  {health.stats.executions}
+                </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Running Now</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Running Now
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{health.stats.running}</div>
-                {health.stats.running > 0 && <Badge variant="warning" className="mt-1">active</Badge>}
+                {health.stats.running > 0 && (
+                  <Badge variant="warning" className="mt-1">
+                    active
+                  </Badge>
+                )}
               </CardContent>
             </Card>
 
@@ -76,7 +92,11 @@ export default function DashboardPage() {
                 <CardTitle className="text-sm font-medium">DB Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <Badge variant={health.status === 'healthy' ? 'success' : 'destructive'}>
+                <Badge
+                  variant={
+                    health.status === 'healthy' ? 'success' : 'destructive'
+                  }
+                >
                   {health.status}
                 </Badge>
                 <p className="text-xs text-muted-foreground mt-1">
@@ -88,7 +108,9 @@ export default function DashboardPage() {
         )}
 
         {!health && !error && (
-          <div className="text-sm text-muted-foreground">Loading dashboard...</div>
+          <div className="text-sm text-muted-foreground">
+            Loading dashboard...
+          </div>
         )}
       </div>
     </AuthGuard>

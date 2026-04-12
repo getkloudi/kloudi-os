@@ -38,7 +38,9 @@ function CallbackHandler() {
         <div className="text-center space-y-2">
           <p className="text-destructive font-medium">Authentication failed</p>
           <p className="text-sm text-muted-foreground">{error}</p>
-          <a href="/" className="text-sm underline">Back to login</a>
+          <a href="/" className="text-sm underline">
+            Back to login
+          </a>
         </div>
       </div>
     );
@@ -53,11 +55,13 @@ function CallbackHandler() {
 
 export default function AuthCallbackPage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-sm text-muted-foreground">Loading...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center">
+          <div className="text-sm text-muted-foreground">Loading...</div>
+        </div>
+      }
+    >
       <CallbackHandler />
     </Suspense>
   );

@@ -2,7 +2,13 @@
 
 import { opsApi } from '@/lib/api';
 import { Button } from './ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from './ui/card';
 
 export function LoginPage() {
   async function handleLogin() {
@@ -19,7 +25,9 @@ export function LoginPage() {
       <Card className="w-[380px]">
         <CardHeader className="text-center">
           <CardTitle className="text-xl">kloudi.os ops</CardTitle>
-          <CardDescription>Internal operations dashboard. Sign in with Google.</CardDescription>
+          <CardDescription>
+            Internal operations dashboard. Sign in with Google.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Button onClick={handleLogin} className="w-full">

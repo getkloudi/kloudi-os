@@ -28,12 +28,16 @@ export function Sidebar() {
   return (
     <aside className="flex h-screen w-56 flex-col border-r bg-card">
       <div className="flex h-14 items-center border-b px-4">
-        <span className="text-sm font-semibold tracking-tight">kloudi.os ops</span>
+        <span className="text-sm font-semibold tracking-tight">
+          kloudi.os ops
+        </span>
       </div>
 
       <nav className="flex-1 space-y-1 p-2">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+          const isActive =
+            pathname === item.href ||
+            (item.href !== '/' && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}
@@ -55,9 +59,14 @@ export function Sidebar() {
       <div className="border-t p-3">
         {user && (
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground truncate max-w-[140px]">{user.email}</span>
+            <span className="text-xs text-muted-foreground truncate max-w-[140px]">
+              {user.email}
+            </span>
             <button
-              onClick={() => { clearAuth(); window.location.href = '/'; }}
+              onClick={() => {
+                clearAuth();
+                window.location.href = '/';
+              }}
               className="text-muted-foreground hover:text-foreground"
               title="Sign out"
             >

@@ -42,34 +42,63 @@ export default function ProcedureDetailPage() {
       .finally(() => setLoading(false));
   }, [params.id]);
 
-  if (loading) return <AuthGuard><p className="text-sm text-muted-foreground">Loading...</p></AuthGuard>;
-  if (!procedure) return <AuthGuard><p className="text-sm text-destructive">Procedure not found</p></AuthGuard>;
+  if (loading)
+    return (
+      <AuthGuard>
+        <p className="text-sm text-muted-foreground">Loading...</p>
+      </AuthGuard>
+    );
+  if (!procedure)
+    return (
+      <AuthGuard>
+        <p className="text-sm text-destructive">Procedure not found</p>
+      </AuthGuard>
+    );
 
   return (
     <AuthGuard>
       <div className="space-y-6">
         <div>
-          <Link href="/procedures" className="text-xs text-muted-foreground hover:underline">
+          <Link
+            href="/procedures"
+            className="text-xs text-muted-foreground hover:underline"
+          >
             &larr; Back to procedures
           </Link>
-          <h1 className="text-2xl font-semibold tracking-tight mt-1">{procedure.name}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight mt-1">
+            {procedure.name}
+          </h1>
           <div className="flex gap-2 mt-1">
             <Badge variant="outline">{procedure.level}</Badge>
             <Badge variant="secondary">{procedure.maturity}</Badge>
-            <span className="text-xs text-muted-foreground">workspace: {procedure.workspaceId}</span>
+            <span className="text-xs text-muted-foreground">
+              workspace: {procedure.workspaceId}
+            </span>
           </div>
           {procedure.description && (
-            <p className="text-sm text-muted-foreground mt-2">{procedure.description}</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              {procedure.description}
+            </p>
           )}
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Executions</CardTitle></CardHeader>
-            <CardContent><div className="text-2xl font-bold">{procedure.executionCount}</div></CardContent>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Executions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {procedure.executionCount}
+              </div>
+            </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Success Rate</CardTitle></CardHeader>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
+                Success Rate
+              </CardTitle>
+            </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {procedure.executionCount > 0
@@ -79,17 +108,25 @@ export default function ProcedureDetailPage() {
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Avg Duration</CardTitle></CardHeader>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">
+                Avg Duration
+              </CardTitle>
+            </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {procedure.avgDurationMs ? `${(procedure.avgDurationMs / 1000).toFixed(1)}s` : 'N/A'}
+                {procedure.avgDurationMs
+                  ? `${(procedure.avgDurationMs / 1000).toFixed(1)}s`
+                  : 'N/A'}
               </div>
             </CardContent>
           </Card>
         </div>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm font-medium">Graph (raw)</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">Graph (raw)</CardTitle>
+          </CardHeader>
           <CardContent>
             <pre className="text-xs bg-muted p-3 rounded-md overflow-auto max-h-[400px]">
               {JSON.stringify(procedure.graph, null, 2)}
@@ -99,7 +136,11 @@ export default function ProcedureDetailPage() {
 
         {procedure.executions.length > 0 && (
           <Card>
-            <CardHeader><CardTitle className="text-sm font-medium">Recent Executions</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">
+                Recent Executions
+              </CardTitle>
+            </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 {procedure.executions.map((ex) => (
@@ -108,8 +149,18 @@ export default function ProcedureDetailPage() {
                     href={`/executions/${ex.id}`}
                     className="flex items-center justify-between rounded-md border p-2 text-sm hover:bg-accent"
                   >
-                    <span className="font-mono text-xs">{ex.id.slice(0, 12)}</span>
-                    <Badge variant={ex.status === 'completed' ? 'success' : ex.status === 'failed' ? 'destructive' : 'secondary'}>
+                    <span className="font-mono text-xs">
+                      {ex.id.slice(0, 12)}
+                    </span>
+                    <Badge
+                      variant={
+                        ex.status === 'completed'
+                          ? 'success'
+                          : ex.status === 'failed'
+                            ? 'destructive'
+                            : 'secondary'
+                      }
+                    >
                       {ex.status}
                     </Badge>
                     <span className="text-xs text-muted-foreground">

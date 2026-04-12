@@ -23,10 +23,16 @@ interface Execution {
 
 const statusVariant = (s: string) => {
   switch (s) {
-    case 'completed': return 'success' as const;
-    case 'failed': case 'cancelled': return 'destructive' as const;
-    case 'running': case 'waiting_input': return 'warning' as const;
-    default: return 'secondary' as const;
+    case 'completed':
+      return 'success' as const;
+    case 'failed':
+    case 'cancelled':
+      return 'destructive' as const;
+    case 'running':
+    case 'waiting_input':
+      return 'warning' as const;
+    default:
+      return 'secondary' as const;
   }
 };
 
@@ -40,11 +46,16 @@ export default function ExecutionsPage() {
     setLoading(true);
     const params = statusFilter ? `?status=${statusFilter}` : '';
     opsApi<{ data: Execution[]; total: number }>(`/ops/executions${params}`)
-      .then((res) => { setExecutions(res.data); setTotal(res.total); })
+      .then((res) => {
+        setExecutions(res.data);
+        setTotal(res.total);
+      })
       .finally(() => setLoading(false));
   }, [statusFilter]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   async function handleKill(id: string) {
     if (!confirm('Kill this execution?')) return;
@@ -54,23 +65,38 @@ export default function ExecutionsPage() {
 
   async function handleBulkCancel() {
     if (!confirm('Cancel all executions stuck for >60 minutes?')) return;
-    const result = await opsApi<{ cancelled: number }>('/ops/executions/bulk-cancel-stuck', {
-      method: 'POST',
-      body: JSON.stringify({ thresholdMinutes: 60 }),
-    });
+    const result = await opsApi<{ cancelled: number }>(
+      '/ops/executions/bulk-cancel-stuck',
+      {
+        method: 'POST',
+        body: JSON.stringify({ thresholdMinutes: 60 }),
+      }
+    );
     alert(`Cancelled ${result.cancelled} stuck executions`);
     load();
   }
 
-  const statuses = ['', 'pending', 'running', 'waiting_input', 'completed', 'failed', 'cancelled'];
+  const statuses = [
+    '',
+    'pending',
+    'running',
+    'waiting_input',
+    'completed',
+    'failed',
+    'cancelled',
+  ];
 
   return (
     <AuthGuard>
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Executions</h1>
-            <p className="text-sm text-muted-foreground">{total} total executions</p>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Executions
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {total} total executions
+            </p>
           </div>
           <Button variant="destructive" size="sm" onClick={handleBulkCancel}>
             Cancel Stuck
@@ -110,28 +136,48 @@ export default function ExecutionsPage() {
                 {executions.map((ex) => (
                   <tr key={ex.id} className="border-b">
                     <td className="px-4 py-3">
-                      <Link href={`/executions/${ex.id}`} className="font-mono text-xs hover:underline">
+                      <Link
+                        href={`/executions/${ex.id}`}
+                        className="font-mono text-xs hover:underline"
+                      >
                         {ex.id.slice(0, 12)}
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-xs">
                       {ex.procedure ? (
-                        <Link href={`/procedures/${ex.procedure.id}`} className="hover:underline">
+                        <Link
+                          href={`/procedures/${ex.procedure.id}`}
+                          className="hover:underline"
+                        >
                           {ex.procedure.name}
                         </Link>
-                      ) : ex.procedureId.slice(0, 12)}
+                      ) : (
+                        ex.procedureId.slice(0, 12)
+                      )}
                     </td>
                     <td className="px-4 py-3">
-                      <Badge variant={statusVariant(ex.status)}>{ex.status}</Badge>
+                      <Badge variant={statusVariant(ex.status)}>
+                        {ex.status}
+                      </Badge>
                     </td>
-                    <td className="px-4 py-3 text-xs">{ex._count?.executionNodes ?? '-'}</td>
-                    <td className="px-4 py-3 text-xs">{ex.tokensUsed.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-xs">
+                      {ex._count?.executionNodes ?? '-'}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {ex.tokensUsed.toLocaleString()}
+                    </td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {new Date(ex.startedAt).toLocaleString()}
                     </td>
                     <td className="px-4 py-3">
-                      {['running', 'waiting_input', 'pending'].includes(ex.status) && (
-                        <Button variant="ghost" size="sm" onClick={() => handleKill(ex.id)}>
+                      {['running', 'waiting_input', 'pending'].includes(
+                        ex.status
+                      ) && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleKill(ex.id)}
+                        >
                           Kill
                         </Button>
                       )}
