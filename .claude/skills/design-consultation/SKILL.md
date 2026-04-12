@@ -1,0 +1,1 @@
+/Users/nitish/kloudi.os/.claude/skills/gstack/design-consultation/SKILL.md

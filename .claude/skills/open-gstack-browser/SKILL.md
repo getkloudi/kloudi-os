@@ -1,0 +1,1 @@
+/Users/nitish/kloudi.os/.claude/skills/gstack/open-gstack-browser/SKILL.md

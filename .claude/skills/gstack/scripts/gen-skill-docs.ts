@@ -11,837 +11,470 @@
 
 import { COMMAND_DESCRIPTIONS } from '../browse/src/commands';
 import { SNAPSHOT_FLAGS } from '../browse/src/snapshot';
+import { discoverTemplates } from './discover-skills';
 import * as fs from 'fs';
 import * as path from 'path';
+import type { Host, TemplateContext } from './resolvers/types';
+import { HOST_PATHS } from './resolvers/types';
+import { RESOLVERS } from './resolvers/index';
+import { externalSkillName, extractHookSafetyProse as _extractHookSafetyProse, extractNameAndDescription as _extractNameAndDescription, condenseOpenAIShortDescription as _condenseOpenAIShortDescription, generateOpenAIYaml as _generateOpenAIYaml } from './resolvers/codex-helpers';
+import { generatePlanCompletionAuditShip, generatePlanCompletionAuditReview, generatePlanVerificationExec } from './resolvers/review';
+import { ALL_HOST_CONFIGS, ALL_HOST_NAMES, resolveHostArg, getHostConfig } from '../hosts/index';
+import type { HostConfig } from './host-config';
 
 const ROOT = path.resolve(import.meta.dir, '..');
 const DRY_RUN = process.argv.includes('--dry-run');
 
-// ─── Placeholder Resolvers ──────────────────────────────────
+// ─── Host Detection (config-driven) ─────────────────────────
 
-function generateCommandReference(): string {
-  // Group commands by category
-  const groups = new Map<string, Array<{ command: string; description: string; usage?: string }>>();
-  for (const [cmd, meta] of Object.entries(COMMAND_DESCRIPTIONS)) {
-    const list = groups.get(meta.category) || [];
-    list.push({ command: cmd, description: meta.description, usage: meta.usage });
-    groups.set(meta.category, list);
+const HOST_ARG = process.argv.find(a => a.startsWith('--host'));
+type HostArg = Host | 'all';
+const HOST_ARG_VAL: HostArg = (() => {
+  if (!HOST_ARG) return 'claude';
+  const val = HOST_ARG.includes('=') ? HOST_ARG.split('=')[1] : process.argv[process.argv.indexOf(HOST_ARG) + 1];
+  if (val === 'all') return 'all';
+  try {
+    return resolveHostArg(val) as Host;
+  } catch {
+    throw new Error(`Unknown host: ${val}. Use ${ALL_HOST_NAMES.join(', ')}, or all.`);
   }
+})();
 
-  // Category display order
-  const categoryOrder = [
-    'Navigation', 'Reading', 'Interaction', 'Inspection',
-    'Visual', 'Snapshot', 'Meta', 'Tabs', 'Server',
-  ];
+// For single-host mode, HOST is the host. For --host all, it's set per iteration below.
+let HOST: Host = HOST_ARG_VAL === 'all' ? 'claude' : HOST_ARG_VAL;
 
-  const sections: string[] = [];
-  for (const category of categoryOrder) {
-    const commands = groups.get(category);
-    if (!commands || commands.length === 0) continue;
+// HostPaths, HOST_PATHS, and TemplateContext imported from ./resolvers/types (line 7-8)
 
-    // Sort alphabetically within category
-    commands.sort((a, b) => a.command.localeCompare(b.command));
+// ─── Shared Design Constants ────────────────────────────────
 
-    sections.push(`### ${category}`);
-    sections.push('| Command | Description |');
-    sections.push('|---------|-------------|');
-    for (const cmd of commands) {
-      const display = cmd.usage ? `\`${cmd.usage}\`` : `\`${cmd.command}\``;
-      sections.push(`| ${display} | ${cmd.description} |`);
+/** gstack's 10 AI slop anti-patterns — shared between DESIGN_METHODOLOGY and DESIGN_HARD_RULES */
+const AI_SLOP_BLACKLIST = [
+  'Purple/violet/indigo gradient backgrounds or blue-to-purple color schemes',
+  '**The 3-column feature grid:** icon-in-colored-circle + bold title + 2-line description, repeated 3x symmetrically. THE most recognizable AI layout.',
+  'Icons in colored circles as section decoration (SaaS starter template look)',
+  'Centered everything (`text-align: center` on all headings, descriptions, cards)',
+  'Uniform bubbly border-radius on every element (same large radius on everything)',
+  'Decorative blobs, floating circles, wavy SVG dividers (if a section feels empty, it needs better content, not decoration)',
+  'Emoji as design elements (rockets in headings, emoji as bullet points)',
+  'Colored left-border on cards (`border-left: 3px solid <accent>`)',
+  'Generic hero copy ("Welcome to [X]", "Unlock the power of...", "Your all-in-one solution for...")',
+  'Cookie-cutter section rhythm (hero → 3 features → testimonials → pricing → CTA, every section same height)',
+];
+
+/** OpenAI hard rejection criteria (from "Designing Delightful Frontends with GPT-5.4", Mar 2026) */
+const OPENAI_HARD_REJECTIONS = [
+  'Generic SaaS card grid as first impression',
+  'Beautiful image with weak brand',
+  'Strong headline with no clear action',
+  'Busy imagery behind text',
+  'Sections repeating same mood statement',
+  'Carousel with no narrative purpose',
+  'App UI made of stacked cards instead of layout',
+];
+
+/** OpenAI litmus checks — 7 yes/no tests for cross-model consensus scoring */
+const OPENAI_LITMUS_CHECKS = [
+  'Brand/product unmistakable in first screen?',
+  'One strong visual anchor present?',
+  'Page understandable by scanning headlines only?',
+  'Each section has one job?',
+  'Are cards actually necessary?',
+  'Does motion improve hierarchy or atmosphere?',
+  'Would design feel premium with all decorative shadows removed?',
+];
+
+// ─── External Host Helpers ───────────────────────────────────
+
+// Re-export local copy for use in this file (matches codex-helpers.ts)
+// Accepts optional frontmatter name to support directory/invocation name divergence
+function externalSkillName(skillDir: string, frontmatterName?: string): string {
+  // Root skill (skillDir === '' or '.') always maps to 'gstack' regardless of frontmatter
+  if (skillDir === '.' || skillDir === '') return 'gstack';
+  // Use frontmatter name when it differs from directory name (e.g., run-tests/ with name: test)
+  const baseName = frontmatterName && frontmatterName !== skillDir ? frontmatterName : skillDir;
+  // Don't double-prefix: gstack-upgrade → gstack-upgrade (not gstack-gstack-upgrade)
+  if (baseName.startsWith('gstack-')) return baseName;
+  return `gstack-${baseName}`;
+}
+
+function extractNameAndDescription(content: string): { name: string; description: string } {
+  const fmStart = content.indexOf('---\n');
+  if (fmStart !== 0) return { name: '', description: '' };
+  const fmEnd = content.indexOf('\n---', fmStart + 4);
+  if (fmEnd === -1) return { name: '', description: '' };
+
+  const frontmatter = content.slice(fmStart + 4, fmEnd);
+  const nameMatch = frontmatter.match(/^name:\s*(.+)$/m);
+  const name = nameMatch ? nameMatch[1].trim() : '';
+
+  let description = '';
+  const lines = frontmatter.split('\n');
+  let inDescription = false;
+  const descLines: string[] = [];
+  for (const line of lines) {
+    if (line.match(/^description:\s*\|?\s*$/)) {
+      inDescription = true;
+      continue;
     }
-    sections.push('');
+    if (line.match(/^description:\s*\S/)) {
+      description = line.replace(/^description:\s*/, '').trim();
+      break;
+    }
+    if (inDescription) {
+      if (line === '' || line.match(/^\s/)) {
+        descLines.push(line.replace(/^  /, ''));
+      } else {
+        break;
+      }
+    }
+  }
+  if (descLines.length > 0) {
+    description = descLines.join('\n').trim();
   }
 
-  return sections.join('\n').trimEnd();
+  return { name, description };
 }
 
-function generateSnapshotFlags(): string {
-  const lines: string[] = [
-    'The snapshot is your primary tool for understanding and interacting with pages.',
-    '',
-    '```',
-  ];
+// ─── Voice Trigger Processing ────────────────────────────────
 
-  for (const flag of SNAPSHOT_FLAGS) {
-    const label = flag.valueHint ? `${flag.short} ${flag.valueHint}` : flag.short;
-    lines.push(`${label.padEnd(10)}${flag.long.padEnd(24)}${flag.description}`);
+/**
+ * Extract voice-triggers YAML list from frontmatter.
+ * Returns an array of trigger strings, or [] if no voice-triggers field.
+ */
+function extractVoiceTriggers(content: string): string[] {
+  const fmStart = content.indexOf('---\n');
+  if (fmStart !== 0) return [];
+  const fmEnd = content.indexOf('\n---', fmStart + 4);
+  if (fmEnd === -1) return [];
+  const frontmatter = content.slice(fmStart + 4, fmEnd);
+
+  const triggers: string[] = [];
+  let inVoice = false;
+  for (const line of frontmatter.split('\n')) {
+    if (/^voice-triggers:/.test(line)) { inVoice = true; continue; }
+    if (inVoice) {
+      const m = line.match(/^\s+-\s+"(.+)"$/);
+      if (m) triggers.push(m[1]);
+      else if (!/^\s/.test(line)) break;
+    }
+  }
+  return triggers;
+}
+
+/**
+ * Preprocess voice triggers: fold voice-triggers YAML field into description,
+ * then strip the field from frontmatter. Must run BEFORE transformFrontmatter
+ * and extractNameAndDescription so all hosts see the updated description.
+ */
+function processVoiceTriggers(content: string): string {
+  const triggers = extractVoiceTriggers(content);
+  if (triggers.length === 0) return content;
+
+  // Strip voice-triggers block from frontmatter
+  content = content.replace(/^voice-triggers:\n(?:\s+-\s+"[^"]*"\n?)*/m, '');
+
+  // Get current description (after stripping voice-triggers, so it's clean)
+  const { description } = extractNameAndDescription(content);
+  if (!description) return content;
+
+  // Build new description with voice triggers appended
+  const voiceLine = `Voice triggers (speech-to-text aliases): ${triggers.map(t => `"${t}"`).join(', ')}.`;
+  const newDescription = description + '\n' + voiceLine;
+
+  // Replace old indented description with new in frontmatter
+  const oldIndented = description.split('\n').map(l => `  ${l}`).join('\n');
+  const newIndented = newDescription.split('\n').map(l => `  ${l}`).join('\n');
+  content = content.replace(oldIndented, newIndented);
+
+  return content;
+}
+
+// Export for testing
+export { extractVoiceTriggers, processVoiceTriggers };
+
+const OPENAI_SHORT_DESCRIPTION_LIMIT = 120;
+
+function condenseOpenAIShortDescription(description: string): string {
+  const firstParagraph = description.split(/\n\s*\n/)[0] || description;
+  const collapsed = firstParagraph.replace(/\s+/g, ' ').trim();
+  if (collapsed.length <= OPENAI_SHORT_DESCRIPTION_LIMIT) return collapsed;
+
+  const truncated = collapsed.slice(0, OPENAI_SHORT_DESCRIPTION_LIMIT - 3);
+  const lastSpace = truncated.lastIndexOf(' ');
+  const safe = lastSpace > 40 ? truncated.slice(0, lastSpace) : truncated;
+  return `${safe}...`;
+}
+
+function generateOpenAIYaml(displayName: string, shortDescription: string): string {
+  return `interface:
+  display_name: ${JSON.stringify(displayName)}
+  short_description: ${JSON.stringify(shortDescription)}
+  default_prompt: ${JSON.stringify(`Use ${displayName} for this task.`)}
+policy:
+  allow_implicit_invocation: true
+`;
+}
+
+/**
+ * Transform frontmatter for external hosts.
+ * Claude: strips `sensitive:` field (only Factory uses it).
+ * Codex: keeps name + description only, enforces 1024-char limit.
+ * Factory: keeps name + description + user-invocable, conditionally adds disable-model-invocation.
+ */
+function transformFrontmatter(content: string, host: Host): string {
+  const hostConfig = getHostConfig(host);
+  const fm = hostConfig.frontmatter;
+
+  if (fm.mode === 'denylist') {
+    // Denylist mode: strip listed fields, keep everything else
+    for (const field of fm.stripFields || []) {
+      if (field === 'voice-triggers') {
+        content = content.replace(/^voice-triggers:\n(?:\s+-\s+"[^"]*"\n?)*/m, '');
+      } else {
+        content = content.replace(new RegExp(`^${field}:\\s*.*\\n`, 'm'), '');
+      }
+    }
+    return content;
   }
 
-  lines.push('```');
-  lines.push('');
-  lines.push('All flags can be combined freely. `-o` only applies when `-a` is also used.');
-  lines.push('Example: `$B snapshot -i -a -C -o /tmp/annotated.png`');
-  lines.push('');
-  lines.push('**Ref numbering:** @e refs are assigned sequentially (@e1, @e2, ...) in tree order.');
-  lines.push('@c refs from `-C` are numbered separately (@c1, @c2, ...).');
-  lines.push('');
-  lines.push('After snapshot, use @refs as selectors in any command:');
-  lines.push('```bash');
-  lines.push('$B click @e3       $B fill @e4 "value"     $B hover @e1');
-  lines.push('$B html @e2        $B css @e5 "color"      $B attrs @e6');
-  lines.push('$B click @c1       # cursor-interactive ref (from -C)');
-  lines.push('```');
-  lines.push('');
-  lines.push('**Output format:** indented accessibility tree with @ref IDs, one element per line.');
-  lines.push('```');
-  lines.push('  @e1 [heading] "Welcome" [level=1]');
-  lines.push('  @e2 [textbox] "Email"');
-  lines.push('  @e3 [button] "Submit"');
-  lines.push('```');
-  lines.push('');
-  lines.push('Refs are invalidated on navigation — run `snapshot` again after `goto`.');
+  // Allowlist mode: reconstruct frontmatter with only allowed fields
+  const fmStart = content.indexOf('---\n');
+  if (fmStart !== 0) return content;
+  const fmEnd = content.indexOf('\n---', fmStart + 4);
+  if (fmEnd === -1) return content;
+  const frontmatter = content.slice(fmStart + 4, fmEnd);
+  const body = content.slice(fmEnd + 4);
+  const { name, description } = extractNameAndDescription(content);
 
-  return lines.join('\n');
+  // Description limit enforcement
+  if (fm.descriptionLimit) {
+    const behavior = fm.descriptionLimitBehavior || 'error';
+    if (description.length > fm.descriptionLimit) {
+      if (behavior === 'error') {
+        throw new Error(
+          `${hostConfig.displayName} description for "${name}" is ${description.length} chars (max ${fm.descriptionLimit}). ` +
+          `Compress the description in the .tmpl file.`
+        );
+      } else if (behavior === 'warn') {
+        console.warn(`WARNING: ${hostConfig.displayName} description for "${name}" exceeds ${fm.descriptionLimit} chars`);
+      }
+      // 'truncate' — silently proceed
+    }
+  }
+
+  // Build frontmatter with allowed fields
+  const indentedDesc = description.split('\n').map(l => `  ${l}`).join('\n');
+  let newFm = `---\nname: ${name}\ndescription: |\n${indentedDesc}\n`;
+
+  // Add extra fields (host-wide)
+  if (fm.extraFields) {
+    for (const [key, value] of Object.entries(fm.extraFields)) {
+      if (key !== 'name' && key !== 'description') {
+        newFm += `${key}: ${value}\n`;
+      }
+    }
+  }
+
+  // Add conditional fields
+  if (fm.conditionalFields) {
+    for (const rule of fm.conditionalFields) {
+      const match = Object.entries(rule.if).every(([k, v]) =>
+        new RegExp(`^${k}:\\s*${v}`, 'm').test(frontmatter)
+      );
+      if (match) {
+        for (const [key, value] of Object.entries(rule.add)) {
+          newFm += `${key}: ${value}\n`;
+        }
+      }
+    }
+  }
+
+  // Rename fields (copy values from template frontmatter with new keys)
+  if (fm.renameFields) {
+    for (const [oldName, newName] of Object.entries(fm.renameFields)) {
+      const fieldMatch = frontmatter.match(new RegExp(`^${oldName}:(.+(?:\\n(?:\\s+.+)*)?)`, 'm'));
+      if (fieldMatch) {
+        newFm += `${newName}:${fieldMatch[1]}\n`;
+      }
+    }
+  }
+
+  newFm += '---';
+  return newFm + body;
 }
 
-function generatePreamble(): string {
-  return `## Preamble (run first)
+/**
+ * Extract hook descriptions from frontmatter for inline safety prose.
+ * Returns a description of what the hooks do, or null if no hooks.
+ */
+function extractHookSafetyProse(tmplContent: string): string | null {
+  if (!tmplContent.match(/^hooks:/m)) return null;
 
-\`\`\`bash
-_UPD=$(~/.claude/skills/gstack/bin/gstack-update-check 2>/dev/null || .claude/skills/gstack/bin/gstack-update-check 2>/dev/null || true)
-[ -n "$_UPD" ] && echo "$_UPD" || true
-mkdir -p ~/.gstack/sessions
-touch ~/.gstack/sessions/"$PPID"
-_SESSIONS=$(find ~/.gstack/sessions -mmin -120 -type f 2>/dev/null | wc -l | tr -d ' ')
-find ~/.gstack/sessions -mmin +120 -type f -delete 2>/dev/null || true
-_CONTRIB=$(~/.claude/skills/gstack/bin/gstack-config get gstack_contributor 2>/dev/null || true)
-_BRANCH=$(git branch --show-current 2>/dev/null || echo "unknown")
-echo "BRANCH: $_BRANCH"
-\`\`\`
+  // Parse the hook matchers to build a human-readable safety description
+  const matchers: string[] = [];
+  const matcherRegex = /matcher:\s*"(\w+)"/g;
+  let m;
+  while ((m = matcherRegex.exec(tmplContent)) !== null) {
+    if (!matchers.includes(m[1])) matchers.push(m[1]);
+  }
 
-If output shows \`UPGRADE_AVAILABLE <old> <new>\`: read \`~/.claude/skills/gstack/gstack-upgrade/SKILL.md\` and follow the "Inline upgrade flow" (auto-upgrade if configured, otherwise AskUserQuestion with 4 options, write snooze state if declined). If \`JUST_UPGRADED <from> <to>\`: tell user "Running gstack v{to} (just updated!)" and continue.
+  if (matchers.length === 0) return null;
 
-## AskUserQuestion Format
+  // Build safety prose based on what tools are hooked
+  const toolDescriptions: Record<string, string> = {
+    Bash: 'check bash commands for destructive operations (rm -rf, DROP TABLE, force-push, git reset --hard, etc.) before execution',
+    Edit: 'verify file edits are within the allowed scope boundary before applying',
+    Write: 'verify file writes are within the allowed scope boundary before applying',
+  };
 
-**ALWAYS follow this structure for every AskUserQuestion call:**
-1. **Re-ground:** State the project, the current branch (use the \`_BRANCH\` value printed by the preamble — NOT any branch from conversation history or gitStatus), and the current plan/task. (1-2 sentences)
-2. **Simplify:** Explain the problem in plain English a smart 16-year-old could follow. No raw function names, no internal jargon, no implementation details. Use concrete examples and analogies. Say what it DOES, not what it's called.
-3. **Recommend:** \`RECOMMENDATION: Choose [X] because [one-line reason]\`
-4. **Options:** Lettered options: \`A) ... B) ... C) ...\`
+  const safetyChecks = matchers
+    .map(t => toolDescriptions[t] || `check ${t} operations for safety`)
+    .join(', and ');
 
-Assume the user hasn't looked at this window in 20 minutes and doesn't have the code open. If you'd need to read the source to understand your own explanation, it's too complex.
-
-Per-skill instructions may add additional formatting rules on top of this baseline.
-
-## Contributor Mode
-
-If \`_CONTRIB\` is \`true\`: you are in **contributor mode**. You're a gstack user who also helps make it better.
-
-**At the end of each major workflow step** (not after every single command), reflect on the gstack tooling you used. Rate your experience 0 to 10. If it wasn't a 10, think about why. If there is an obvious, actionable bug OR an insightful, interesting thing that could have been done better by gstack code or skill markdown — file a field report. Maybe our contributor will help make us better!
-
-**Calibration — this is the bar:** For example, \`$B js "await fetch(...)"\` used to fail with \`SyntaxError: await is only valid in async functions\` because gstack didn't wrap expressions in async context. Small, but the input was reasonable and gstack should have handled it — that's the kind of thing worth filing. Things less consequential than this, ignore.
-
-**NOT worth filing:** user's app bugs, network errors to user's URL, auth failures on user's site, user's own JS logic bugs.
-
-**To file:** write \`~/.gstack/contributor-logs/{slug}.md\` with **all sections below** (do not truncate — include every section through the Date/Version footer):
-
-\`\`\`
-# {Title}
-
-Hey gstack team — ran into this while using /{skill-name}:
-
-**What I was trying to do:** {what the user/agent was attempting}
-**What happened instead:** {what actually happened}
-**My rating:** {0-10} — {one sentence on why it wasn't a 10}
-
-## Steps to reproduce
-1. {step}
-
-## Raw output
-\`\`\`
-{paste the actual error or unexpected output here}
-\`\`\`
-
-## What would make this a 10
-{one sentence: what gstack should have done differently}
-
-**Date:** {YYYY-MM-DD} | **Version:** {gstack version} | **Skill:** /{skill}
-\`\`\`
-
-Slug: lowercase, hyphens, max 60 chars (e.g. \`browse-js-no-await\`). Skip if file already exists. Max 3 reports per session. File inline and continue — don't stop the workflow. Tell user: "Filed gstack field report: {title}"`;
+  return `> **Safety Advisory:** This skill includes safety checks that ${safetyChecks}. When using this skill, always pause and verify before executing potentially destructive operations. If uncertain about a command's safety, ask the user for confirmation before proceeding.`;
 }
 
-function generateBrowseSetup(): string {
-  return `## SETUP (run this check BEFORE any browse command)
-
-\`\`\`bash
-_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-B=""
-[ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/gstack/browse/dist/browse" ] && B="$_ROOT/.claude/skills/gstack/browse/dist/browse"
-[ -z "$B" ] && B=~/.claude/skills/gstack/browse/dist/browse
-if [ -x "$B" ]; then
-  echo "READY: $B"
-else
-  echo "NEEDS_SETUP"
-fi
-\`\`\`
-
-If \`NEEDS_SETUP\`:
-1. Tell the user: "gstack browse needs a one-time build (~10 seconds). OK to proceed?" Then STOP and wait.
-2. Run: \`cd <SKILL_DIR> && ./setup\`
-3. If \`bun\` is not installed: \`curl -fsSL https://bun.sh/install | bash\``;
-}
-
-function generateBaseBranchDetect(): string {
-  return `## Step 0: Detect base branch
-
-Determine which branch this PR targets. Use the result as "the base branch" in all subsequent steps.
-
-1. Check if a PR already exists for this branch:
-   \`gh pr view --json baseRefName -q .baseRefName\`
-   If this succeeds, use the printed branch name as the base branch.
-
-2. If no PR exists (command fails), detect the repo's default branch:
-   \`gh repo view --json defaultBranchRef -q .defaultBranchRef.name\`
-
-3. If both commands fail, fall back to \`main\`.
-
-Print the detected base branch name. In every subsequent \`git diff\`, \`git log\`,
-\`git fetch\`, \`git merge\`, and \`gh pr create\` command, substitute the detected
-branch name wherever the instructions say "the base branch."
-
----`;
-}
-
-function generateQAMethodology(): string {
-  return `## Modes
-
-### Diff-aware (automatic when on a feature branch with no URL)
-
-This is the **primary mode** for developers verifying their work. When the user says \`/qa\` without a URL and the repo is on a feature branch, automatically:
-
-1. **Analyze the branch diff** to understand what changed:
-   \`\`\`bash
-   git diff main...HEAD --name-only
-   git log main..HEAD --oneline
-   \`\`\`
-
-2. **Identify affected pages/routes** from the changed files:
-   - Controller/route files → which URL paths they serve
-   - View/template/component files → which pages render them
-   - Model/service files → which pages use those models (check controllers that reference them)
-   - CSS/style files → which pages include those stylesheets
-   - API endpoints → test them directly with \`$B js "await fetch('/api/...')"\`
-   - Static pages (markdown, HTML) → navigate to them directly
-
-3. **Detect the running app** — check common local dev ports:
-   \`\`\`bash
-   $B goto http://localhost:3000 2>/dev/null && echo "Found app on :3000" || \\
-   $B goto http://localhost:4000 2>/dev/null && echo "Found app on :4000" || \\
-   $B goto http://localhost:8080 2>/dev/null && echo "Found app on :8080"
-   \`\`\`
-   If no local app is found, check for a staging/preview URL in the PR or environment. If nothing works, ask the user for the URL.
-
-4. **Test each affected page/route:**
-   - Navigate to the page
-   - Take a screenshot
-   - Check console for errors
-   - If the change was interactive (forms, buttons, flows), test the interaction end-to-end
-   - Use \`snapshot -D\` before and after actions to verify the change had the expected effect
-
-5. **Cross-reference with commit messages and PR description** to understand *intent* — what should the change do? Verify it actually does that.
-
-6. **Check TODOS.md** (if it exists) for known bugs or issues related to the changed files. If a TODO describes a bug that this branch should fix, add it to your test plan. If you find a new bug during QA that isn't in TODOS.md, note it in the report.
-
-7. **Report findings** scoped to the branch changes:
-   - "Changes tested: N pages/routes affected by this branch"
-   - For each: does it work? Screenshot evidence.
-   - Any regressions on adjacent pages?
-
-**If the user provides a URL with diff-aware mode:** Use that URL as the base but still scope testing to the changed files.
-
-### Full (default when URL is provided)
-Systematic exploration. Visit every reachable page. Document 5-10 well-evidenced issues. Produce health score. Takes 5-15 minutes depending on app size.
-
-### Quick (\`--quick\`)
-30-second smoke test. Visit homepage + top 5 navigation targets. Check: page loads? Console errors? Broken links? Produce health score. No detailed issue documentation.
-
-### Regression (\`--regression <baseline>\`)
-Run full mode, then load \`baseline.json\` from a previous run. Diff: which issues are fixed? Which are new? What's the score delta? Append regression section to report.
-
----
-
-## Workflow
-
-### Phase 1: Initialize
-
-1. Find browse binary (see Setup above)
-2. Create output directories
-3. Copy report template from \`qa/templates/qa-report-template.md\` to output dir
-4. Start timer for duration tracking
-
-### Phase 2: Authenticate (if needed)
-
-**If the user specified auth credentials:**
-
-\`\`\`bash
-$B goto <login-url>
-$B snapshot -i                    # find the login form
-$B fill @e3 "user@example.com"
-$B fill @e4 "[REDACTED]"         # NEVER include real passwords in report
-$B click @e5                      # submit
-$B snapshot -D                    # verify login succeeded
-\`\`\`
-
-**If the user provided a cookie file:**
-
-\`\`\`bash
-$B cookie-import cookies.json
-$B goto <target-url>
-\`\`\`
-
-**If 2FA/OTP is required:** Ask the user for the code and wait.
-
-**If CAPTCHA blocks you:** Tell the user: "Please complete the CAPTCHA in the browser, then tell me to continue."
-
-### Phase 3: Orient
-
-Get a map of the application:
-
-\`\`\`bash
-$B goto <target-url>
-$B snapshot -i -a -o "$REPORT_DIR/screenshots/initial.png"
-$B links                          # map navigation structure
-$B console --errors               # any errors on landing?
-\`\`\`
-
-**Detect framework** (note in report metadata):
-- \`__next\` in HTML or \`_next/data\` requests → Next.js
-- \`csrf-token\` meta tag → Rails
-- \`wp-content\` in URLs → WordPress
-- Client-side routing with no page reloads → SPA
-
-**For SPAs:** The \`links\` command may return few results because navigation is client-side. Use \`snapshot -i\` to find nav elements (buttons, menu items) instead.
-
-### Phase 4: Explore
-
-Visit pages systematically. At each page:
-
-\`\`\`bash
-$B goto <page-url>
-$B snapshot -i -a -o "$REPORT_DIR/screenshots/page-name.png"
-$B console --errors
-\`\`\`
-
-Then follow the **per-page exploration checklist** (see \`qa/references/issue-taxonomy.md\`):
-
-1. **Visual scan** — Look at the annotated screenshot for layout issues
-2. **Interactive elements** — Click buttons, links, controls. Do they work?
-3. **Forms** — Fill and submit. Test empty, invalid, edge cases
-4. **Navigation** — Check all paths in and out
-5. **States** — Empty state, loading, error, overflow
-6. **Console** — Any new JS errors after interactions?
-7. **Responsiveness** — Check mobile viewport if relevant:
-   \`\`\`bash
-   $B viewport 375x812
-   $B screenshot "$REPORT_DIR/screenshots/page-mobile.png"
-   $B viewport 1280x720
-   \`\`\`
-
-**Depth judgment:** Spend more time on core features (homepage, dashboard, checkout, search) and less on secondary pages (about, terms, privacy).
-
-**Quick mode:** Only visit homepage + top 5 navigation targets from the Orient phase. Skip the per-page checklist — just check: loads? Console errors? Broken links visible?
-
-### Phase 5: Document
-
-Document each issue **immediately when found** — don't batch them.
-
-**Two evidence tiers:**
-
-**Interactive bugs** (broken flows, dead buttons, form failures):
-1. Take a screenshot before the action
-2. Perform the action
-3. Take a screenshot showing the result
-4. Use \`snapshot -D\` to show what changed
-5. Write repro steps referencing screenshots
-
-\`\`\`bash
-$B screenshot "$REPORT_DIR/screenshots/issue-001-step-1.png"
-$B click @e5
-$B screenshot "$REPORT_DIR/screenshots/issue-001-result.png"
-$B snapshot -D
-\`\`\`
-
-**Static bugs** (typos, layout issues, missing images):
-1. Take a single annotated screenshot showing the problem
-2. Describe what's wrong
-
-\`\`\`bash
-$B snapshot -i -a -o "$REPORT_DIR/screenshots/issue-002.png"
-\`\`\`
-
-**Write each issue to the report immediately** using the template format from \`qa/templates/qa-report-template.md\`.
-
-### Phase 6: Wrap Up
-
-1. **Compute health score** using the rubric below
-2. **Write "Top 3 Things to Fix"** — the 3 highest-severity issues
-3. **Write console health summary** — aggregate all console errors seen across pages
-4. **Update severity counts** in the summary table
-5. **Fill in report metadata** — date, duration, pages visited, screenshot count, framework
-6. **Save baseline** — write \`baseline.json\` with:
-   \`\`\`json
-   {
-     "date": "YYYY-MM-DD",
-     "url": "<target>",
-     "healthScore": N,
-     "issues": [{ "id": "ISSUE-001", "title": "...", "severity": "...", "category": "..." }],
-     "categoryScores": { "console": N, "links": N, ... }
-   }
-   \`\`\`
-
-**Regression mode:** After writing the report, load the baseline file. Compare:
-- Health score delta
-- Issues fixed (in baseline but not current)
-- New issues (in current but not baseline)
-- Append the regression section to the report
-
----
-
-## Health Score Rubric
-
-Compute each category score (0-100), then take the weighted average.
-
-### Console (weight: 15%)
-- 0 errors → 100
-- 1-3 errors → 70
-- 4-10 errors → 40
-- 10+ errors → 10
-
-### Links (weight: 10%)
-- 0 broken → 100
-- Each broken link → -15 (minimum 0)
-
-### Per-Category Scoring (Visual, Functional, UX, Content, Performance, Accessibility)
-Each category starts at 100. Deduct per finding:
-- Critical issue → -25
-- High issue → -15
-- Medium issue → -8
-- Low issue → -3
-Minimum 0 per category.
-
-### Weights
-| Category | Weight |
-|----------|--------|
-| Console | 15% |
-| Links | 10% |
-| Visual | 10% |
-| Functional | 20% |
-| UX | 15% |
-| Performance | 10% |
-| Content | 5% |
-| Accessibility | 15% |
-
-### Final Score
-\`score = Σ (category_score × weight)\`
-
----
-
-## Framework-Specific Guidance
-
-### Next.js
-- Check console for hydration errors (\`Hydration failed\`, \`Text content did not match\`)
-- Monitor \`_next/data\` requests in network — 404s indicate broken data fetching
-- Test client-side navigation (click links, don't just \`goto\`) — catches routing issues
-- Check for CLS (Cumulative Layout Shift) on pages with dynamic content
-
-### Rails
-- Check for N+1 query warnings in console (if development mode)
-- Verify CSRF token presence in forms
-- Test Turbo/Stimulus integration — do page transitions work smoothly?
-- Check for flash messages appearing and dismissing correctly
-
-### WordPress
-- Check for plugin conflicts (JS errors from different plugins)
-- Verify admin bar visibility for logged-in users
-- Test REST API endpoints (\`/wp-json/\`)
-- Check for mixed content warnings (common with WP)
-
-### General SPA (React, Vue, Angular)
-- Use \`snapshot -i\` for navigation — \`links\` command misses client-side routes
-- Check for stale state (navigate away and back — does data refresh?)
-- Test browser back/forward — does the app handle history correctly?
-- Check for memory leaks (monitor console after extended use)
-
----
-
-## Important Rules
-
-1. **Repro is everything.** Every issue needs at least one screenshot. No exceptions.
-2. **Verify before documenting.** Retry the issue once to confirm it's reproducible, not a fluke.
-3. **Never include credentials.** Write \`[REDACTED]\` for passwords in repro steps.
-4. **Write incrementally.** Append each issue to the report as you find it. Don't batch.
-5. **Never read source code.** Test as a user, not a developer.
-6. **Check console after every interaction.** JS errors that don't surface visually are still bugs.
-7. **Test like a user.** Use realistic data. Walk through complete workflows end-to-end.
-8. **Depth over breadth.** 5-10 well-documented issues with evidence > 20 vague descriptions.
-9. **Never delete output files.** Screenshots and reports accumulate — that's intentional.
-10. **Use \`snapshot -C\` for tricky UIs.** Finds clickable divs that the accessibility tree misses.`;
-}
-
-function generateDesignMethodology(): string {
-  return `## Modes
-
-### Full (default)
-Systematic review of all pages reachable from homepage. Visit 5-8 pages. Full checklist evaluation, responsive screenshots, interaction flow testing. Produces complete design audit report with letter grades.
-
-### Quick (\`--quick\`)
-Homepage + 2 key pages only. First Impression + Design System Extraction + abbreviated checklist. Fastest path to a design score.
-
-### Deep (\`--deep\`)
-Comprehensive review: 10-15 pages, every interaction flow, exhaustive checklist. For pre-launch audits or major redesigns.
-
-### Diff-aware (automatic when on a feature branch with no URL)
-When on a feature branch, scope to pages affected by the branch changes:
-1. Analyze the branch diff: \`git diff main...HEAD --name-only\`
-2. Map changed files to affected pages/routes
-3. Detect running app on common local ports (3000, 4000, 8080)
-4. Audit only affected pages, compare design quality before/after
-
-### Regression (\`--regression\` or previous \`design-baseline.json\` found)
-Run full audit, then load previous \`design-baseline.json\`. Compare: per-category grade deltas, new findings, resolved findings. Output regression table in report.
-
----
-
-## Phase 1: First Impression
-
-The most uniquely designer-like output. Form a gut reaction before analyzing anything.
-
-1. Navigate to the target URL
-2. Take a full-page desktop screenshot: \`$B screenshot "$REPORT_DIR/screenshots/first-impression.png"\`
-3. Write the **First Impression** using this structured critique format:
-   - "The site communicates **[what]**." (what it says at a glance — competence? playfulness? confusion?)
-   - "I notice **[observation]**." (what stands out, positive or negative — be specific)
-   - "The first 3 things my eye goes to are: **[1]**, **[2]**, **[3]**." (hierarchy check — are these intentional?)
-   - "If I had to describe this in one word: **[word]**." (gut verdict)
-
-This is the section users read first. Be opinionated. A designer doesn't hedge — they react.
-
----
-
-## Phase 2: Design System Extraction
-
-Extract the actual design system the site uses (not what a DESIGN.md says, but what's rendered):
-
-\`\`\`bash
-# Fonts in use (capped at 500 elements to avoid timeout)
-$B js "JSON.stringify([...new Set([...document.querySelectorAll('*')].slice(0,500).map(e => getComputedStyle(e).fontFamily))])"
-
-# Color palette in use
-$B js "JSON.stringify([...new Set([...document.querySelectorAll('*')].slice(0,500).flatMap(e => [getComputedStyle(e).color, getComputedStyle(e).backgroundColor]).filter(c => c !== 'rgba(0, 0, 0, 0)'))])"
-
-# Heading hierarchy
-$B js "JSON.stringify([...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].map(h => ({tag:h.tagName, text:h.textContent.trim().slice(0,50), size:getComputedStyle(h).fontSize, weight:getComputedStyle(h).fontWeight})))"
-
-# Touch target audit (find undersized interactive elements)
-$B js "JSON.stringify([...document.querySelectorAll('a,button,input,[role=button]')].filter(e => {const r=e.getBoundingClientRect(); return r.width>0 && (r.width<44||r.height<44)}).map(e => ({tag:e.tagName, text:(e.textContent||'').trim().slice(0,30), w:Math.round(e.getBoundingClientRect().width), h:Math.round(e.getBoundingClientRect().height)})).slice(0,20))"
-
-# Performance baseline
-$B perf
-\`\`\`
-
-Structure findings as an **Inferred Design System**:
-- **Fonts:** list with usage counts. Flag if >3 distinct font families.
-- **Colors:** palette extracted. Flag if >12 unique non-gray colors. Note warm/cool/mixed.
-- **Heading Scale:** h1-h6 sizes. Flag skipped levels, non-systematic size jumps.
-- **Spacing Patterns:** sample padding/margin values. Flag non-scale values.
-
-After extraction, offer: *"Want me to save this as your DESIGN.md? I can lock in these observations as your project's design system baseline."*
-
----
-
-## Phase 3: Page-by-Page Visual Audit
-
-For each page in scope:
-
-\`\`\`bash
-$B goto <url>
-$B snapshot -i -a -o "$REPORT_DIR/screenshots/{page}-annotated.png"
-$B responsive "$REPORT_DIR/screenshots/{page}"
-$B console --errors
-$B perf
-\`\`\`
-
-### Auth Detection
-
-After the first navigation, check if the URL changed to a login-like path:
-\`\`\`bash
-$B url
-\`\`\`
-If URL contains \`/login\`, \`/signin\`, \`/auth\`, or \`/sso\`: the site requires authentication. AskUserQuestion: "This site requires authentication. Want to import cookies from your browser? Run \`/setup-browser-cookies\` first if needed."
-
-### Design Audit Checklist (10 categories, ~80 items)
-
-Apply these at each page. Each finding gets an impact rating (high/medium/polish) and category.
-
-**1. Visual Hierarchy & Composition** (8 items)
-- Clear focal point? One primary CTA per view?
-- Eye flows naturally top-left to bottom-right?
-- Visual noise — competing elements fighting for attention?
-- Information density appropriate for content type?
-- Z-index clarity — nothing unexpectedly overlapping?
-- Above-the-fold content communicates purpose in 3 seconds?
-- Squint test: hierarchy still visible when blurred?
-- White space is intentional, not leftover?
-
-**2. Typography** (15 items)
-- Font count <=3 (flag if more)
-- Scale follows ratio (1.25 major third or 1.333 perfect fourth)
-- Line-height: 1.5x body, 1.15-1.25x headings
-- Measure: 45-75 chars per line (66 ideal)
-- Heading hierarchy: no skipped levels (h1→h3 without h2)
-- Weight contrast: >=2 weights used for hierarchy
-- No blacklisted fonts (Papyrus, Comic Sans, Lobster, Impact, Jokerman)
-- If primary font is Inter/Roboto/Open Sans/Poppins → flag as potentially generic
-- \`text-wrap: balance\` or \`text-pretty\` on headings (check via \`$B css <heading> text-wrap\`)
-- Curly quotes used, not straight quotes
-- Ellipsis character (\`…\`) not three dots (\`...\`)
-- \`font-variant-numeric: tabular-nums\` on number columns
-- Body text >= 16px
-- Caption/label >= 12px
-- No letterspacing on lowercase text
-
-**3. Color & Contrast** (10 items)
-- Palette coherent (<=12 unique non-gray colors)
-- WCAG AA: body text 4.5:1, large text (18px+) 3:1, UI components 3:1
-- Semantic colors consistent (success=green, error=red, warning=yellow/amber)
-- No color-only encoding (always add labels, icons, or patterns)
-- Dark mode: surfaces use elevation, not just lightness inversion
-- Dark mode: text off-white (~#E0E0E0), not pure white
-- Primary accent desaturated 10-20% in dark mode
-- \`color-scheme: dark\` on html element (if dark mode present)
-- No red/green only combinations (8% of men have red-green deficiency)
-- Neutral palette is warm or cool consistently — not mixed
-
-**4. Spacing & Layout** (12 items)
-- Grid consistent at all breakpoints
-- Spacing uses a scale (4px or 8px base), not arbitrary values
-- Alignment is consistent — nothing floats outside the grid
-- Rhythm: related items closer together, distinct sections further apart
-- Border-radius hierarchy (not uniform bubbly radius on everything)
-- Inner radius = outer radius - gap (nested elements)
-- No horizontal scroll on mobile
-- Max content width set (no full-bleed body text)
-- \`env(safe-area-inset-*)\` for notch devices
-- URL reflects state (filters, tabs, pagination in query params)
-- Flex/grid used for layout (not JS measurement)
-- Breakpoints: mobile (375), tablet (768), desktop (1024), wide (1440)
-
-**5. Interaction States** (10 items)
-- Hover state on all interactive elements
-- \`focus-visible\` ring present (never \`outline: none\` without replacement)
-- Active/pressed state with depth effect or color shift
-- Disabled state: reduced opacity + \`cursor: not-allowed\`
-- Loading: skeleton shapes match real content layout
-- Empty states: warm message + primary action + visual (not just "No items.")
-- Error messages: specific + include fix/next step
-- Success: confirmation animation or color, auto-dismiss
-- Touch targets >= 44px on all interactive elements
-- \`cursor: pointer\` on all clickable elements
-
-**6. Responsive Design** (8 items)
-- Mobile layout makes *design* sense (not just stacked desktop columns)
-- Touch targets sufficient on mobile (>= 44px)
-- No horizontal scroll on any viewport
-- Images handle responsive (srcset, sizes, or CSS containment)
-- Text readable without zooming on mobile (>= 16px body)
-- Navigation collapses appropriately (hamburger, bottom nav, etc.)
-- Forms usable on mobile (correct input types, no autoFocus on mobile)
-- No \`user-scalable=no\` or \`maximum-scale=1\` in viewport meta
-
-**7. Motion & Animation** (6 items)
-- Easing: ease-out for entering, ease-in for exiting, ease-in-out for moving
-- Duration: 50-700ms range (nothing slower unless page transition)
-- Purpose: every animation communicates something (state change, attention, spatial relationship)
-- \`prefers-reduced-motion\` respected (check: \`$B js "matchMedia('(prefers-reduced-motion: reduce)').matches"\`)
-- No \`transition: all\` — properties listed explicitly
-- Only \`transform\` and \`opacity\` animated (not layout properties like width, height, top, left)
-
-**8. Content & Microcopy** (8 items)
-- Empty states designed with warmth (message + action + illustration/icon)
-- Error messages specific: what happened + why + what to do next
-- Button labels specific ("Save API Key" not "Continue" or "Submit")
-- No placeholder/lorem ipsum text visible in production
-- Truncation handled (\`text-overflow: ellipsis\`, \`line-clamp\`, or \`break-words\`)
-- Active voice ("Install the CLI" not "The CLI will be installed")
-- Loading states end with \`…\` ("Saving…" not "Saving...")
-- Destructive actions have confirmation modal or undo window
-
-**9. AI Slop Detection** (10 anti-patterns — the blacklist)
-
-The test: would a human designer at a respected studio ever ship this?
-
-- Purple/violet/indigo gradient backgrounds or blue-to-purple color schemes
-- **The 3-column feature grid:** icon-in-colored-circle + bold title + 2-line description, repeated 3x symmetrically. THE most recognizable AI layout.
-- Icons in colored circles as section decoration (SaaS starter template look)
-- Centered everything (\`text-align: center\` on all headings, descriptions, cards)
-- Uniform bubbly border-radius on every element (same large radius on everything)
-- Decorative blobs, floating circles, wavy SVG dividers (if a section feels empty, it needs better content, not decoration)
-- Emoji as design elements (rockets in headings, emoji as bullet points)
-- Colored left-border on cards (\`border-left: 3px solid <accent>\`)
-- Generic hero copy ("Welcome to [X]", "Unlock the power of...", "Your all-in-one solution for...")
-- Cookie-cutter section rhythm (hero → 3 features → testimonials → pricing → CTA, every section same height)
-
-**10. Performance as Design** (6 items)
-- LCP < 2.0s (web apps), < 1.5s (informational sites)
-- CLS < 0.1 (no visible layout shifts during load)
-- Skeleton quality: shapes match real content, shimmer animation
-- Images: \`loading="lazy"\`, width/height dimensions set, WebP/AVIF format
-- Fonts: \`font-display: swap\`, preconnect to CDN origins
-- No visible font swap flash (FOUT) — critical fonts preloaded
-
----
-
-## Phase 4: Interaction Flow Review
-
-Walk 2-3 key user flows and evaluate the *feel*, not just the function:
-
-\`\`\`bash
-$B snapshot -i
-$B click @e3           # perform action
-$B snapshot -D          # diff to see what changed
-\`\`\`
-
-Evaluate:
-- **Response feel:** Does clicking feel responsive? Any delays or missing loading states?
-- **Transition quality:** Are transitions intentional or generic/absent?
-- **Feedback clarity:** Did the action clearly succeed or fail? Is the feedback immediate?
-- **Form polish:** Focus states visible? Validation timing correct? Errors near the source?
-
----
-
-## Phase 5: Cross-Page Consistency
-
-Compare screenshots and observations across pages for:
-- Navigation bar consistent across all pages?
-- Footer consistent?
-- Component reuse vs one-off designs (same button styled differently on different pages?)
-- Tone consistency (one page playful while another is corporate?)
-- Spacing rhythm carries across pages?
-
----
-
-## Phase 6: Compile Report
-
-### Output Locations
-
-**Local:** \`.gstack/design-reports/design-audit-{domain}-{YYYY-MM-DD}.md\`
-
-**Project-scoped:**
-\`\`\`bash
-SLUG=$(git remote get-url origin 2>/dev/null | sed 's|.*[:/]\\([^/]*/[^/]*\\)\\.git$|\\1|;s|.*[:/]\\([^/]*/[^/]*\\)$|\\1|' | tr '/' '-')
-mkdir -p ~/.gstack/projects/$SLUG
-\`\`\`
-Write to: \`~/.gstack/projects/{slug}/{user}-{branch}-design-audit-{datetime}.md\`
-
-**Baseline:** Write \`design-baseline.json\` for regression mode:
-\`\`\`json
-{
-  "date": "YYYY-MM-DD",
-  "url": "<target>",
-  "designScore": "B",
-  "aiSlopScore": "C",
-  "categoryGrades": { "hierarchy": "A", "typography": "B", ... },
-  "findings": [{ "id": "FINDING-001", "title": "...", "impact": "high", "category": "typography" }]
-}
-\`\`\`
-
-### Scoring System
-
-**Dual headline scores:**
-- **Design Score: {A-F}** — weighted average of all 10 categories
-- **AI Slop Score: {A-F}** — standalone grade with pithy verdict
-
-**Per-category grades:**
-- **A:** Intentional, polished, delightful. Shows design thinking.
-- **B:** Solid fundamentals, minor inconsistencies. Looks professional.
-- **C:** Functional but generic. No major problems, no design point of view.
-- **D:** Noticeable problems. Feels unfinished or careless.
-- **F:** Actively hurting user experience. Needs significant rework.
-
-**Grade computation:** Each category starts at A. Each High-impact finding drops one letter grade. Each Medium-impact finding drops half a letter grade. Polish findings are noted but do not affect grade. Minimum is F.
-
-**Category weights for Design Score:**
-| Category | Weight |
-|----------|--------|
-| Visual Hierarchy | 15% |
-| Typography | 15% |
-| Spacing & Layout | 15% |
-| Color & Contrast | 10% |
-| Interaction States | 10% |
-| Responsive | 10% |
-| Content Quality | 10% |
-| AI Slop | 5% |
-| Motion | 5% |
-| Performance Feel | 5% |
-
-AI Slop is 5% of Design Score but also graded independently as a headline metric.
-
-### Regression Output
-
-When previous \`design-baseline.json\` exists or \`--regression\` flag is used:
-- Load baseline grades
-- Compare: per-category deltas, new findings, resolved findings
-- Append regression table to report
-
----
-
-## Design Critique Format
-
-Use structured feedback, not opinions:
-- "I notice..." — observation (e.g., "I notice the primary CTA competes with the secondary action")
-- "I wonder..." — question (e.g., "I wonder if users will understand what 'Process' means here")
-- "What if..." — suggestion (e.g., "What if we moved search to a more prominent position?")
-- "I think... because..." — reasoned opinion (e.g., "I think the spacing between sections is too uniform because it doesn't create hierarchy")
-
-Tie everything to user goals and product objectives. Always suggest specific improvements alongside problems.
-
----
-
-## Important Rules
-
-1. **Think like a designer, not a QA engineer.** You care whether things feel right, look intentional, and respect the user. You do NOT just care whether things "work."
-2. **Screenshots are evidence.** Every finding needs at least one screenshot. Use annotated screenshots (\`snapshot -a\`) to highlight elements.
-3. **Be specific and actionable.** "Change X to Y because Z" — not "the spacing feels off."
-4. **Never read source code.** Evaluate the rendered site, not the implementation. (Exception: offer to write DESIGN.md from extracted observations.)
-5. **AI Slop detection is your superpower.** Most developers can't evaluate whether their site looks AI-generated. You can. Be direct about it.
-6. **Quick wins matter.** Always include a "Quick Wins" section — the 3-5 highest-impact fixes that take <30 minutes each.
-7. **Use \`snapshot -C\` for tricky UIs.** Finds clickable divs that the accessibility tree misses.
-8. **Responsive is design, not just "not broken."** A stacked desktop layout on mobile is not responsive design — it's lazy. Evaluate whether the mobile layout makes *design* sense.
-9. **Document incrementally.** Write each finding to the report as you find it. Don't batch.
-10. **Depth over breadth.** 5-10 well-documented findings with screenshots and specific suggestions > 20 vague observations.`;
-}
-
-const RESOLVERS: Record<string, () => string> = {
-  COMMAND_REFERENCE: generateCommandReference,
-  SNAPSHOT_FLAGS: generateSnapshotFlags,
-  PREAMBLE: generatePreamble,
-  BROWSE_SETUP: generateBrowseSetup,
-  BASE_BRANCH_DETECT: generateBaseBranchDetect,
-  QA_METHODOLOGY: generateQAMethodology,
-  DESIGN_METHODOLOGY: generateDesignMethodology,
-};
+// ─── External Host Config (now derived from hosts/*.ts) ──────
+// EXTERNAL_HOST_CONFIG replaced by getHostConfig() from hosts/index.ts
 
 // ─── Template Processing ────────────────────────────────────
 
 const GENERATED_HEADER = `<!-- AUTO-GENERATED from {{SOURCE}} — do not edit directly -->\n<!-- Regenerate: bun run gen:skill-docs -->\n`;
 
-function processTemplate(tmplPath: string): { outputPath: string; content: string } {
+/**
+ * Process external host output: routing, frontmatter, path rewrites, metadata.
+ * Shared between Codex and Factory (and future external hosts).
+ */
+function processExternalHost(
+  content: string,
+  tmplContent: string,
+  host: Host,
+  skillDir: string,
+  extractedDescription: string,
+  ctx: TemplateContext,
+  frontmatterName?: string,
+): { content: string; outputPath: string; outputDir: string; symlinkLoop: boolean } {
+  const hostConfig = getHostConfig(host);
+
+  const name = externalSkillName(skillDir === '.' ? '' : skillDir, frontmatterName);
+  const outputDir = path.join(ROOT, hostConfig.hostSubdir, 'skills', name);
+  fs.mkdirSync(outputDir, { recursive: true });
+  const outputPath = path.join(outputDir, 'SKILL.md');
+
+  // Guard against symlink loops
+  let symlinkLoop = false;
+  const claudePath = ctx.tmplPath.replace(/\.tmpl$/, '');
+  try {
+    const resolvedClaude = fs.realpathSync(claudePath);
+    const resolvedExternal = fs.realpathSync(path.dirname(outputPath)) + '/' + path.basename(outputPath);
+    if (resolvedClaude === resolvedExternal) {
+      symlinkLoop = true;
+    }
+  } catch {
+    // realpathSync fails if file doesn't exist yet — no symlink loop
+  }
+
+  // Extract hook safety prose BEFORE transforming frontmatter (which strips hooks)
+  const safetyProse = extractHookSafetyProse(tmplContent);
+
+  // Transform frontmatter (host-aware)
+  let result = transformFrontmatter(content, host);
+
+  // Insert safety advisory at the top of the body (after frontmatter)
+  if (safetyProse) {
+    const bodyStart = result.indexOf('\n---') + 4;
+    result = result.slice(0, bodyStart) + '\n' + safetyProse + '\n' + result.slice(bodyStart);
+  }
+
+  // Config-driven path rewrites (order matters, replaceAll)
+  for (const rewrite of hostConfig.pathRewrites) {
+    result = result.replaceAll(rewrite.from, rewrite.to);
+  }
+
+  // Config-driven tool rewrites
+  if (hostConfig.toolRewrites) {
+    for (const [from, to] of Object.entries(hostConfig.toolRewrites)) {
+      result = result.replaceAll(from, to);
+    }
+  }
+
+  // Config-driven: generate metadata (e.g., openai.yaml for Codex)
+  if (hostConfig.generation.generateMetadata && !symlinkLoop) {
+    const agentsDir = path.join(outputDir, 'agents');
+    fs.mkdirSync(agentsDir, { recursive: true });
+    const shortDescription = condenseOpenAIShortDescription(extractedDescription);
+    fs.writeFileSync(path.join(agentsDir, 'openai.yaml'), generateOpenAIYaml(name, shortDescription));
+  }
+
+  return { content: result, outputPath, outputDir, symlinkLoop };
+}
+
+function processTemplate(tmplPath: string, host: Host = 'claude'): { outputPath: string; content: string; symlinkLoop?: boolean } {
   const tmplContent = fs.readFileSync(tmplPath, 'utf-8');
   const relTmplPath = path.relative(ROOT, tmplPath);
-  const outputPath = tmplPath.replace(/\.tmpl$/, '');
+  let outputPath = tmplPath.replace(/\.tmpl$/, '');
 
-  // Replace placeholders
-  let content = tmplContent.replace(/\{\{(\w+)\}\}/g, (match, name) => {
-    const resolver = RESOLVERS[name];
-    if (!resolver) throw new Error(`Unknown placeholder {{${name}}} in ${relTmplPath}`);
-    return resolver();
+  // Determine skill directory relative to ROOT
+  const skillDir = path.relative(ROOT, path.dirname(tmplPath));
+
+  // Extract skill name from frontmatter early — needed for both TemplateContext and external host output paths.
+  // When frontmatter name: differs from directory name (e.g., run-tests/ with name: test),
+  // the frontmatter name is used for external skill naming and setup script symlinks.
+  const { name: extractedName, description: extractedDescription } = extractNameAndDescription(tmplContent);
+  const skillName = extractedName || path.basename(path.dirname(tmplPath));
+
+
+  // Extract benefits-from list from frontmatter (inline YAML: benefits-from: [a, b])
+  const benefitsMatch = tmplContent.match(/^benefits-from:\s*\[([^\]]*)\]/m);
+  const benefitsFrom = benefitsMatch
+    ? benefitsMatch[1].split(',').map(s => s.trim()).filter(Boolean)
+    : undefined;
+
+  // Extract preamble-tier from frontmatter (1-4, controls which preamble sections are included)
+  const tierMatch = tmplContent.match(/^preamble-tier:\s*(\d+)$/m);
+  const preambleTier = tierMatch ? parseInt(tierMatch[1], 10) : undefined;
+
+  const ctx: TemplateContext = { skillName, tmplPath, benefitsFrom, host, paths: HOST_PATHS[host], preambleTier };
+
+  // Replace placeholders (supports parameterized: {{NAME:arg1:arg2}})
+  // Config-driven: suppressedResolvers return empty string for this host
+  const currentHostConfig = getHostConfig(host);
+  const suppressed = new Set(currentHostConfig.suppressedResolvers || []);
+  let content = tmplContent.replace(/\{\{(\w+(?::[^}]+)?)\}\}/g, (match, fullKey) => {
+    const parts = fullKey.split(':');
+    const resolverName = parts[0];
+    const args = parts.slice(1);
+    if (suppressed.has(resolverName)) return '';
+    const resolver = RESOLVERS[resolverName];
+    if (!resolver) throw new Error(`Unknown placeholder {{${resolverName}}} in ${relTmplPath}`);
+    return args.length > 0 ? resolver(ctx, args) : resolver(ctx);
   });
 
   // Check for any remaining unresolved placeholders
-  const remaining = content.match(/\{\{(\w+)\}\}/g);
+  const remaining = content.match(/\{\{(\w+(?::[^}]+)?)\}\}/g);
   if (remaining) {
     throw new Error(`Unresolved placeholders in ${relTmplPath}: ${remaining.join(', ')}`);
+  }
+
+  // Preprocess voice triggers: fold into description, strip field from frontmatter.
+  // Must run BEFORE transformFrontmatter so all hosts see the updated description,
+  // and BEFORE extractedDescription is used by external host metadata.
+  content = processVoiceTriggers(content);
+
+  // Re-extract description AFTER voice trigger preprocessing so Codex openai.yaml
+  // metadata gets the updated description with voice triggers included.
+  const postProcessDescription = extractNameAndDescription(content).description;
+
+  // For Claude: strip sensitive: field (only Factory uses it)
+  // For external hosts: route output, transform frontmatter, rewrite paths
+  let symlinkLoop = false;
+  if (host === 'claude') {
+    content = transformFrontmatter(content, host);
+  } else {
+    const result = processExternalHost(content, tmplContent, host, skillDir, postProcessDescription, ctx, extractedName || undefined);
+    content = result.content;
+    outputPath = result.outputPath;
+    symlinkLoop = result.symlinkLoop;
   }
 
   // Prepend generated header (after frontmatter)
@@ -854,57 +487,171 @@ function processTemplate(tmplPath: string): { outputPath: string; content: strin
     content = header + content;
   }
 
-  return { outputPath, content };
+  return { outputPath, content, symlinkLoop };
 }
 
 // ─── Main ───────────────────────────────────────────────────
 
 function findTemplates(): string[] {
-  const templates: string[] = [];
-  const candidates = [
-    path.join(ROOT, 'SKILL.md.tmpl'),
-    path.join(ROOT, 'browse', 'SKILL.md.tmpl'),
-    path.join(ROOT, 'qa', 'SKILL.md.tmpl'),
-    path.join(ROOT, 'qa-only', 'SKILL.md.tmpl'),
-    path.join(ROOT, 'setup-browser-cookies', 'SKILL.md.tmpl'),
-    path.join(ROOT, 'ship', 'SKILL.md.tmpl'),
-    path.join(ROOT, 'review', 'SKILL.md.tmpl'),
-    path.join(ROOT, 'plan-ceo-review', 'SKILL.md.tmpl'),
-    path.join(ROOT, 'plan-eng-review', 'SKILL.md.tmpl'),
-    path.join(ROOT, 'retro', 'SKILL.md.tmpl'),
-    path.join(ROOT, 'gstack-upgrade', 'SKILL.md.tmpl'),
-    path.join(ROOT, 'plan-design-review', 'SKILL.md.tmpl'),
-    path.join(ROOT, 'qa-design-review', 'SKILL.md.tmpl'),
-    path.join(ROOT, 'design-consultation', 'SKILL.md.tmpl'),
-    path.join(ROOT, 'document-release', 'SKILL.md.tmpl'),
-  ];
-  for (const p of candidates) {
-    if (fs.existsSync(p)) templates.push(p);
-  }
-  return templates;
+  return discoverTemplates(ROOT).map(t => path.join(ROOT, t.tmpl));
 }
 
-let hasChanges = false;
+const ALL_HOSTS: Host[] = ALL_HOST_NAMES as Host[];
+const hostsToRun: Host[] = HOST_ARG_VAL === 'all' ? ALL_HOSTS : [HOST];
+const failures: { host: string; error: Error }[] = [];
 
-for (const tmplPath of findTemplates()) {
-  const { outputPath, content } = processTemplate(tmplPath);
-  const relOutput = path.relative(ROOT, outputPath);
+for (const currentHost of hostsToRun) {
+  HOST = currentHost;
 
-  if (DRY_RUN) {
-    const existing = fs.existsSync(outputPath) ? fs.readFileSync(outputPath, 'utf-8') : '';
-    if (existing !== content) {
-      console.log(`STALE: ${relOutput}`);
-      hasChanges = true;
-    } else {
-      console.log(`FRESH: ${relOutput}`);
+  try {
+    let hasChanges = false;
+    const tokenBudget: Array<{ skill: string; lines: number; tokens: number }> = [];
+
+    const currentHostConfig = getHostConfig(currentHost);
+    for (const tmplPath of findTemplates()) {
+      const dir = path.basename(path.dirname(tmplPath));
+
+      // includeSkills allowlist (union logic: include minus skip)
+      if (currentHostConfig.generation.includeSkills?.length) {
+        if (!currentHostConfig.generation.includeSkills.includes(dir)) continue;
+      }
+      // skipSkills denylist (subtracts from includeSkills or full set)
+      if (currentHostConfig.generation.skipSkills?.length) {
+        if (currentHostConfig.generation.skipSkills.includes(dir)) continue;
+      }
+
+      const { outputPath, content, symlinkLoop } = processTemplate(tmplPath, currentHost);
+      const relOutput = path.relative(ROOT, outputPath);
+
+      if (symlinkLoop) {
+        console.log(`SKIPPED (symlink loop): ${relOutput}`);
+      } else if (DRY_RUN) {
+        const existing = fs.existsSync(outputPath) ? fs.readFileSync(outputPath, 'utf-8') : '';
+        if (existing !== content) {
+          console.log(`STALE: ${relOutput}`);
+          hasChanges = true;
+        } else {
+          console.log(`FRESH: ${relOutput}`);
+        }
+      } else {
+        fs.writeFileSync(outputPath, content);
+        console.log(`GENERATED: ${relOutput}`);
+      }
+
+      // Track token budget
+      const lines = content.split('\n').length;
+      const tokens = Math.round(content.length / 4); // ~4 chars per token
+      tokenBudget.push({ skill: relOutput, lines, tokens });
     }
-  } else {
-    fs.writeFileSync(outputPath, content);
-    console.log(`GENERATED: ${relOutput}`);
+
+    // Generate gstack-lite and gstack-full for OpenClaw host
+    if (currentHost === 'openclaw' && !DRY_RUN) {
+      const openclawDir = path.join(ROOT, 'openclaw');
+      if (!fs.existsSync(openclawDir)) fs.mkdirSync(openclawDir, { recursive: true });
+
+      const gstackLite = `# gstack-lite Planning Discipline
+
+Injected by the orchestrator into spawned Claude Code sessions. Append to existing CLAUDE.md.
+
+## Planning Discipline
+1. Read every file you will modify. Understand existing patterns first.
+2. Before writing code, state your plan: what, why, which files, test case, risk.
+3. When ambiguous, prefer: completeness over shortcuts, existing patterns over new ones,
+   reversible choices over irreversible ones, safe defaults over clever ones.
+4. Self-review your changes before reporting done. Check for: missed files, broken
+   imports, untested paths, style inconsistencies.
+5. Report when done: what shipped, what decisions you made, anything uncertain.
+`;
+      fs.writeFileSync(path.join(openclawDir, 'gstack-lite-CLAUDE.md'), gstackLite);
+      console.log('GENERATED: openclaw/gstack-lite-CLAUDE.md');
+
+      const gstackFull = `# gstack-full Pipeline
+
+Injected by the orchestrator for complete feature builds. Append to existing CLAUDE.md.
+
+## Full Pipeline
+1. Read CLAUDE.md and understand the project context.
+2. Run /autoplan to review your approach (CEO + eng + design review pipeline).
+3. Implement the approved plan. Follow the planning discipline above.
+4. Run /ship to create a PR with tests, changelog, and version bump.
+5. Report back: PR URL, what shipped, decisions made, anything uncertain.
+
+Do not ask for human input until the PR is ready for review.
+`;
+      fs.writeFileSync(path.join(openclawDir, 'gstack-full-CLAUDE.md'), gstackFull);
+      console.log('GENERATED: openclaw/gstack-full-CLAUDE.md');
+
+      const gstackPlan = `# gstack-plan: Full Review Gauntlet
+
+Injected by the orchestrator when the user wants to plan a Claude Code project.
+Append to existing CLAUDE.md.
+
+## Planning Pipeline
+1. Read CLAUDE.md and understand the project context.
+2. Run /office-hours to produce a design doc (problem statement, premises, alternatives).
+3. Run /autoplan to review the design (CEO + eng + design + DX reviews + codex adversarial).
+4. Save the final reviewed plan to a file the orchestrator can reference later.
+   Write it to: plans/<project-slug>-plan-<date>.md in the current repo.
+   Include the design doc, all review decisions, and the implementation sequence.
+5. Report back to the orchestrator:
+   - Plan file path
+   - One-paragraph summary of what was designed and the key decisions
+   - List of accepted scope expansions (if any)
+   - Recommended next step (usually: spawn a new session with gstack-full to implement)
+
+Do not implement anything. This is planning only.
+The orchestrator will persist the plan link to its own memory/knowledge store.
+`;
+      fs.writeFileSync(path.join(openclawDir, 'gstack-plan-CLAUDE.md'), gstackPlan);
+      console.log('GENERATED: openclaw/gstack-plan-CLAUDE.md');
+    }
+
+    if (DRY_RUN && hasChanges) {
+      console.error(`\nGenerated SKILL.md files are stale (${currentHost} host). Run: bun run gen:skill-docs --host ${currentHost}`);
+      if (HOST_ARG_VAL !== 'all') process.exit(1);
+      failures.push({ host: currentHost, error: new Error('Stale files detected') });
+    }
+
+    // Print token budget summary
+    if (!DRY_RUN && tokenBudget.length > 0) {
+      tokenBudget.sort((a, b) => b.lines - a.lines);
+      const totalLines = tokenBudget.reduce((s, t) => s + t.lines, 0);
+      const totalTokens = tokenBudget.reduce((s, t) => s + t.tokens, 0);
+
+      console.log('');
+      console.log(`Token Budget (${currentHost} host)`);
+      console.log('═'.repeat(60));
+      for (const t of tokenBudget) {
+        const hostSubdirs = ALL_HOST_CONFIGS.map(c => c.hostSubdir.replace('.', '\\.')).join('|');
+        const name = t.skill.replace(/\/SKILL\.md$/, '').replace(new RegExp(`^\\.(${hostSubdirs})\\/skills\\/`), '');
+        console.log(`  ${name.padEnd(30)} ${String(t.lines).padStart(5)} lines  ~${String(t.tokens).padStart(6)} tokens`);
+      }
+      console.log('─'.repeat(60));
+      console.log(`  ${'TOTAL'.padEnd(30)} ${String(totalLines).padStart(5)} lines  ~${String(totalTokens).padStart(6)} tokens`);
+      console.log('');
+    }
+  } catch (e) {
+    failures.push({ host: currentHost, error: e as Error });
+    console.error(`WARNING: ${currentHost} generation failed: ${(e as Error).message}`);
   }
 }
 
-if (DRY_RUN && hasChanges) {
-  console.error('\nGenerated SKILL.md files are stale. Run: bun run gen:skill-docs');
-  process.exit(1);
+// --host all: report failures. Only exit(1) if claude failed.
+if (failures.length > 0 && HOST_ARG_VAL === 'all') {
+  console.error(`\n${failures.length} host(s) failed: ${failures.map(f => f.host).join(', ')}`);
+  if (failures.some(f => f.host === 'claude')) process.exit(1);
+}
+// Single host dry-run failure already handled above
+
+// After all hosts processed, warn if prefix patches may need re-applying
+if (!DRY_RUN) {
+  try {
+    const configPath = path.join(process.env.HOME || '', '.gstack', 'config.yaml');
+    if (fs.existsSync(configPath)) {
+      const config = fs.readFileSync(configPath, 'utf-8');
+      if (/^skill_prefix:\s*true/m.test(config)) {
+        console.log('\nNote: skill_prefix is true. Run gstack-relink to re-apply name: patches.');
+      }
+    }
+  } catch { /* non-fatal */ }
 }

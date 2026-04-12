@@ -1,0 +1,1 @@
+/Users/nitish/kloudi.os/.claude/skills/gstack/setup-deploy/SKILL.md
