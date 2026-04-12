@@ -296,6 +296,71 @@ Each sprint produces a working system. No sprint requires the next to be useful.
 - Trace analysis or pattern extraction
 - AgentFS integration
 
+### Trace format (Sprint 1 deliverable)
+
+The existing `DecisionTrace` type only covers interpolative nodes. For Sprint 1, every node type must produce a structured trace that captures WHY the node did what it did, not just WHAT it output.
+
+**Current schema:** `ExecutionNode.decisionTrace Json?` — flexible JSON field. Keep this. Define the shape per node type:
+
+```
+// All node traces share this base
+interface NodeTrace {
+  nodeType: 'llm_generate' | 'tool_call' | 'interpolative' | 'sub_entity';
+  startedAt: string;           // ISO timestamp
+  durationMs: number;
+  tokensUsed: number;
+}
+
+// LLM nodes: what did the model reason about?
+interface LLMTrace extends NodeTrace {
+  nodeType: 'llm_generate';
+  prompt: string;              // the assembled prompt (after variable interpolation)
+  model: string;               // which model was used
+  response: string;            // full model response
+  contextSources: string[];    // which context slots were used (from ContextManager)
+}
+
+// Tool call nodes: what tool, what args, what happened?
+interface ToolCallTrace extends NodeTrace {
+  nodeType: 'tool_call';
+  toolName: string;
+  toolArgs: Record<string, unknown>;
+  toolResult: unknown;
+  toolError?: string;
+}
+
+// Interpolative nodes: what decision was made and why?
+interface InterpolativeTrace extends NodeTrace {
+  nodeType: 'interpolative';
+  optionsConsidered: string[];
+  chosenOption: string;
+  reasoning: string;
+  confidence?: number;
+}
+
+// Sub-entity nodes: which child SOP was called?
+interface SubEntityTrace extends NodeTrace {
+  nodeType: 'sub_entity';
+  childSopId: string;
+  childExecutionId: string;
+  childStatus: string;
+}
+
+// Human approval events (appended to any node's trace)
+interface ApprovalEvent {
+  requestedAt: string;
+  reason: string;              // why the agent stopped
+  question: string;            // what was asked
+  response: string;            // what the human answered
+  respondedAt: string;
+  durationMs: number;          // how long the human took to decide
+}
+```
+
+**Why this matters:** Traces are the raw material for the learning loop. If we don't capture prompt, reasoning, and context sources now, we can never extract patterns later. The "trillion-dollar layer" from chat 01 starts here — not as a world model, but as structured recording of every agent decision.
+
+**What's NOT in Sprint 1 traces:** Intent inference, alternative paths considered, precedent matching, pattern extraction. Those are extraction engine features (deferred). Sprint 1 traces are recording-only.
+
 ---
 
 ## Open Questions (Not Yet Ratcheted)
@@ -353,6 +418,7 @@ Each sprint produces a working system. No sprint requires the next to be useful.
 |Agent-agnostic|✓|✓|—|—|?|ALMOST: projection layer design needed|
 |First user|✓|✓|✓|—|—|LOCKED: JTBD before/after story, named contacts, adoption blockers|
 |Interaction model|—|—|—|✓|—|ALMOST: terminal-first + v6 mockup exists|
+|Trace format|—|✓|—|—|✓|LOCKED: per-node-type trace schema, approval events defined|
 |Build sequence|—|✓|—|—|✓|LOCKED: 3 sprints defined, exit criteria set|
 
 ---
