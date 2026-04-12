@@ -37,5 +37,29 @@ export {
   githubTools,
 } from './builtin/index.js';
 
+// Tool adapters
+export {
+  MCPClientAdapter,
+  registerCLITool,
+  registerCLITools,
+} from './adapters/index.js';
+export type { MCPServerConfig, CLIToolDefinition } from './adapters/index.js';
+
+// GitHub CLI tools
+export {
+  registerGitHubCLITools,
+  githubCLIToolDefinitions,
+} from './builtin/github-cli.js';
+
+// Jira MCP tools
+export {
+  jiraMcpConfig,
+  registerJiraMCPTools,
+  disconnectJiraMCP,
+} from './builtin/jira-mcp.js';
+
+// Startup/shutdown
+export { registerAllTools, shutdownTools } from './startup.js';
+
 // Default export: create a registry with all built-in tools
 export { default } from './builtin/index.js';

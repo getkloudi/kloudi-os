@@ -17,6 +17,14 @@
     "./builtin": {
       "types": "./dist/builtin/index.d.ts",
       "import": "./dist/builtin/index.js"
+    },
+    "./adapters": {
+      "types": "./dist/adapters/index.d.ts",
+      "import": "./dist/adapters/index.js"
+    },
+    "./startup": {
+      "types": "./dist/startup.d.ts",
+      "import": "./dist/startup.js"
     }
   },
   "scripts": {
