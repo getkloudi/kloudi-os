@@ -138,7 +138,7 @@ kloudi.os is an agent-first organizational OS. SOPs are the universal file forma
 
 **Sprint 1 (Days 1-14): THE PROOF** — "One SOP runs end-to-end with trust gates"
 - Rename `Procedure` → `SOP` across codebase (model, table, routes, types). One atomic rename before building on top.
-- Fix trust layer (onHumanApprovalNeeded currently auto-continues — Codex found this)
+- Fix trust layer (see trust layer design below)
 - Import 3 skills as SOPs into Postgres
 - Run /engineering/impl through execution engine with real Jira + GitHub
 - Approval gates stop before risky actions, show reasoning, wait for y/n
@@ -361,6 +361,76 @@ interface ApprovalEvent {
 
 **What's NOT in Sprint 1 traces:** Intent inference, alternative paths considered, precedent matching, pattern extraction. Those are extraction engine features (deferred). Sprint 1 traces are recording-only.
 
+### Trust layer design (Sprint 1 — #1 blocker)
+
+**The bug (Codex found this):** `onHumanApprovalNeeded` callback in the API route is hardcoded to return `'continue'`. The engine never actually stops for human input.
+
+**Current engine behavior:**
+1. Cycle guard (node visited ≥3 times) → calls `onHumanApprovalNeeded` callback → awaits response inline
+2. Node returns `waiting_input` status → engine updates DB, pauses → no resume path exists
+
+**The fix is a state machine, not a callback:**
+
+```
+STATES:
+  running        — engine is executing nodes
+  waiting_input  — engine paused, human must respond
+  completed      — all nodes done
+  failed         — unrecoverable error
+  cancelled      — human or system aborted
+
+TRANSITIONS:
+  running → waiting_input    (approval gate triggered)
+  waiting_input → running    (human approves)
+  waiting_input → cancelled  (human rejects)
+  running → completed        (terminal node reached)
+  running → failed           (unrecoverable error)
+
+APPROVAL TRIGGERS (Sprint 1):
+  1. Cycle guard: node visited ≥ threshold times
+  2. Node-level: any node with `requiresApproval: true` in graph config
+  3. Tool-level: specific tools marked dangerous (shell.exec, github.merge, db.migrate)
+```
+
+**Protocol (WebSocket):**
+
+```
+// Engine → Client: approval request
+{
+  type: 'approval_required',
+  executionId: string,
+  nodeId: string,
+  reason: string,           // "Node 'deploy-to-prod' requires approval"
+  context: {
+    nodeName: string,
+    nodeType: string,
+    whatWillHappen: string,  // human-readable description of what the node will do
+    previousOutput: unknown, // output from the last completed node
+  }
+}
+
+// Client → API: approval response
+POST /api/executions/:id/approve
+{
+  nodeId: string,
+  decision: 'continue' | 'abort',
+  comment?: string          // optional human note (captured in trace)
+}
+```
+
+**Implementation sequence:**
+1. Add `requiresApproval` field to graph node config
+2. Add dangerous-tool list to engine config
+3. When approval triggers: set execution status → `waiting_input`, emit WebSocket message, return from execution loop
+4. Add `POST /api/executions/:id/approve` route
+5. On approve: set status → `running`, resume execution from paused node
+6. On abort: set status → `cancelled`, record in trace
+7. Timeout: if no response in 30 minutes, set status → `failed` with timeout reason
+
+**CLI behavior (Sprint 2):** Terminal prompt `[approve/reject]` inline. Same API underneath.
+
+**What's NOT in Sprint 1 trust:** Role-based approval (any authenticated user can approve), multi-approver workflows, auto-approval rules, escalation chains. Those require Organization/Role models (deferred).
+
 ---
 
 ## Open Questions (Not Yet Ratcheted)
@@ -414,6 +484,7 @@ interface ApprovalEvent {
 |Everything is SOP|✓|✓|✓|?|✓|ALMOST: PRDs-as-SOPs clarified|
 |Filesystem-first|✓|✓|✓|?|✓|ALMOST: 3 defaults locked|
 |Governance density|✓|✓|✓|?|?|ALMOST: scaling story defined|
+|Trust layer|—|✓|—|—|✓|LOCKED: state machine, WebSocket protocol, approval triggers defined|
 |Agent-first|✓|✓|✓|?|?|ALMOST: vision locked, impl pending|
 |Agent-agnostic|✓|✓|—|—|?|ALMOST: projection layer design needed|
 |First user|✓|✓|✓|—|—|LOCKED: JTBD before/after story, named contacts, adoption blockers|
