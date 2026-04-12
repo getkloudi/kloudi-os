@@ -27,6 +27,8 @@ export default [
         setInterval: 'readonly',
         clearInterval: 'readonly',
         clearTimeout: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
       },
       ecmaVersion: 'latest',
       sourceType: 'module',
