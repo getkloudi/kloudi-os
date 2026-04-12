@@ -93,6 +93,7 @@ model ExecutionNode {
   input         Json?
   output        Json?
   decisionTrace Json?
+  gateContext   Json?
   tokensUsed    Int       @default(0)
   durationMs    Int?
   startedAt     DateTime?

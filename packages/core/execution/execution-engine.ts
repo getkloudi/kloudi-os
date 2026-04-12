@@ -3,6 +3,7 @@ import type {
   NodeExecutor,
   NodeResult,
   ExecutionCallbacks,
+  TrustGateContext,
   ProcedureRecord,
 } from './types.js';
 import type { GraphNode, Graph, NodeType } from '@kloudi/shared/types';
@@ -42,7 +43,7 @@ export class ExecutionEngine {
     // Concurrency limit check (counts both top-level and child executions)
     const limit = options?.concurrencyLimit ?? DEFAULT_CONCURRENCY_LIMIT;
     const activeCount = await (db as any).execution.count({
-      where: { workspaceId, status: { in: ['running', 'waiting_input'] } },
+      where: { workspaceId, status: { in: ['running', 'pending'] } },
     });
     if (activeCount >= limit) {
       throw new Error(`Concurrent execution limit reached (${activeCount}/${limit})`);
@@ -113,7 +114,7 @@ export class ExecutionEngine {
     // Concurrency check (child executions count against the same limit)
     const limit = options?.concurrencyLimit ?? DEFAULT_CONCURRENCY_LIMIT;
     const activeCount = await (db as any).execution.count({
-      where: { workspaceId, status: { in: ['running', 'waiting_input'] } },
+      where: { workspaceId, status: { in: ['running', 'pending'] } },
     });
     if (activeCount >= limit) {
       throw new Error(`Concurrent execution limit reached (${activeCount}/${limit})`);
@@ -256,6 +257,119 @@ export class ExecutionEngine {
             startedAt: new Date(),
           },
         });
+
+        // Trust gate check — tool_call nodes with requiresApproval
+        if (
+          node.type === 'tool_call' &&
+          (node.config as Record<string, unknown>)?.['requiresApproval']
+        ) {
+          const nodeConfig = node.config as Record<string, unknown>;
+          const gateContext: TrustGateContext = {
+            executionId: ctx.executionId,
+            nodeId: currentNodeId,
+            nodeName: node.name,
+            nodeType: node.type as NodeType,
+            action: `Tool call: ${nodeConfig['tool_name']}`,
+            config: resolvedConfig,
+            visitCount: visitCount + 1,
+          };
+
+          // Persist gate context (survives restart)
+          await db.executionNode.update({
+            where: {
+              executionId_nodeId_attemptNumber: {
+                executionId: ctx.executionId,
+                nodeId: currentNodeId,
+                attemptNumber: 1,
+              },
+            },
+            data: {
+              status: 'waiting_input',
+              gateContext: gateContext as any,
+            },
+          });
+
+          // Update execution status
+          await db.execution.update({
+            where: { id: ctx.executionId },
+            data: { status: 'waiting_input', currentNodeId },
+          });
+
+          if (callbacks?.onTrustGateTriggered) {
+            const decision =
+              await callbacks.onTrustGateTriggered(gateContext);
+
+            // Resume execution status
+            await db.execution.update({
+              where: { id: ctx.executionId },
+              data: { status: 'running' },
+            });
+
+            if (decision === 'reject') {
+              await db.executionNode.update({
+                where: {
+                  executionId_nodeId_attemptNumber: {
+                    executionId: ctx.executionId,
+                    nodeId: currentNodeId,
+                    attemptNumber: 1,
+                  },
+                },
+                data: {
+                  status: 'failed',
+                  completedAt: new Date(),
+                  output: { decision: 'rejected' } as any,
+                },
+              });
+              throw new Error(
+                `Trust gate rejected at node '${node.name}'`
+              );
+            }
+
+            // Approved — update gate node and continue to execution
+            await db.executionNode.update({
+              where: {
+                executionId_nodeId_attemptNumber: {
+                  executionId: ctx.executionId,
+                  nodeId: currentNodeId,
+                  attemptNumber: 1,
+                },
+              },
+              data: {
+                status: 'running',
+                gateContext: {
+                  ...(gateContext as any),
+                  decision: 'approved',
+                },
+              },
+            });
+          } else {
+            // No callback registered — auto-approve with warning
+            logger.warn(
+              'Trust gate triggered but no callback registered, auto-approving',
+              {
+                executionId: ctx.executionId,
+                nodeId: currentNodeId,
+              }
+            );
+
+            // Resume execution status
+            await db.execution.update({
+              where: { id: ctx.executionId },
+              data: { status: 'running' },
+            });
+
+            await db.executionNode.update({
+              where: {
+                executionId_nodeId_attemptNumber: {
+                  executionId: ctx.executionId,
+                  nodeId: currentNodeId,
+                  attemptNumber: 1,
+                },
+              },
+              data: { status: 'running' },
+            });
+          }
+        }
 
         // Execute the node
         let result: NodeResult;
