@@ -12,11 +12,22 @@ export type ExecutionStatus =
   | 'waiting_input'
   | 'cancelled';
 
-export type BadgeVariant = 'green' | 'red' | 'amber' | 'blue' | 'neutral' | 'accent';
+export type BadgeVariant =
+  | 'green'
+  | 'red'
+  | 'amber'
+  | 'blue'
+  | 'neutral'
+  | 'accent';
 
 export interface ActivityPost {
   id: string;
-  type: 'execution_run' | 'execution_completed' | 'execution_failed' | 'awaiting_approval' | 'procedure_edited';
+  type:
+    | 'execution_run'
+    | 'execution_completed'
+    | 'execution_failed'
+    | 'awaiting_approval'
+    | 'procedure_edited';
   user: { username: string; initials: string };
   procedure: { id: string; name: string; slug: string };
   execution?: {

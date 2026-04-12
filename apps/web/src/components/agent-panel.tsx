@@ -14,7 +14,12 @@ interface AgentPanelProps {
 
 type Tab = 'terminal' | 'context' | 'history';
 
-export function AgentPanel({ messages, collapsed, onToggle, onCommand }: AgentPanelProps) {
+export function AgentPanel({
+  messages,
+  collapsed,
+  onToggle,
+  onCommand,
+}: AgentPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>('terminal');
   const [input, setInput] = useState('');
   const outputRef = useRef<HTMLDivElement>(null);
@@ -33,7 +38,9 @@ export function AgentPanel({ messages, collapsed, onToggle, onCommand }: AgentPa
     <aside className="flex w-80 shrink-0 flex-col border-l border-[var(--border)] bg-[var(--bg-0)] transition-[width] duration-200">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] bg-[var(--bg-1)] px-4 py-3">
-        <span className="text-[13px] font-semibold text-[var(--text-1)]">Agent</span>
+        <span className="text-[13px] font-semibold text-[var(--text-1)]">
+          Agent
+        </span>
         <button
           onClick={onToggle}
           className="cursor-pointer border-none bg-none text-base text-[var(--text-3)] hover:text-[var(--text-1)]"
@@ -51,7 +58,8 @@ export function AgentPanel({ messages, collapsed, onToggle, onCommand }: AgentPa
             className={cn(
               'relative cursor-pointer border-none bg-transparent px-3.5 py-1.5 font-mono text-[11px] text-[var(--text-3)]',
               activeTab === tab && 'text-[var(--text-1)]',
-              activeTab === tab && 'after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[var(--accent)]'
+              activeTab === tab &&
+                'after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-[var(--accent)]'
             )}
           >
             {tab}
@@ -77,7 +85,9 @@ export function AgentPanel({ messages, collapsed, onToggle, onCommand }: AgentPa
               >
                 {msg.role}
               </span>
-              <span className="text-[9px] text-[var(--text-4)]">{msg.timestamp}</span>
+              <span className="text-[9px] text-[var(--text-4)]">
+                {msg.timestamp}
+              </span>
             </div>
             <div
               className="text-xs leading-[1.7] text-[var(--text-2)]"

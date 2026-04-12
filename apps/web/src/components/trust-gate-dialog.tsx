@@ -10,7 +10,11 @@ interface TrustGateDialogProps {
   onAbort: (executionId: string, nodeId: string) => void;
 }
 
-export function TrustGateDialog({ event, onApprove, onAbort }: TrustGateDialogProps) {
+export function TrustGateDialog({
+  event,
+  onApprove,
+  onAbort,
+}: TrustGateDialogProps) {
   if (!event) return null;
 
   return (

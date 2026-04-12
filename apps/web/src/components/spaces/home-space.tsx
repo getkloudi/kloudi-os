@@ -71,7 +71,10 @@ export function HomeSpace({
       {/* Hero */}
       <div
         className="px-10 pb-8 pt-12"
-        style={{ background: 'linear-gradient(180deg, var(--glow) 0%, transparent 100%)' }}
+        style={{
+          background:
+            'linear-gradient(180deg, var(--glow) 0%, transparent 100%)',
+        }}
       >
         <h1 className="mb-1 text-[28px] font-bold tracking-[-0.03em] text-[var(--text-1)]">
           {greeting}
@@ -116,7 +119,11 @@ export function HomeSpace({
                 {item.status === 'running' && <span className="live-dot" />}
                 {item.meta}
               </div>
-              <ProgressBar value={item.progress} status={item.status} className="mt-2" />
+              <ProgressBar
+                value={item.progress}
+                status={item.status}
+                className="mt-2"
+              />
             </div>
           ))}
         </div>
@@ -125,7 +132,9 @@ export function HomeSpace({
       {/* Feed */}
       <div className="max-w-[640px] px-10 pb-10">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-[var(--text-2)]">Activity</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-2)]">
+            Activity
+          </h2>
           <div className="flex gap-1">
             {filters.map((f) => (
               <button

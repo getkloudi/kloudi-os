@@ -27,8 +27,20 @@ const sidebarItems: SidebarItem[] = [
   { id: 'recent', label: 'recent', icon: '🕐', section: 'favorites' },
   { id: 'default', label: 'default', icon: '🏠', section: 'workspaces' },
   { id: 'staging', label: 'staging', icon: '🧪', section: 'workspaces' },
-  { id: 'production', label: 'production', icon: '●', section: 'tags', color: 'var(--green)' },
-  { id: 'draft', label: 'draft', icon: '●', section: 'tags', color: 'var(--amber)' },
+  {
+    id: 'production',
+    label: 'production',
+    icon: '●',
+    section: 'tags',
+    color: 'var(--green)',
+  },
+  {
+    id: 'draft',
+    label: 'draft',
+    icon: '●',
+    section: 'tags',
+    color: 'var(--amber)',
+  },
 ];
 
 const fileIcons: Record<EntityType, string> = {

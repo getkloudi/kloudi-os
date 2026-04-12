@@ -17,11 +17,23 @@ interface ProgressBarProps {
   className?: string;
 }
 
-export function ProgressBar({ value, status = 'running', className }: ProgressBarProps) {
+export function ProgressBar({
+  value,
+  status = 'running',
+  className,
+}: ProgressBarProps) {
   return (
-    <div className={cn('h-0.5 rounded-sm bg-[var(--bg-3)] overflow-hidden', className)}>
+    <div
+      className={cn(
+        'h-0.5 rounded-sm bg-[var(--bg-3)] overflow-hidden',
+        className
+      )}
+    >
       <div
-        className={cn('h-full rounded-sm transition-[width] duration-300', statusColors[status])}
+        className={cn(
+          'h-full rounded-sm transition-[width] duration-300',
+          statusColors[status]
+        )}
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
       />
     </div>

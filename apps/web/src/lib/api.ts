@@ -106,7 +106,8 @@ class ApiClient {
   }
 
   async getProcedureTree(): Promise<TreeNode[]> {
-    const response = await this.fetch<ApiResponse<TreeNode[]>>('/api/procedures');
+    const response =
+      await this.fetch<ApiResponse<TreeNode[]>>('/api/procedures');
     return response.data;
   }
 
@@ -145,14 +146,20 @@ class ApiClient {
     description?: string;
     level?: string;
   }): Promise<EntityData> {
-    const response = await this.fetch<ApiResponse<EntityData>>('/api/procedures', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    const response = await this.fetch<ApiResponse<EntityData>>(
+      '/api/procedures',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
     return response.data;
   }
 
-  async updateProcedure(id: string, data: Partial<EntityData>): Promise<EntityData> {
+  async updateProcedure(
+    id: string,
+    data: Partial<EntityData>
+  ): Promise<EntityData> {
     const response = await this.fetch<ApiResponse<EntityData>>(
       `/api/procedures/${encodeURIComponent(id)}`,
       {
@@ -173,7 +180,8 @@ class ApiClient {
 
   async getActivity(): Promise<ActivityPost[]> {
     try {
-      const response = await this.fetch<ApiResponse<ActivityPost[]>>('/api/activity');
+      const response =
+        await this.fetch<ApiResponse<ActivityPost[]>>('/api/activity');
       return response.data;
     } catch {
       return [];

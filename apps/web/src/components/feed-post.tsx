@@ -45,7 +45,8 @@ export function FeedPost({
   onAbort,
   onRetry,
 }: FeedPostProps) {
-  const isLive = post.type === 'execution_run' && post.execution?.status === 'running';
+  const isLive =
+    post.type === 'execution_run' && post.execution?.status === 'running';
   const isFailed = post.type === 'execution_failed';
   const isWaiting = post.type === 'awaiting_approval';
 
@@ -89,11 +90,16 @@ export function FeedPost({
               <span>{post.execution.id}</span>
               {post.execution.nodes && (
                 <span>
-                  {post.execution.nodes.filter((n) => n.status === 'completed').length}/
-                  {post.execution.nodes.length}
+                  {
+                    post.execution.nodes.filter((n) => n.status === 'completed')
+                      .length
+                  }
+                  /{post.execution.nodes.length}
                 </span>
               )}
-              {post.execution.tokens != null && <span>{post.execution.tokens.toLocaleString()} tk</span>}
+              {post.execution.tokens != null && (
+                <span>{post.execution.tokens.toLocaleString()} tk</span>
+              )}
             </div>
 
             {/* Node list (for running/completed with nodes) */}
@@ -111,7 +117,12 @@ export function FeedPost({
                         node.status === 'running' && 'animate-pulse'
                       )}
                     />
-                    <span className={cn(node.status === 'running' && 'font-medium', node.status === 'pending' && 'text-[var(--text-4)]')}>
+                    <span
+                      className={cn(
+                        node.status === 'running' && 'font-medium',
+                        node.status === 'pending' && 'text-[var(--text-4)]'
+                      )}
+                    >
                       {node.label}
                     </span>
                     <span className="ml-auto font-mono text-[10px] text-[var(--text-3)]">

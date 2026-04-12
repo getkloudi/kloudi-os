@@ -50,10 +50,14 @@ export function EditorSpace({
                 <span key={i} className="flex items-center gap-1.5">
                   {i > 0 && <span className="text-[var(--text-4)]">/</span>}
                   <span
-                    onClick={i < pathParts.length - 1 ? onBrowseNavigate : undefined}
+                    onClick={
+                      i < pathParts.length - 1 ? onBrowseNavigate : undefined
+                    }
                     className={cn(
-                      i < pathParts.length - 1 && 'cursor-pointer hover:text-[var(--text-2)]',
-                      i === pathParts.length - 1 && 'font-medium text-[var(--text-1)]'
+                      i < pathParts.length - 1 &&
+                        'cursor-pointer hover:text-[var(--text-2)]',
+                      i === pathParts.length - 1 &&
+                        'font-medium text-[var(--text-1)]'
                     )}
                   >
                     {part}
@@ -69,7 +73,9 @@ export function EditorSpace({
                 className={cn(
                   'border-none px-3 py-1 text-[11px] text-[var(--text-3)]',
                   'cursor-pointer transition-all duration-100',
-                  mode === 'edit' ? 'bg-[var(--accent-s)] text-[var(--accent)]' : 'bg-transparent hover:bg-[var(--bg-3)]'
+                  mode === 'edit'
+                    ? 'bg-[var(--accent-s)] text-[var(--accent)]'
+                    : 'bg-transparent hover:bg-[var(--bg-3)]'
                 )}
               >
                 Edit
@@ -79,7 +85,9 @@ export function EditorSpace({
                 className={cn(
                   'border-none px-3 py-1 text-[11px] text-[var(--text-3)]',
                   'cursor-pointer transition-all duration-100',
-                  mode === 'view' ? 'bg-[var(--accent-s)] text-[var(--accent)]' : 'bg-transparent hover:bg-[var(--bg-3)]'
+                  mode === 'view'
+                    ? 'bg-[var(--accent-s)] text-[var(--accent)]'
+                    : 'bg-transparent hover:bg-[var(--bg-3)]'
                 )}
               >
                 View
@@ -182,7 +190,8 @@ export function EditorSpace({
             <span className="font-mono text-[11px]">{execution.id}</span>
             <Badge status={execution.status as ExecutionStatus} />
             <span className="font-mono text-[11px]">
-              {execution.stats.duration} · {execution.stats.tokens.toLocaleString()} tk
+              {execution.stats.duration} ·{' '}
+              {execution.stats.tokens.toLocaleString()} tk
             </span>
           </div>
           <Button

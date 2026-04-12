@@ -8,12 +8,19 @@ const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001/ws';
 type WSMessage =
   | { type: 'trust_gate'; data: TrustGateEvent }
   | { type: 'activity'; data: ActivityPost }
-  | { type: 'execution_update'; data: { executionId: string; status: string; nodeId?: string } };
+  | {
+      type: 'execution_update';
+      data: { executionId: string; status: string; nodeId?: string };
+    };
 
 interface UseWebSocketOptions {
   onTrustGate?: (event: TrustGateEvent) => void;
   onActivity?: (post: ActivityPost) => void;
-  onExecutionUpdate?: (data: { executionId: string; status: string; nodeId?: string }) => void;
+  onExecutionUpdate?: (data: {
+    executionId: string;
+    status: string;
+    nodeId?: string;
+  }) => void;
 }
 
 export function useWebSocket(options: UseWebSocketOptions) {
@@ -23,7 +30,10 @@ export function useWebSocket(options: UseWebSocketOptions) {
   optionsRef.current = options;
 
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('accessToken')
+        : null;
     if (!token) return;
 
     const url = `${WS_URL}?token=${encodeURIComponent(token)}`;

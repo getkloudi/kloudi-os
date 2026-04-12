@@ -32,7 +32,10 @@ export function StoreSpace({ apps, onInstall, onSearch }: StoreSpaceProps) {
       {/* Hero */}
       <div
         className="px-10 pb-8 pt-12"
-        style={{ background: 'linear-gradient(180deg, var(--glow) 0%, transparent 100%)' }}
+        style={{
+          background:
+            'linear-gradient(180deg, var(--glow) 0%, transparent 100%)',
+        }}
       >
         <h1 className="mb-1 text-2xl font-bold tracking-[-0.02em] text-[var(--text-1)]">
           Store
@@ -92,15 +95,21 @@ export function StoreSpace({ apps, onInstall, onSearch }: StoreSpaceProps) {
                 {app.icon}
               </div>
               <div>
-                <div className="text-sm font-semibold text-[var(--text-1)]">{app.name}</div>
-                <div className="text-[11px] text-[var(--text-3)]">{app.author}</div>
+                <div className="text-sm font-semibold text-[var(--text-1)]">
+                  {app.name}
+                </div>
+                <div className="text-[11px] text-[var(--text-3)]">
+                  {app.author}
+                </div>
               </div>
             </div>
             <p className="mb-3 text-xs leading-[1.5] text-[var(--text-2)]">
               {app.description}
             </p>
             <div className="flex items-center justify-between">
-              <span className="font-mono text-[10px] text-[var(--text-4)]">{app.tag}</span>
+              <span className="font-mono text-[10px] text-[var(--text-4)]">
+                {app.tag}
+              </span>
               <button
                 onClick={() => !app.installed && onInstall?.(app.id)}
                 className={cn(

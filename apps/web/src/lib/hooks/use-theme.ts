@@ -18,7 +18,9 @@ export function useTheme() {
   const applyTheme = (t: Theme) => {
     const root = document.documentElement;
     if (t === 'auto') {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const prefersDark = window.matchMedia(
+        '(prefers-color-scheme: dark)'
+      ).matches;
       root.className = prefersDark ? 'dark' : '';
     } else {
       root.className = t === 'dark' ? 'dark' : '';

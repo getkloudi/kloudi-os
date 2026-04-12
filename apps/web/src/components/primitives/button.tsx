@@ -8,11 +8,9 @@ type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 const variantStyles: Record<ButtonVariant, string> = {
   primary:
     'bg-[var(--accent)] text-white hover:bg-[var(--accent-h)] hover:-translate-y-px',
-  secondary:
-    'bg-[var(--bg-3)] text-[var(--text-2)] hover:bg-[var(--bg-4)]',
+  secondary: 'bg-[var(--bg-3)] text-[var(--text-2)] hover:bg-[var(--bg-4)]',
   danger: 'bg-[var(--red)] text-white hover:brightness-110',
-  ghost:
-    'bg-transparent text-[var(--text-3)] hover:text-[var(--text-2)]',
+  ghost: 'bg-transparent text-[var(--text-3)] hover:text-[var(--text-2)]',
 };
 
 interface ButtonProps {

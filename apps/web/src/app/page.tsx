@@ -6,7 +6,10 @@ import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { useWebSocket } from '@/lib/hooks/use-websocket';
 import { NavRail } from '@/components/nav-rail';
-import { HomeSpace, type QuickAccessItem } from '@/components/spaces/home-space';
+import {
+  HomeSpace,
+  type QuickAccessItem,
+} from '@/components/spaces/home-space';
 import { BrowseSpace } from '@/components/spaces/browse-space';
 import { EditorSpace } from '@/components/spaces/editor-space';
 import { StoreSpace } from '@/components/spaces/store-space';
@@ -52,16 +55,42 @@ function getMockPosts(): ActivityPost[] {
       id: '1',
       type: 'execution_run',
       user: { username: 'sarah', initials: 'S' },
-      procedure: { id: 'p1', name: 'deploy-auth-flow', slug: 'engineering/deploy-auth-flow' },
+      procedure: {
+        id: 'p1',
+        name: 'deploy-auth-flow',
+        slug: 'engineering/deploy-auth-flow',
+      },
       execution: {
         id: 'exec_9kp2',
         status: 'running' as ExecutionStatus,
         progress: 55,
         nodes: [
-          { id: 'n1', label: 'Validate Config', type: 'tool_call', status: 'completed' as ExecutionStatus, duration: '0.4s' },
-          { id: 'n2', label: 'Generate Auth Module', type: 'llm_generate', status: 'completed' as ExecutionStatus, duration: '2.1s' },
-          { id: 'n3', label: 'Deploy to Staging', type: 'tool_call', status: 'running' as ExecutionStatus },
-          { id: 'n4', label: 'Verify Health', type: 'tool_call', status: 'pending' as ExecutionStatus },
+          {
+            id: 'n1',
+            label: 'Validate Config',
+            type: 'tool_call',
+            status: 'completed' as ExecutionStatus,
+            duration: '0.4s',
+          },
+          {
+            id: 'n2',
+            label: 'Generate Auth Module',
+            type: 'llm_generate',
+            status: 'completed' as ExecutionStatus,
+            duration: '2.1s',
+          },
+          {
+            id: 'n3',
+            label: 'Deploy to Staging',
+            type: 'tool_call',
+            status: 'running' as ExecutionStatus,
+          },
+          {
+            id: 'n4',
+            label: 'Verify Health',
+            type: 'tool_call',
+            status: 'pending' as ExecutionStatus,
+          },
         ],
       },
       reactions: [{ emoji: '👀', count: 2 }],
@@ -73,7 +102,11 @@ function getMockPosts(): ActivityPost[] {
       id: '2',
       type: 'execution_completed',
       user: { username: 'nitish', initials: 'N' },
-      procedure: { id: 'p2', name: 'analyze-codebase', slug: 'engineering/analyze-codebase' },
+      procedure: {
+        id: 'p2',
+        name: 'analyze-codebase',
+        slug: 'engineering/analyze-codebase',
+      },
       execution: {
         id: 'exec_clx8k2m',
         status: 'completed' as ExecutionStatus,
@@ -90,7 +123,11 @@ function getMockPosts(): ActivityPost[] {
       id: '3',
       type: 'execution_failed',
       user: { username: 'alex', initials: 'A' },
-      procedure: { id: 'p3', name: 'migrate-database', slug: 'engineering/migrate-database' },
+      procedure: {
+        id: 'p3',
+        name: 'migrate-database',
+        slug: 'engineering/migrate-database',
+      },
       execution: {
         id: 'exec_fail1',
         status: 'failed' as ExecutionStatus,
@@ -105,7 +142,11 @@ function getMockPosts(): ActivityPost[] {
       id: '4',
       type: 'awaiting_approval',
       user: { username: 'sarah', initials: 'S' },
-      procedure: { id: 'p4', name: 'security-review', slug: 'engineering/security-review' },
+      procedure: {
+        id: 'p4',
+        name: 'security-review',
+        slug: 'engineering/security-review',
+      },
       execution: {
         id: 'exec_wait1',
         status: 'waiting_input' as ExecutionStatus,
@@ -124,7 +165,11 @@ function getMockPosts(): ActivityPost[] {
       id: '5',
       type: 'procedure_edited',
       user: { username: 'nitish', initials: 'N' },
-      procedure: { id: 'p2', name: 'analyze-codebase', slug: 'engineering/analyze-codebase' },
+      procedure: {
+        id: 'p2',
+        name: 'analyze-codebase',
+        slug: 'engineering/analyze-codebase',
+      },
       editSummary: 'added "security-scan" node',
       timestamp: new Date(Date.now() - 3600000).toISOString(),
       relativeTime: '1h ago',
@@ -134,10 +179,38 @@ function getMockPosts(): ActivityPost[] {
 
 function getMockQuickAccess(): QuickAccessItem[] {
   return [
-    { id: 'p2', name: 'analyze-codebase', icon: '⚡', status: 'completed' as ExecutionStatus, meta: 'completed · 2m ago', progress: 100 },
-    { id: 'p1', name: 'deploy-auth-flow', icon: '⚡', status: 'running' as ExecutionStatus, meta: 'running · 2/4 nodes', progress: 55 },
-    { id: 'p5', name: 'onboard-user', icon: '🎯', status: 'completed' as ExecutionStatus, meta: 'completed · 3h ago', progress: 100 },
-    { id: 'p4', name: 'security-review', icon: '⚡', status: 'waiting_input' as ExecutionStatus, meta: '⚠ awaiting approval', progress: 60 },
+    {
+      id: 'p2',
+      name: 'analyze-codebase',
+      icon: '⚡',
+      status: 'completed' as ExecutionStatus,
+      meta: 'completed · 2m ago',
+      progress: 100,
+    },
+    {
+      id: 'p1',
+      name: 'deploy-auth-flow',
+      icon: '⚡',
+      status: 'running' as ExecutionStatus,
+      meta: 'running · 2/4 nodes',
+      progress: 55,
+    },
+    {
+      id: 'p5',
+      name: 'onboard-user',
+      icon: '🎯',
+      status: 'completed' as ExecutionStatus,
+      meta: 'completed · 3h ago',
+      progress: 100,
+    },
+    {
+      id: 'p4',
+      name: 'security-review',
+      icon: '⚡',
+      status: 'waiting_input' as ExecutionStatus,
+      meta: '⚠ awaiting approval',
+      progress: 60,
+    },
   ];
 }
 
@@ -151,9 +224,30 @@ function getMockExecution(): ExecutionDetail {
       'Analyzes repository structure, determines authentication strategy, and runs security scanning. Outputs a structured report with actionable recommendations.',
     status: 'completed',
     nodes: [
-      { id: 'n1', label: 'Analyze Repository Structure', type: 'llm_generate', status: 'completed', duration: '1.8s', tokens: 1204 },
-      { id: 'n2', label: 'Determine Auth Strategy', type: 'interpolative → "jwt-based"', status: 'completed', duration: '0.9s', tokens: 847 },
-      { id: 'n3', label: 'Run Security Scanner', type: 'tool_call → security-scan', status: 'completed', duration: '1.5s', tokens: 796 },
+      {
+        id: 'n1',
+        label: 'Analyze Repository Structure',
+        type: 'llm_generate',
+        status: 'completed',
+        duration: '1.8s',
+        tokens: 1204,
+      },
+      {
+        id: 'n2',
+        label: 'Determine Auth Strategy',
+        type: 'interpolative → "jwt-based"',
+        status: 'completed',
+        duration: '0.9s',
+        tokens: 847,
+      },
+      {
+        id: 'n3',
+        label: 'Run Security Scanner',
+        type: 'tool_call → security-scan',
+        status: 'completed',
+        duration: '1.5s',
+        tokens: 796,
+      },
     ],
     stats: { duration: '4.2s', tokens: 2847, nodesCompleted: 3, nodesTotal: 3 },
     startedAt: new Date(Date.now() - 300000).toISOString(),
@@ -167,7 +261,8 @@ function getMockAgentMessages(): AgentMessage[] {
       id: 'm1',
       role: 'agent',
       timestamp: '12:04:22',
-      content: 'Starting <code>analyze-codebase</code><br>Workspace: default · Timeout: 600s',
+      content:
+        'Starting <code>analyze-codebase</code><br>Workspace: default · Timeout: 600s',
     },
     {
       id: 'm2',
@@ -194,7 +289,8 @@ function getMockAgentMessages(): AgentMessage[] {
       id: 'm5',
       role: 'agent',
       timestamp: '12:04:27',
-      content: '<span style="color:var(--green)">✓</span> <strong>Done</strong> — 3/3 · 2,847 tk · 4.2s',
+      content:
+        '<span style="color:var(--green)">✓</span> <strong>Done</strong> — 3/3 · 2,847 tk · 4.2s',
     },
   ];
 }
@@ -215,7 +311,9 @@ export default function Home() {
   const [execution, setExecution] = useState<ExecutionDetail | null>(null);
   const [storeApps, setStoreApps] = useState<StoreApp[]>([]);
   const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
-  const [trustGateEvent, setTrustGateEvent] = useState<TrustGateEvent | null>(null);
+  const [trustGateEvent, setTrustGateEvent] = useState<TrustGateEvent | null>(
+    null
+  );
 
   // WebSocket
   const { sendTrustGateResponse } = useWebSocket({
@@ -248,11 +346,7 @@ export default function Home() {
       // Use API data if available, otherwise mock
       setPosts(activityPosts.length > 0 ? activityPosts : getMockPosts());
       setProcedures(tree);
-      setFiles(
-        tree.length > 0
-          ? flattenTreeToFiles(tree)
-          : getMockFiles()
-      );
+      setFiles(tree.length > 0 ? flattenTreeToFiles(tree) : getMockFiles());
       setQuickAccess(getMockQuickAccess());
       setStoreApps(apps);
       setExecution(getMockExecution());
@@ -266,17 +360,14 @@ export default function Home() {
     setActiveSpace(space);
   }, []);
 
-  const handleProcedureClick = useCallback(
-    (id: string) => {
-      // Navigate to editor with this procedure
-      setActiveSpace('editor');
-      // Load execution detail for this procedure
-      api.getExecutionDetail(id).then((detail) => {
-        if (detail) setExecution(detail);
-      });
-    },
-    []
-  );
+  const handleProcedureClick = useCallback((id: string) => {
+    // Navigate to editor with this procedure
+    setActiveSpace('editor');
+    // Load execution detail for this procedure
+    api.getExecutionDetail(id).then((detail) => {
+      if (detail) setExecution(detail);
+    });
+  }, []);
 
   const handleTrustGateApprove = useCallback(
     (executionId: string, nodeId: string) => {
@@ -367,9 +458,7 @@ export default function Home() {
         )}
 
         {/* Store */}
-        {activeSpace === 'store' && (
-          <StoreSpace apps={storeApps} />
-        )}
+        {activeSpace === 'store' && <StoreSpace apps={storeApps} />}
       </div>
 
       {/* Command palette */}
@@ -409,14 +498,57 @@ function flattenTreeToFiles(nodes: TreeNode[]): ProcedureFile[] {
 
 function getMockFiles(): ProcedureFile[] {
   return [
-    { id: 'p2', name: 'analyze-codebase', slug: 'analyze-codebase', type: 'skill' },
-    { id: 'p1', name: 'deploy-auth-flow', slug: 'deploy-auth-flow', type: 'skill' },
-    { id: 'p3', name: 'migrate-database', slug: 'migrate-database', type: 'skill' },
+    {
+      id: 'p2',
+      name: 'analyze-codebase',
+      slug: 'analyze-codebase',
+      type: 'skill',
+    },
+    {
+      id: 'p1',
+      name: 'deploy-auth-flow',
+      slug: 'deploy-auth-flow',
+      type: 'skill',
+    },
+    {
+      id: 'p3',
+      name: 'migrate-database',
+      slug: 'migrate-database',
+      type: 'skill',
+    },
     { id: 'p5', name: 'onboard-user', slug: 'onboard-user', type: 'task' },
-    { id: 'p6', name: 'team-setup-guide', slug: 'team-setup-guide', type: 'guide' },
-    { id: 'p4', name: 'security-review', slug: 'security-review', type: 'skill' },
-    { id: 'f1', name: 'onboarding', slug: 'onboarding', type: 'folder', isFolder: true },
-    { id: 'f2', name: 'security', slug: 'security', type: 'folder', isFolder: true },
-    { id: 'f3', name: 'templates', slug: 'templates', type: 'folder', isFolder: true },
+    {
+      id: 'p6',
+      name: 'team-setup-guide',
+      slug: 'team-setup-guide',
+      type: 'guide',
+    },
+    {
+      id: 'p4',
+      name: 'security-review',
+      slug: 'security-review',
+      type: 'skill',
+    },
+    {
+      id: 'f1',
+      name: 'onboarding',
+      slug: 'onboarding',
+      type: 'folder',
+      isFolder: true,
+    },
+    {
+      id: 'f2',
+      name: 'security',
+      slug: 'security',
+      type: 'folder',
+      isFolder: true,
+    },
+    {
+      id: 'f3',
+      name: 'templates',
+      slug: 'templates',
+      type: 'folder',
+      isFolder: true,
+    },
   ];
 }

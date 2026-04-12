@@ -38,7 +38,8 @@ interface BadgeProps {
 }
 
 export function Badge({ variant, status, children, className }: BadgeProps) {
-  const resolvedVariant = variant ?? (status ? statusToVariant[status] : 'neutral');
+  const resolvedVariant =
+    variant ?? (status ? statusToVariant[status] : 'neutral');
   const label = children ?? (status ? statusLabels[status] : '');
 
   return (
