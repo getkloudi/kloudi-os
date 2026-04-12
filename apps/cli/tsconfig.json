@@ -17,6 +17,7 @@
   ],
   "references": [
     { "path": "../../packages/shared" },
-    { "path": "../../packages/infrastructure" }
+    { "path": "../../packages/infrastructure" },
+    { "path": "../../packages/sdk" }
   ]
 }

@@ -169,6 +169,9 @@ importers:
       glob:
         specifier: ^13.0.0
         version: 13.0.0
+      ws:
+        specifier: ^8.18.1
+        version: 8.19.0
     devDependencies:
       '@types/node':
         specifier: ^25.1.0

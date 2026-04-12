@@ -4,7 +4,7 @@ import { Config } from '@kloudi/shared/config';
 import { Logger } from '@kloudi/shared/logger';
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { setupPackageCommands } from './core/command-discovery.js';
+import { setupCommands } from './core/command-discovery.js';
 
 // Configuration flow: local.yml → config system → CLI, with verbose flag as runtime override
 // Set CLI-friendly logging (only errors) unless user specified otherwise
@@ -35,24 +35,17 @@ program
 `)
   );
 
-// Setup commands from all packages (explicit imports, no magic)
-await setupPackageCommands();
+// Register CLI commands
+await setupCommands(program);
 
 // Add help examples
 program.addHelpText(
   'after',
   chalk.gray(`
 Examples:
-  # Agent commands
-  $ kloudi agent list
-  $ kloudi agent execute my-agent --request "analyze this"
-  $ kloudi agent info my-agent
-
-  # Tool commands (when @kloudi/agent-tools adds CLI)
-  $ kloudi tool list
-  $ kloudi tool execute scan_files --path=./src
-
-Explicit composition: Packages export setup functions, no magic!
+  $ kloudi import data/seed/procedures/engineering-impl.json
+  $ kloudi run engineering-impl -p jiraStoryId=PROJ-123
+  $ kloudi run shared-standup
 `)
 );
 

@@ -78,6 +78,10 @@ export class KloudiClient {
     return this.request<Procedure>('GET', `/api/procedures/${idOrSlug}`);
   }
 
+  async createProcedure(data: CreateProcedureInput): Promise<Procedure> {
+    return this.request<Procedure>('POST', '/api/procedures', data);
+  }
+
   async runProcedure(
     id: string,
     options?: { dryRun?: boolean; input?: Record<string, unknown> }
@@ -132,6 +136,17 @@ export interface Execution {
   startedAt: string;
   completedAt?: string;
   result?: unknown;
+}
+
+export interface CreateProcedureInput {
+  name: string;
+  slug: string;
+  description: string;
+  level: string;
+  graph: unknown;
+  parameters: unknown;
+  constraints: unknown;
+  metadata: unknown;
 }
 
 export interface HealthResponse {
