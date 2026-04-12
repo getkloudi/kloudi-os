@@ -35,7 +35,12 @@ function extractFrontmatter(content: string): {
   frontmatter: ParsedSkill['frontmatter'];
   body: string;
 } {
-  const defaults = { name: '', version: '1.0.0', description: '', allowedTools: [] };
+  const defaults = {
+    name: '',
+    version: '1.0.0',
+    description: '',
+    allowedTools: [],
+  };
 
   const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
   if (!match) {
@@ -113,7 +118,9 @@ function extractSections(body: string): ParsedSection[] {
     if (currentSection) {
       currentSection.content = contentLines.join('\n').trim();
       currentSection.skillReferences = extractSkillRefs(currentSection.content);
-      currentSection.hasDecisionPoint = hasDecisionPoint(currentSection.content);
+      currentSection.hasDecisionPoint = hasDecisionPoint(
+        currentSection.content
+      );
       sections.push(currentSection);
     }
   };
@@ -177,7 +184,10 @@ function extractSkillRefs(content: string): string[] {
   for (const m of matches) {
     const ref = m[1] ?? '';
     // Filter out common false positives
-    if (ref && !['api', 'ws', 'health', 'tmp', 'dev', 'usr', 'bin', 'etc'].includes(ref)) {
+    if (
+      ref &&
+      !['api', 'ws', 'health', 'tmp', 'dev', 'usr', 'bin', 'etc'].includes(ref)
+    ) {
       refs.add(ref);
     }
   }
@@ -188,6 +198,6 @@ function hasDecisionPoint(content: string): boolean {
   // Check for lettered options: A), B), C) or a), b), c)
   const hasLettered = /^[A-Da-d]\)\s/m.test(content);
   // Check for "Options:" header
-  const hasOptionsHeader = /^Options:/mi.test(content);
+  const hasOptionsHeader = /^Options:/im.test(content);
   return hasLettered || hasOptionsHeader;
 }

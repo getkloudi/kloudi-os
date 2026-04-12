@@ -27,8 +27,10 @@ export function importSkillMd(content: string): {
 
   const nodeIds = new Set(procedure.graph.nodes.map((n) => n.id));
   for (const edge of procedure.graph.edges) {
-    if (!nodeIds.has(edge.from)) warnings.push(`Edge references unknown node: ${edge.from}`);
-    if (!nodeIds.has(edge.to)) warnings.push(`Edge references unknown node: ${edge.to}`);
+    if (!nodeIds.has(edge.from))
+      warnings.push(`Edge references unknown node: ${edge.from}`);
+    if (!nodeIds.has(edge.to))
+      warnings.push(`Edge references unknown node: ${edge.to}`);
   }
 
   return { procedure, warnings };

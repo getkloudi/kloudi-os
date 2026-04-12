@@ -82,7 +82,8 @@ function buildConfig() {
     database: {
       url: env('DATABASE_URL'),
       maxConnections: Number(
-        env('DATABASE_MAX_CONNECTIONS') ?? (isProduction ? 50 : isDevelopment ? 5 : 10)
+        env('DATABASE_MAX_CONNECTIONS') ??
+          (isProduction ? 50 : isDevelopment ? 5 : 10)
       ),
       connectionTimeout: Number(
         env('DATABASE_CONNECTION_TIMEOUT') ?? (isProduction ? 60000 : 30000)
@@ -93,27 +94,41 @@ function buildConfig() {
       type: env('CACHE_TYPE') ?? 'redis',
       redisUrl: env('REDIS_URL'),
       defaultTtl: Number(
-        env('CACHE_DEFAULT_TTL') ?? (isProduction ? 7200 : isDevelopment ? 1800 : 300)
+        env('CACHE_DEFAULT_TTL') ??
+          (isProduction ? 7200 : isDevelopment ? 1800 : 300)
       ),
       maxMemory: env('CACHE_MAX_MEMORY'),
     },
     auth: {
       jwtSecret: env('JWT_SECRET'),
-      jwtExpiresIn: env('JWT_EXPIRES_IN') ?? (isProduction ? '24h' : isDevelopment ? '12h' : '15m'),
+      jwtExpiresIn:
+        env('JWT_EXPIRES_IN') ??
+        (isProduction ? '24h' : isDevelopment ? '12h' : '15m'),
       bcryptRounds: Number(env('BCRYPT_ROUNDS') ?? (isProduction ? 14 : 10)),
       sessionSecret: env('SESSION_SECRET'),
     },
     environment: {
       nodeEnv,
       logLevel:
-        env('LOG_LEVEL') ?? (isBeta ? 'info' : isProduction ? 'warn' : isDevelopment ? 'debug' : 'error'),
+        env('LOG_LEVEL') ??
+        (isBeta
+          ? 'info'
+          : isProduction
+            ? 'warn'
+            : isDevelopment
+              ? 'debug'
+              : 'error'),
     },
     events: {
       enabled: env('EVENTS_ENABLED') !== 'false',
-      retryAttempts: Number(env('EVENTS_RETRY_ATTEMPTS') ?? (isProduction ? 5 : 3)),
+      retryAttempts: Number(
+        env('EVENTS_RETRY_ATTEMPTS') ?? (isProduction ? 5 : 3)
+      ),
     },
     application: {
-      port: Number(env('PORT') ?? (isProduction ? 8080 : isDevelopment ? 3001 : 3002)),
+      port: Number(
+        env('PORT') ?? (isProduction ? 8080 : isDevelopment ? 3001 : 3002)
+      ),
       host: env('HOST') ?? (isDevelopment ? 'localhost' : '0.0.0.0'),
     },
     cors: {
@@ -121,8 +136,7 @@ function buildConfig() {
       allowedMethods: env('CORS_ALLOWED_METHODS') ?? 'GET,POST,PUT,DELETE',
       allowedHeaders:
         env('CORS_ALLOWED_HEADERS') ?? 'Content-Type,Authorization',
-      allowCredentials:
-        env('CORS_ALLOW_CREDENTIALS') === 'true' || false,
+      allowCredentials: env('CORS_ALLOW_CREDENTIALS') === 'true' || false,
     },
     ai: {
       provider: env('AI_PROVIDER') ?? 'openai',
@@ -176,7 +190,11 @@ function getByPath(obj: NestedRecord, path: string): unknown {
   const parts = path.split('.');
   let current: unknown = obj;
   for (const part of parts) {
-    if (current === null || current === undefined || typeof current !== 'object') {
+    if (
+      current === null ||
+      current === undefined ||
+      typeof current !== 'object'
+    ) {
       return undefined;
     }
     current = (current as NestedRecord)[part];

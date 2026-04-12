@@ -112,10 +112,14 @@ export function setupRoutes(app: Application): void {
         });
       }
     } catch (error) {
-      logger.error('Filesystem operation failed', error instanceof Error ? error : null, {
-        context: 'fs-error',
-        path: req.params['path'],
-      });
+      logger.error(
+        'Filesystem operation failed',
+        error instanceof Error ? error : null,
+        {
+          context: 'fs-error',
+          path: req.params['path'],
+        }
+      );
       res.status(500).json({ error: 'Filesystem operation failed' });
     }
   });
@@ -146,9 +150,13 @@ export function setupRoutes(app: Application): void {
         data: items,
       });
     } catch (error) {
-      logger.error('Root listing failed', error instanceof Error ? error : null, {
-        context: 'fs-root-error',
-      });
+      logger.error(
+        'Root listing failed',
+        error instanceof Error ? error : null,
+        {
+          context: 'fs-root-error',
+        }
+      );
       res.status(500).json({ error: 'Failed to list root directory' });
     }
   });

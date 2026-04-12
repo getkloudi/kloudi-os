@@ -11,7 +11,9 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
   "mcpServers": {
     "lore": {
       "command": "node",
-      "args": ["/Users/nitish/tmp/boilerplate/js-monorepo-boilerplate/apps/mcp-server/index.js"]
+      "args": [
+        "/Users/nitish/tmp/boilerplate/js-monorepo-boilerplate/apps/mcp-server/index.js"
+      ]
     }
   }
 }

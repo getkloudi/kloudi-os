@@ -26,21 +26,33 @@ interface Schema<T> {
 /** Result type for generateText */
 interface TextResult {
   text: string;
-  usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
   [key: string]: unknown;
 }
 
 /** Result type for streamText */
 interface StreamResult {
   textStream: AsyncIterable<string>;
-  usage?: Promise<{ promptTokens: number; completionTokens: number; totalTokens: number }>;
+  usage?: Promise<{
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  }>;
   [key: string]: unknown;
 }
 
 /** Result type for generateObject */
 interface ObjectResult<T> {
   object: T;
-  usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
   [key: string]: unknown;
 }
 
@@ -68,7 +80,7 @@ interface AISDKModule {
 let _ai: AISDKModule | null = null;
 async function getAI(): Promise<AISDKModule> {
   if (!_ai) {
-    _ai = await import('ai') as unknown as AISDKModule;
+    _ai = (await import('ai')) as unknown as AISDKModule;
   }
   return _ai;
 }
@@ -100,7 +112,11 @@ interface TrackingMetadata {
 /** Logger interface from shared package */
 interface LoggerInstance {
   info: (message: string, metadata?: Record<string, unknown>) => void;
-  error: (message: string, error?: Error | null, metadata?: Record<string, unknown>) => void;
+  error: (
+    message: string,
+    error?: Error | null,
+    metadata?: Record<string, unknown>
+  ) => void;
   warn: (message: string, metadata?: Record<string, unknown>) => void;
   debug: (message: string, metadata?: Record<string, unknown>) => void;
 }
@@ -138,7 +154,10 @@ export class AIClient {
     this.provider = provider ?? aiDefaults.provider;
     const modelName = model ?? aiDefaults.model;
     try {
-      this.model = ProviderManager.getModel(this.provider, modelName) as unknown as LanguageModel;
+      this.model = ProviderManager.getModel(
+        this.provider,
+        modelName
+      ) as unknown as LanguageModel;
 
       this.usageTracker = new UsageTracker({
         context,
@@ -219,7 +238,11 @@ export class AIClient {
     return this.#executeAIOperation(
       'generateObject',
       () => generateObject({ model: this.model, messages, schema, ...options }),
-      { provider: this.provider, messageCount: messages.length, schemaProvided: !!schema }
+      {
+        provider: this.provider,
+        messageCount: messages.length,
+        schemaProvided: !!schema,
+      }
     );
   }
 }

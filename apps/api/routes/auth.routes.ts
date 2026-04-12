@@ -73,7 +73,11 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * @param body - Request body with email, username, password
  * @returns Error message or null if valid
  */
-function validateRegistrationInput({ email, username, password }: RegistrationInput): string | null {
+function validateRegistrationInput({
+  email,
+  username,
+  password,
+}: RegistrationInput): string | null {
   if (!email || !username || !password) {
     return 'Email, username, and password are required';
   }
@@ -82,7 +86,11 @@ function validateRegistrationInput({ email, username, password }: RegistrationIn
     return 'Invalid email format';
   }
 
-  if (typeof username !== 'string' || username.length < 3 || username.length > 30) {
+  if (
+    typeof username !== 'string' ||
+    username.length < 3 ||
+    username.length > 30
+  ) {
     return 'Username must be between 3 and 30 characters';
   }
 
@@ -127,7 +135,11 @@ export function setupRoutes(app: Application): void {
       const { email, username, password } = req.body as RegistrationInput;
 
       // Validate input
-      const validationError = validateRegistrationInput({ email, username, password });
+      const validationError = validateRegistrationInput({
+        email,
+        username,
+        password,
+      });
       if (validationError) {
         res.status(400).json({ error: validationError });
         return;
@@ -151,8 +163,13 @@ export function setupRoutes(app: Application): void {
       });
 
       if (existingUser) {
-        const field = existingUser.email === validEmail.toLowerCase() ? 'email' : 'username';
-        res.status(409).json({ error: `A user with that ${field} already exists` });
+        const field =
+          existingUser.email === validEmail.toLowerCase()
+            ? 'email'
+            : 'username';
+        res
+          .status(409)
+          .json({ error: `A user with that ${field} already exists` });
         return;
       }
 
@@ -210,9 +227,13 @@ export function setupRoutes(app: Application): void {
         sessionId: sessionData.sessionId,
       });
     } catch (error) {
-      logger.error('Registration failed', error instanceof Error ? error : null, {
-        context: 'auth-register-error',
-      });
+      logger.error(
+        'Registration failed',
+        error instanceof Error ? error : null,
+        {
+          context: 'auth-register-error',
+        }
+      );
       res.status(500).json({ error: 'Registration failed' });
     }
   });
@@ -251,7 +272,10 @@ export function setupRoutes(app: Application): void {
       }
 
       // Compare password
-      const passwordMatch = await Auth.comparePassword(validPassword, user.password);
+      const passwordMatch = await Auth.comparePassword(
+        validPassword,
+        user.password
+      );
       if (!passwordMatch) {
         res.status(401).json({ error: 'Invalid credentials' });
         return;
@@ -321,7 +345,7 @@ export function setupRoutes(app: Application): void {
       }
 
       // Validate the refresh token
-      const decoded = await Auth.validateToken(refreshToken) as DecodedToken;
+      const decoded = (await Auth.validateToken(refreshToken)) as DecodedToken;
 
       if (decoded.type !== 'refresh') {
         res.status(401).json({ error: 'Invalid token type' });
@@ -360,9 +384,13 @@ export function setupRoutes(app: Application): void {
         sessionId: newSessionData.sessionId,
       });
     } catch (error) {
-      logger.error('Token refresh failed', error instanceof Error ? error : null, {
-        context: 'auth-refresh-error',
-      });
+      logger.error(
+        'Token refresh failed',
+        error instanceof Error ? error : null,
+        {
+          context: 'auth-refresh-error',
+        }
+      );
       res.status(401).json({ error: 'Invalid or expired refresh token' });
     }
   });
@@ -391,7 +419,9 @@ export function setupRoutes(app: Application): void {
       // Validate the token and get decoded payload
       let decoded: DecodedToken;
       try {
-        decoded = await Auth.validateSession(token) as unknown as DecodedToken;
+        decoded = (await Auth.validateSession(
+          token
+        )) as unknown as DecodedToken;
       } catch {
         // Even if the token is invalid/expired, still try to clean up
         res.json({ message: 'Logged out' });

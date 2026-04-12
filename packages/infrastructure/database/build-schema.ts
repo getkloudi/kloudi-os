@@ -6,9 +6,12 @@ import { fileURLToPath } from 'url';
 // Inline logger — this script must run before workspace packages are built,
 // so it cannot import from @kloudi/shared.
 const logger = {
-  info: (msg: string, _meta?: Record<string, unknown>) => console.log(`[schema] ${msg}`),
-  error: (msg: string, _err?: Error | null, _meta?: Record<string, unknown>) => console.error(`[schema] ${msg}`),
-  warn: (msg: string, _meta?: Record<string, unknown>) => console.warn(`[schema] ${msg}`),
+  info: (msg: string, _meta?: Record<string, unknown>) =>
+    console.log(`[schema] ${msg}`),
+  error: (msg: string, _err?: Error | null, _meta?: Record<string, unknown>) =>
+    console.error(`[schema] ${msg}`),
+  warn: (msg: string, _meta?: Record<string, unknown>) =>
+    console.warn(`[schema] ${msg}`),
   debug: (msg: string, _meta?: Record<string, unknown>) => {},
 };
 
@@ -79,7 +82,12 @@ datasource db {
       });
 
       packages.forEach((pkg) => {
-        const schemaPath = path.join(packagesDir, pkg, 'prisma', 'schema.prisma');
+        const schemaPath = path.join(
+          packagesDir,
+          pkg,
+          'prisma',
+          'schema.prisma'
+        );
         if (fs.existsSync(schemaPath)) {
           schemaFiles.push({
             path: schemaPath,
@@ -99,7 +107,7 @@ datasource db {
         return (
           fs.statSync(itemPath).isDirectory() &&
           !item.startsWith('.') &&
-          item !== 'api'  // Exclude apps/api
+          item !== 'api' // Exclude apps/api
         );
       });
 

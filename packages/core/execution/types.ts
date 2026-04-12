@@ -57,7 +57,7 @@ export interface NodeExecutor {
   execute(
     node: import('@kloudi/shared/types').GraphNode,
     ctx: ExecutionContext,
-    engine?: ExecutionEngine,
+    engine?: ExecutionEngine
   ): Promise<NodeResult>;
 }
 
@@ -85,22 +85,32 @@ export interface TrustGateContext {
   nodeId: string;
   nodeName: string;
   nodeType: NodeType;
-  action: string;           // human-readable: "Call Jira API: createIssue"
+  action: string; // human-readable: "Call Jira API: createIssue"
   config: Record<string, unknown>; // resolved node config
-  reasoning?: string;       // LLM reasoning if available
-  visitCount: number;       // how many times this node has run
+  reasoning?: string; // LLM reasoning if available
+  visitCount: number; // how many times this node has run
 }
 
 // --- Callbacks ---
 
 export interface ExecutionCallbacks {
   onNodeStart?: (executionId: string, nodeId: string, nodeName: string) => void;
-  onNodeComplete?: (executionId: string, nodeId: string, output: unknown) => void;
+  onNodeComplete?: (
+    executionId: string,
+    nodeId: string,
+    output: unknown
+  ) => void;
   onNodeFailed?: (executionId: string, nodeId: string, error: string) => void;
   onExecutionComplete?: (executionId: string, result: unknown) => void;
   onExecutionFailed?: (executionId: string, error: string) => void;
-  onHumanApprovalNeeded?: (executionId: string, nodeId: string, question: string) => Promise<string>;
-  onTrustGateTriggered?: (context: TrustGateContext) => Promise<'approve' | 'reject'>;
+  onHumanApprovalNeeded?: (
+    executionId: string,
+    nodeId: string,
+    question: string
+  ) => Promise<string>;
+  onTrustGateTriggered?: (
+    context: TrustGateContext
+  ) => Promise<'approve' | 'reject'>;
 }
 
 // --- Context types ---

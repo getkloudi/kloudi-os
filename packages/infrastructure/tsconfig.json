@@ -9,13 +9,6 @@
     "noEmit": false
   },
   "include": ["**/*.ts"],
-  "exclude": [
-    "**/*.test.ts",
-    "**/*.spec.ts",
-    "dist",
-    "node_modules"
-  ],
-  "references": [
-    { "path": "../shared" }
-  ]
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "dist", "node_modules"],
+  "references": [{ "path": "../shared" }]
 }

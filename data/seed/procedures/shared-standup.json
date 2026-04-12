@@ -126,9 +126,17 @@
     ],
     "edges": [
       { "id": "e1", "source": "read_git_log", "target": "synthesize_update" },
-      { "id": "e2", "source": "read_jira_board", "target": "synthesize_update" },
+      {
+        "id": "e2",
+        "source": "read_jira_board",
+        "target": "synthesize_update"
+      },
       { "id": "e3", "source": "read_open_prs", "target": "synthesize_update" },
-      { "id": "e4", "source": "synthesize_update", "target": "choose_delivery" },
+      {
+        "id": "e4",
+        "source": "synthesize_update",
+        "target": "choose_delivery"
+      },
       { "id": "e5", "source": "choose_delivery", "target": "deliver_update" }
     ]
   }

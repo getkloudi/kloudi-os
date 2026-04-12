@@ -10,7 +10,8 @@
       "cache": false
     },
     "type-check": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^build"]
     },
     "test": {
       "cache": false,

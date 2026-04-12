@@ -260,7 +260,11 @@ export function {{name}}({ ...props }: {{name}}Props) {
         required: true,
         description: 'Component name in PascalCase',
       },
-      path: { type: 'string', required: false, description: 'Target directory' },
+      path: {
+        type: 'string',
+        required: false,
+        description: 'Target directory',
+      },
       withTests: {
         type: 'boolean',
         default: true,
@@ -368,7 +372,8 @@ Generated Files:
   {
     slug: 'craft-clone',
     name: 'Craft Clone',
-    description: 'Build a Craft-like document editor as an Electron application',
+    description:
+      'Build a Craft-like document editor as an Electron application',
     level: 'project',
     maturity: 'draft',
     graph: {
@@ -461,7 +466,8 @@ Design and implement the session inbox where users can:
   {
     slug: 'implement-local-storage',
     name: 'Implement Local Storage',
-    description: 'Set up SQLite-based local storage for offline-first operation',
+    description:
+      'Set up SQLite-based local storage for offline-first operation',
     level: 'task',
     maturity: 'draft',
     graph: {
@@ -499,7 +505,9 @@ async function seed(): Promise<void> {
 
   const adapter = new PrismaPg({ connectionString: databaseUrl });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const prisma = new (PrismaClient as unknown as new (options: { adapter: typeof adapter }) => SeedPrismaClient)({ adapter });
+  const prisma = new (PrismaClient as unknown as new (options: {
+    adapter: typeof adapter;
+  }) => SeedPrismaClient)({ adapter });
 
   try {
     await prisma.$connect();

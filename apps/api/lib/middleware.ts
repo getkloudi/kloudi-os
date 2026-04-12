@@ -53,7 +53,10 @@ function getAllowedOrigins(): string[] {
 /**
  * Check if an origin is allowed based on CORS configuration
  */
-function isOriginAllowed(origin: string | string[] | undefined, allowedOrigins: string[]): boolean {
+function isOriginAllowed(
+  origin: string | string[] | undefined,
+  allowedOrigins: string[]
+): boolean {
   if (!origin) {
     return false; // No origin header (same-origin requests)
   }
@@ -108,12 +111,14 @@ export async function setupMiddleware(app: Application): Promise<void> {
       }
 
       const corsConfig = Config.getCorsConfig();
-      const allowedMethods = typeof corsConfig.allowedMethods === 'string'
-        ? corsConfig.allowedMethods
-        : 'GET, POST, PUT, DELETE, OPTIONS';
-      const allowedHeaders = typeof corsConfig.allowedHeaders === 'string'
-        ? corsConfig.allowedHeaders
-        : 'Content-Type, Authorization';
+      const allowedMethods =
+        typeof corsConfig.allowedMethods === 'string'
+          ? corsConfig.allowedMethods
+          : 'GET, POST, PUT, DELETE, OPTIONS';
+      const allowedHeaders =
+        typeof corsConfig.allowedHeaders === 'string'
+          ? corsConfig.allowedHeaders
+          : 'Content-Type, Authorization';
       res.setHeader('Access-Control-Allow-Methods', allowedMethods);
       res.setHeader('Access-Control-Allow-Headers', allowedHeaders);
       res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -152,9 +157,13 @@ export async function setupMiddleware(app: Application): Promise<void> {
       corsOrigins: getAllowedOrigins(),
     });
   } catch (error) {
-    logger.error('❌ Middleware setup failed', error instanceof Error ? error : null, {
-      context: 'middleware-setup-error',
-    });
+    logger.error(
+      '❌ Middleware setup failed',
+      error instanceof Error ? error : null,
+      {
+        context: 'middleware-setup-error',
+      }
+    );
     throw error;
   }
 }

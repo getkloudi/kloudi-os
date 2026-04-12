@@ -115,9 +115,7 @@ function executeCLITool(
   const timer = logger.time(`cli:${toolName}`);
 
   return new Promise((resolve, reject) => {
-    const childEnv = env
-      ? { ...process.env, ...env }
-      : process.env;
+    const childEnv = env ? { ...process.env, ...env } : process.env;
 
     const child = execFile(
       command,
@@ -154,9 +152,7 @@ function executeCLITool(
 
           // Non-zero exit code
           const exitCode =
-            'code' in error && typeof error.code === 'number'
-              ? error.code
-              : 1;
+            'code' in error && typeof error.code === 'number' ? error.code : 1;
           const result: CLIToolResult = {
             stdout: stdout ?? '',
             stderr: stderr ?? '',

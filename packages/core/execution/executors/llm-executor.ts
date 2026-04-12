@@ -1,5 +1,11 @@
 import type { GraphNode } from '@kloudi/shared/types';
-import type { ExecutionContext, NodeResult, NodeExecutor, ExecutionEngine, LLMConfig } from '../types.js';
+import type {
+  ExecutionContext,
+  NodeResult,
+  NodeExecutor,
+  ExecutionEngine,
+  LLMConfig,
+} from '../types.js';
 import type { ContextManager } from '../context-manager.js';
 import { Logger } from '@kloudi/shared/logger';
 
@@ -8,25 +14,25 @@ const logger = Logger.getInstance('llm-executor');
 interface AIClient {
   generateText(
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-    options?: Record<string, unknown>,
+    options?: Record<string, unknown>
   ): Promise<{ text: string; usage?: { totalTokens?: number } }>;
   generateObject<T>(
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
     schema: unknown,
-    options?: Record<string, unknown>,
+    options?: Record<string, unknown>
   ): Promise<{ object: T; usage?: { totalTokens?: number } }>;
 }
 
 export class LLMExecutor implements NodeExecutor {
   constructor(
     private aiClient: AIClient,
-    private contextManager: ContextManager,
+    private contextManager: ContextManager
   ) {}
 
   async execute(
     node: GraphNode,
     ctx: ExecutionContext,
-    _engine?: ExecutionEngine,
+    _engine?: ExecutionEngine
   ): Promise<NodeResult> {
     const config = node.config as unknown as LLMConfig;
     const resolvedPrompt =
@@ -34,8 +40,14 @@ export class LLMExecutor implements NodeExecutor {
         ? config.prompt_template
         : JSON.stringify(config);
 
-    const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
-      { role: 'system', content: this.contextManager.assemble(ctx.contextWindow) },
+    const messages: Array<{
+      role: 'system' | 'user' | 'assistant';
+      content: string;
+    }> = [
+      {
+        role: 'system',
+        content: this.contextManager.assemble(ctx.contextWindow),
+      },
       { role: 'user', content: resolvedPrompt },
     ];
 
@@ -46,7 +58,7 @@ export class LLMExecutor implements NodeExecutor {
           this.aiClient.generateObject(messages, {
             parse: (data: unknown) => data,
             ...config.output_schema,
-          }),
+          })
         );
         return {
           status: 'completed',
@@ -56,7 +68,7 @@ export class LLMExecutor implements NodeExecutor {
       }
 
       const result = await this.retryOnFailure(() =>
-        this.aiClient.generateText(messages),
+        this.aiClient.generateText(messages)
       );
 
       // Handle empty response (CEO review requirement)
@@ -91,9 +103,13 @@ export class LLMExecutor implements NodeExecutor {
       };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      logger.error('LLM execution failed', err instanceof Error ? err : new Error(errorMsg), {
-        nodeId: node.id,
-      });
+      logger.error(
+        'LLM execution failed',
+        err instanceof Error ? err : new Error(errorMsg),
+        {
+          nodeId: node.id,
+        }
+      );
       return { status: 'failed', output: null, error: errorMsg };
     }
   }

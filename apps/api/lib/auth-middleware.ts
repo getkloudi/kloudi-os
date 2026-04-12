@@ -81,7 +81,11 @@ interface ValidatedSession {
  * 3. Attaches decoded user information to req.user.
  * 4. Passes control to the next handler, or returns 401 on failure.
  */
-export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
+export function authMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
   // Allow OPTIONS preflight requests through without auth
   if (req.method === 'OPTIONS') {
     next();

@@ -38,7 +38,11 @@ import { EventBus } from './events/event-bus.js';
 /** Logger interface from shared package */
 interface LoggerInstance {
   info: (message: string, metadata?: Record<string, unknown>) => void;
-  error: (message: string, error?: Error | null, metadata?: Record<string, unknown>) => void;
+  error: (
+    message: string,
+    error?: Error | null,
+    metadata?: Record<string, unknown>
+  ) => void;
   warn: (message: string, metadata?: Record<string, unknown>) => void;
   debug: (message: string, metadata?: Record<string, unknown>) => void;
 }
@@ -93,7 +97,10 @@ async function initializeInfrastructure(): Promise<void> {
   } catch (error) {
     const err = error as Error;
     logger.error('Infrastructure initialization failed', err);
-    logger.error('Run "docker compose up -d" to start PostgreSQL and Redis', null);
+    logger.error(
+      'Run "docker compose up -d" to start PostgreSQL and Redis',
+      null
+    );
     throw new Error(`Infrastructure initialization failed: ${err.message}`);
   }
 }

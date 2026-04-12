@@ -8,10 +8,7 @@ import { Logger } from '@kloudi/shared/logger';
 import type { ToolRegistry } from './registry.js';
 import { registerBuiltinTools } from './builtin/index.js';
 import { registerGitHubCLITools } from './builtin/github-cli.js';
-import {
-  registerJiraMCPTools,
-  disconnectJiraMCP,
-} from './builtin/jira-mcp.js';
+import { registerJiraMCPTools, disconnectJiraMCP } from './builtin/jira-mcp.js';
 
 const logger = Logger.getInstance('tools:startup');
 
@@ -22,9 +19,7 @@ const logger = Logger.getInstance('tools:startup');
  * - GitHub CLI tools are always registered.
  * - Jira MCP tools are registered only if JIRA_API_TOKEN is set.
  */
-export async function registerAllTools(
-  registry: ToolRegistry
-): Promise<void> {
+export async function registerAllTools(registry: ToolRegistry): Promise<void> {
   const timer = logger.time('registerAllTools');
 
   // Register built-in tools (Octokit-based GitHub, filesystem, shell, user)
@@ -56,9 +51,7 @@ export async function registerAllTools(
 /**
  * Shutdown all external tool connections.
  */
-export async function shutdownTools(
-  registry?: ToolRegistry
-): Promise<void> {
+export async function shutdownTools(registry?: ToolRegistry): Promise<void> {
   logger.info('Shutting down external tool connections');
   await disconnectJiraMCP(registry);
   logger.info('Tool shutdown complete');

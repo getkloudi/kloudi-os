@@ -104,7 +104,8 @@ class ApiClient {
    * Returns TreeNode[] grouped by level into folders.
    */
   async getProcedureTree(): Promise<TreeNode[]> {
-    const response = await this.fetch<ApiResponse<TreeNode[]>>('/api/procedures');
+    const response =
+      await this.fetch<ApiResponse<TreeNode[]>>('/api/procedures');
     return response.data;
   }
 
@@ -113,7 +114,9 @@ class ApiClient {
    * Returns EntityData for the entity panel.
    */
   async getProcedureDetail(id: string): Promise<EntityData> {
-    const response = await this.fetch<ApiResponse<EntityData>>(`/api/procedures/${encodeURIComponent(id)}`);
+    const response = await this.fetch<ApiResponse<EntityData>>(
+      `/api/procedures/${encodeURIComponent(id)}`
+    );
     return response.data;
   }
 
@@ -159,17 +162,23 @@ class ApiClient {
     description?: string;
     level?: string;
   }): Promise<EntityData> {
-    const response = await this.fetch<ApiResponse<EntityData>>('/api/procedures', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    const response = await this.fetch<ApiResponse<EntityData>>(
+      '/api/procedures',
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
     return response.data;
   }
 
   /**
    * Update an existing procedure.
    */
-  async updateProcedure(id: string, data: Partial<EntityData>): Promise<EntityData> {
+  async updateProcedure(
+    id: string,
+    data: Partial<EntityData>
+  ): Promise<EntityData> {
     const response = await this.fetch<ApiResponse<EntityData>>(
       `/api/procedures/${encodeURIComponent(id)}`,
       {

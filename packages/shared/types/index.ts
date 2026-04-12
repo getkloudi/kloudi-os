@@ -174,7 +174,7 @@ export interface GraphNode {
   type: NodeType;
   name: string;
   description?: string;
-  config: Record<string, unknown>;  // type-specific config (LLMConfig, ToolConfig, etc.)
+  config: Record<string, unknown>; // type-specific config (LLMConfig, ToolConfig, etc.)
   constraints?: Constraint[];
   timeout_ms?: number;
   retry_count?: number;
@@ -256,7 +256,7 @@ export interface NodeResult {
   nodeType: string;
   output?: unknown;
   error?: string;
-  chosenOption?: string;  // for interpolative nodes — the chosen next node ID
+  chosenOption?: string; // for interpolative nodes — the chosen next node ID
 }
 
 export interface ExecutionResult {
@@ -278,7 +278,10 @@ export interface ToolDefinition {
   name: string;
   description: string;
   parameters: ToolParameters;
-  execute: (params: Record<string, unknown>, context: ToolContext) => Promise<unknown>;
+  execute: (
+    params: Record<string, unknown>,
+    context: ToolContext
+  ) => Promise<unknown>;
 }
 
 export interface ToolParameters {
@@ -325,7 +328,11 @@ export interface LoggerInstance {
   debug(message: string, meta?: Record<string, unknown>): void;
   info(message: string, meta?: Record<string, unknown>): void;
   warn(message: string, meta?: Record<string, unknown>): void;
-  error(message: string, error?: Error | unknown, meta?: Record<string, unknown>): void;
+  error(
+    message: string,
+    error?: Error | unknown,
+    meta?: Record<string, unknown>
+  ): void;
   time(label: string): { end: (meta?: Record<string, unknown>) => void };
 }
 

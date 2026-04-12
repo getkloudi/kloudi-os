@@ -7,6 +7,7 @@ This file contains essential information for agentic coding agents working in th
 Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
 
 Available skills:
+
 - `/plan-ceo-review` — Founder/CEO mode: rethink the problem, find the 10-star product
 - `/plan-eng-review` — Eng manager mode: lock in architecture, data flow, edge cases, tests
 - `/plan-design-review` — Designer mode: 80-item design audit with letter grades
@@ -25,6 +26,7 @@ Available skills:
 **READ FIRST:** `docs/specs/execution-engine-plan.md` contains all locked architecture decisions, PR breakdown, file plan, error handling, state machine, and UI design from CEO/eng/design reviews.
 
 **Key rules for implementation:**
+
 - Always use `git pull --rebase` — never create merge commits on pull
 - All work happens on `develop` — never commit directly to `main`
 - `main` only receives code through PRs from `develop`
@@ -334,10 +336,10 @@ jest --testNamePattern="failing test name"
 
 ### Branching & Environments
 
-| Branch | Environment | Deploy trigger |
-|---|---|---|
-| `develop` | Beta | Auto on push |
-| `main` | Production | Auto on push |
+| Branch    | Environment | Deploy trigger |
+| --------- | ----------- | -------------- |
+| `develop` | Beta        | Auto on push   |
+| `main`    | Production  | Auto on push   |
 
 CLI publishes to npm only from `main` via `cli-v*` GitHub release tags.
 
@@ -371,20 +373,20 @@ All services in **us-east / Virginia**. All free tier. Each environment has full
 
 ### Neon (PostgreSQL)
 
-| | Beta | Prod |
-|---|---|---|
-| **Org** | KloudiOS Beta | KloudiOS Prod |
-| **Project** | `kloudi-os-beta` (curly-grass-31791879) | `kloudi-os` (dry-fog-30866369) |
-| **Region** | aws-us-east-1 | aws-us-east-1 |
-| **PG version** | 17 | 17 |
+|                | Beta                                    | Prod                           |
+| -------------- | --------------------------------------- | ------------------------------ |
+| **Org**        | KloudiOS Beta                           | KloudiOS Prod                  |
+| **Project**    | `kloudi-os-beta` (curly-grass-31791879) | `kloudi-os` (dry-fog-30866369) |
+| **Region**     | aws-us-east-1                           | aws-us-east-1                  |
+| **PG version** | 17                                      | 17                             |
 
 ### Upstash (Redis)
 
-| | Beta | Prod |
-|---|---|---|
-| **Team** | KloudiOS Beta | KloudiOS Prod |
+|              | Beta                  | Prod                  |
+| ------------ | --------------------- | --------------------- |
+| **Team**     | KloudiOS Beta         | KloudiOS Prod         |
 | **Database** | `kloudios-beta-redis` | `kloudios-prod-redis` |
-| **Region** | us-east-1 | us-east-1 |
+| **Region**   | us-east-1             | us-east-1             |
 
 ### Vercel (Web + Ops)
 
@@ -461,6 +463,7 @@ Dashboard         # Production values (Render, Vercel, etc.)
 - Production: set env vars in the hosting dashboard (Render, Vercel, etc.)
 
 ## Design System
+
 Always read `DESIGN.md` before making any visual or UI decisions.
 All font choices, colors, spacing, and aesthetic direction are defined there.
 Do not deviate without explicit user approval.

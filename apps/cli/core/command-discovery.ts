@@ -11,9 +11,7 @@ import type { Command } from 'commander';
  * Register all CLI commands
  */
 export async function setupCommands(program: Command) {
-  const { registerImportCommand } = await import(
-    '../commands/import.js'
-  );
+  const { registerImportCommand } = await import('../commands/import.js');
   const { registerRunCommand } = await import('../commands/run.js');
 
   registerImportCommand(program);
