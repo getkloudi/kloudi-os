@@ -43,7 +43,7 @@ program.addHelpText(
   'after',
   chalk.gray(`
 Examples:
-  $ kloudi init --db-url postgresql://...
+  $ kloudi init
   $ kloudi ls
   $ kloudi run shared-standup
   $ kloudi run engineering-impl -p jiraStoryId=PROJ-123

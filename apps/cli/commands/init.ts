@@ -21,9 +21,7 @@ const SEED_DIR = join(
   '../../../data/seed/procedures'
 );
 
-function resolveDbUrl(cliOverride?: string): string {
-  // CLI flag wins, then env var, then .env file
-  if (cliOverride) return cliOverride;
+function resolveDbUrl(): string {
   if (process.env['DATABASE_URL']) return process.env['DATABASE_URL'];
 
   // Try loading .env from cwd
@@ -35,7 +33,7 @@ function resolveDbUrl(cliOverride?: string): string {
 
   console.error(
     chalk.red('  DATABASE_URL not found.'),
-    chalk.gray('Set it in .env or pass --db-url')
+    chalk.gray('Set it in .env')
   );
   process.exit(1);
 }
@@ -44,15 +42,13 @@ export function registerInitCommand(program: Command): void {
   program
     .command('init')
     .description('Bootstrap a kloudi.os workspace')
-    .option('--db-url <url>', 'PostgreSQL connection string (default: DATABASE_URL from env)')
     .option('--skip-seed', 'Skip seeding default SOPs', false)
     .option('--skip-integrations', 'Skip integration setup', false)
     .action(async (opts: {
-      dbUrl?: string;
       skipSeed: boolean;
       skipIntegrations: boolean;
     }) => {
-      const dbUrl = resolveDbUrl(opts.dbUrl);
+      const dbUrl = resolveDbUrl();
 
       console.log('');
       console.log(
