@@ -89,6 +89,9 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/test
+      REDIS_URL: redis://localhost:6379
     services:
       postgres:
         image: postgres:15
@@ -150,9 +153,6 @@ jobs:
 
       - name: Run tests
         run: pnpm test:ci
-        env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/test
-          REDIS_URL: redis://localhost:6379
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v3
