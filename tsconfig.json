@@ -32,12 +32,14 @@
     "node_modules",
     "dist",
     "apps/web",
+    "apps/ops",
     "**/*.test.js",
     "**/*.spec.js",
     "**/coverage"
   ],
   "references": [
     { "path": "./apps/api" },
+    { "path": "./apps/internal-api" },
     { "path": "./apps/cli" },
     { "path": "./apps/mcp-server" },
     { "path": "./packages/auth" },

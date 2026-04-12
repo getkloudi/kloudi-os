@@ -351,6 +351,8 @@ CLI publishes to npm only from `main` via `cli-v*` GitHub release tags.
 | **Web** (Vercel) | PR previews | `kloudi-os-web` on push to `main` |
 | **CLI** (npm) | — | `@kloudi/cli` on `cli-v*` tag |
 | **MCP** | Mounted on API (future) | Mounted on API (future) |
+| **Internal API** (Render) | `kloudi-internal-api` (Beta workspace) | — |
+| **Ops Dashboard** (Vercel) | `kloudi-os-ops` | — |
 
 All services in **us-east / Virginia**. All free tier. Each environment has fully isolated workspaces across Render, Neon, and Upstash.
 
@@ -390,6 +392,23 @@ All services in **us-east / Virginia**. All free tier. Each environment has full
 - **Build Command**: `turbo run build` (auto-detected)
 - **PR previews**: Automatic
 - **Production**: Deploys on push to `main`
+
+### Internal Dashboard
+
+**Internal API** (Render):
+- **Service**: `kloudi-internal-api` in KloudiOS Beta workspace
+- **Runtime**: Docker (root-dir: `apps/internal-api`)
+- **Branch**: `develop`
+- **Port**: 3002
+- **Health**: `GET /health`
+- **Auth**: Google OAuth + email allowlist (`OPS_ALLOWED_EMAILS`)
+- **DB**: Same Neon beta instance (shared `DATABASE_URL`)
+
+**Ops Dashboard** (Vercel):
+- **Project**: `kloudi-os-ops`
+- **Root Directory**: `apps/ops`
+- **Port**: 3003 (dev)
+- **Env**: `NEXT_PUBLIC_OPS_API_URL` points to internal-api Render URL
 
 ### CLI Tools
 
