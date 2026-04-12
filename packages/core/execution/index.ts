@@ -8,6 +8,7 @@ export type {
   NodeResult,
   DecisionTrace,
   ExecutionCallbacks,
+  TrustGateContext,
   GraphNode,
   GraphEdge,
   Graph,

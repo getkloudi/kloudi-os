@@ -16,6 +16,7 @@ import {
   ProcedureService,
 } from '@kloudi/core';
 import type { NodeType } from '@kloudi/shared/types';
+import type { NodeExecutor } from '@kloudi/core';
 import { AIClient } from '@kloudi/infrastructure/ai';
 import { ToolRegistry } from '@kloudi/tools';
 import { Database } from '@kloudi/infrastructure/database';
@@ -34,14 +35,14 @@ const contextManager = new ContextManager();
 const aiClient = new AIClient({ context: 'execution-engine' });
 const procedureService = new ProcedureService();
 
-const executors = new Map<NodeType, InstanceType<typeof LLMExecutor> | InstanceType<typeof ToolCallExecutor> | InstanceType<typeof InterpolativeExecutor> | InstanceType<typeof SubEntityExecutor>>([
+const executors = new Map<NodeType, NodeExecutor>([
   ['llm_generate', new LLMExecutor(aiClient as any, contextManager)],
   ['tool_call', new ToolCallExecutor(() => ToolRegistry.getInstance() as any)],
   ['interpolative', new InterpolativeExecutor(aiClient as any, contextManager)],
   ['sub_entity', new SubEntityExecutor(procedureService as any)],
 ]);
 
-const engine = new ExecutionEngine(executors as any, contextManager);
+const engine = new ExecutionEngine(executors, contextManager);
 
 export function setupRoutes(app: Application): void {
   // POST /api/procedures/:id/run — Execute a procedure
@@ -137,16 +138,6 @@ export function setupRoutes(app: Application): void {
       await (db as any).execution.update({
         where: { id },
         data: { status: 'cancelled', completedAt: new Date() },
-      });
-
-      // Also cancel child executions (outside voice requirement)
-      await (db as any).execution.updateMany({
-        where: {
-          workspaceId: DEFAULT_WORKSPACE_ID,
-          status: { in: ['running', 'waiting_input', 'pending'] },
-          // Child executions are identified by being created after the parent
-          // and being in a running state. This is a heuristic for Phase 1.
-        },
       });
 
       logger.info('Execution cancelled', { executionId: id });

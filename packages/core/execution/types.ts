@@ -2,6 +2,8 @@
 // These re-export from @kloudi/shared/types for consistency,
 // but also define execution-specific types.
 
+import type { NodeType } from '@kloudi/shared/types';
+
 export type {
   GraphNode,
   GraphEdge,
@@ -76,6 +78,19 @@ export interface DecisionTrace {
   confidence?: number;
 }
 
+// --- Trust gate ---
+
+export interface TrustGateContext {
+  executionId: string;
+  nodeId: string;
+  nodeName: string;
+  nodeType: NodeType;
+  action: string;           // human-readable: "Call Jira API: createIssue"
+  config: Record<string, unknown>; // resolved node config
+  reasoning?: string;       // LLM reasoning if available
+  visitCount: number;       // how many times this node has run
+}
+
 // --- Callbacks ---
 
 export interface ExecutionCallbacks {
@@ -85,6 +100,7 @@ export interface ExecutionCallbacks {
   onExecutionComplete?: (executionId: string, result: unknown) => void;
   onExecutionFailed?: (executionId: string, error: string) => void;
   onHumanApprovalNeeded?: (executionId: string, nodeId: string, question: string) => Promise<string>;
+  onTrustGateTriggered?: (context: TrustGateContext) => Promise<'approve' | 'reject'>;
 }
 
 // --- Context types ---
