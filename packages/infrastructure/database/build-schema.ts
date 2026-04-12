@@ -12,7 +12,7 @@ const logger = {
     console.error(`[schema] ${msg}`),
   warn: (msg: string, _meta?: Record<string, unknown>) =>
     console.warn(`[schema] ${msg}`),
-  debug: (msg: string, _meta?: Record<string, unknown>) => {},
+  debug: (_msg: string, _meta?: Record<string, unknown>) => {},
 };
 
 const __filename = fileURLToPath(import.meta.url);
