@@ -64,3 +64,4 @@ tmp/
 packages/infrastructure/config/local.yml
 *local*.yml
 docs/
+.gstack/
