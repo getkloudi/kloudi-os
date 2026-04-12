@@ -5,11 +5,12 @@ import boundariesPlugin from 'eslint-plugin-boundaries';
 
 export default [
   {
-    ignores: ['scripts/templates/**/*', 'packages/mastishk/templates/**/*'],
+    ignores: ['.claude/**', '**/dist/**'],
   },
   js.configs.recommended,
   prettierConfig,
   {
+    files: ['**/*.js'],
     languageOptions: {
       globals: {
         console: 'readonly',
@@ -35,7 +36,10 @@ export default [
       boundaries: boundariesPlugin,
     },
     rules: {
-      'no-unused-vars': 'error',
+      'no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
       'no-console': 'warn',
       'prettier/prettier': 'error',
       'boundaries/element-types': [
@@ -77,6 +81,7 @@ export default [
     languageOptions: {
       globals: {
         describe: 'readonly',
+        it: 'readonly',
         test: 'readonly',
         expect: 'readonly',
         beforeEach: 'readonly',
@@ -85,6 +90,15 @@ export default [
         afterAll: 'readonly',
         jest: 'readonly',
       },
+    },
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
+    files: ['**/cli/**/*.js', '**/e2e/**/*.js', '**/scripts/**/*.js'],
+    rules: {
+      'no-console': 'off',
     },
   },
 ];

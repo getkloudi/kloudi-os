@@ -105,7 +105,9 @@ describe('convertToGraph', () => {
   it('classifies bash sections as tool_call', () => {
     const parsed = parseSkillMd(SAMPLE_SKILL);
     const result = convertToGraph(parsed);
-    const testNode = result.graph.nodes.find((n) => n.name === 'Step 2: Run tests');
+    const testNode = result.graph.nodes.find(
+      (n) => n.name === 'Step 2: Run tests'
+    );
     expect(testNode).toBeDefined();
     expect(testNode.type).toBe('tool_call');
   });
@@ -113,7 +115,9 @@ describe('convertToGraph', () => {
   it('classifies decision sections as interpolative', () => {
     const parsed = parseSkillMd(SAMPLE_SKILL);
     const result = convertToGraph(parsed);
-    const decisionNode = result.graph.nodes.find((n) => n.name === 'Step 3: Choose approach');
+    const decisionNode = result.graph.nodes.find(
+      (n) => n.name === 'Step 3: Choose approach'
+    );
     expect(decisionNode).toBeDefined();
     expect(decisionNode.type).toBe('interpolative');
     expect(decisionNode.config.options).toEqual([
@@ -135,7 +139,9 @@ describe('convertToGraph', () => {
   it('classifies plain text sections as llm_generate', () => {
     const parsed = parseSkillMd(SAMPLE_SKILL);
     const result = convertToGraph(parsed);
-    const readNode = result.graph.nodes.find((n) => n.name === 'Step 1: Read the code');
+    const readNode = result.graph.nodes.find(
+      (n) => n.name === 'Step 1: Read the code'
+    );
     expect(readNode).toBeDefined();
     expect(readNode.type).toBe('llm_generate');
   });

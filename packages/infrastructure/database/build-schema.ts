@@ -3,17 +3,14 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { Logger } from '@kloudi/shared/logger';
-
-/** Logger interface from shared package */
-interface LoggerInstance {
-  info: (message: string, metadata?: Record<string, unknown>) => void;
-  error: (message: string, error?: Error | null, metadata?: Record<string, unknown>) => void;
-  warn: (message: string, metadata?: Record<string, unknown>) => void;
-  debug: (message: string, metadata?: Record<string, unknown>) => void;
-}
-
-const logger: LoggerInstance = Logger.getInstance('database');
+// Inline logger — this script must run before workspace packages are built,
+// so it cannot import from @kloudi/shared.
+const logger = {
+  info: (msg: string, _meta?: Record<string, unknown>) => console.log(`[schema] ${msg}`),
+  error: (msg: string, _err?: Error | null, _meta?: Record<string, unknown>) => console.error(`[schema] ${msg}`),
+  warn: (msg: string, _meta?: Record<string, unknown>) => console.warn(`[schema] ${msg}`),
+  debug: (msg: string, _meta?: Record<string, unknown>) => {},
+};
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

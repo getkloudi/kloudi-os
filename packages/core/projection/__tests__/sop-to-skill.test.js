@@ -19,7 +19,10 @@ function loadSeedGraph(name) {
 describe('walkGraph', () => {
   it('returns nodes in topological order', () => {
     const nodes = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
-    const edges = [{ from: 'a', to: 'b' }, { from: 'b', to: 'c' }];
+    const edges = [
+      { from: 'a', to: 'b' },
+      { from: 'b', to: 'c' },
+    ];
     const result = walkGraph(nodes, edges);
     expect(result.map((n) => n.id)).toEqual(['a', 'b', 'c']);
   });
@@ -82,7 +85,9 @@ describe('projectToSkillMd', () => {
     const proc = loadSeedGraph('engineering-impl');
     const result = projectToSkillMd(proc);
     // engineering-impl has an interpolative node
-    const hasInterpolative = proc.graph.nodes.some((n) => n.type === 'interpolative');
+    const hasInterpolative = proc.graph.nodes.some(
+      (n) => n.type === 'interpolative'
+    );
     if (hasInterpolative) {
       expect(result).toContain('Options:');
     }

@@ -14,7 +14,12 @@ import { resolve } from 'path';
 const envTestPath = resolve(process.cwd(), '.env.test');
 const envPath = resolve(process.cwd(), '.env');
 const envFile = (() => {
-  try { readFileSync(envTestPath, 'utf8'); return envTestPath; } catch { return envPath; }
+  try {
+    readFileSync(envTestPath, 'utf8');
+    return envTestPath;
+  } catch {
+    return envPath;
+  }
 })();
 try {
   const envContent = readFileSync(envFile, 'utf8');
@@ -48,12 +53,17 @@ async function waitForExecution(executionId, timeoutMs = 60000) {
       where: { id: executionId },
       include: { executionNodes: { orderBy: { startedAt: 'asc' } } },
     });
-    if (execution && ['completed', 'failed', 'cancelled'].includes(execution.status)) {
+    if (
+      execution &&
+      ['completed', 'failed', 'cancelled'].includes(execution.status)
+    ) {
       return execution;
     }
     await new Promise((r) => setTimeout(r, 500));
   }
-  throw new Error(`Execution ${executionId} did not complete within ${timeoutMs}ms`);
+  throw new Error(
+    `Execution ${executionId} did not complete within ${timeoutMs}ms`
+  );
 }
 
 async function createProcedure(data) {
@@ -73,13 +83,20 @@ async function createProcedure(data) {
 }
 
 beforeAll(async () => {
-  const { ExecutionEngine } = await import('../../dist/execution/execution-engine.js');
-  const { ContextManager } = await import('../../dist/execution/context-manager.js');
-  const { LLMExecutor } = await import('../../dist/execution/executors/llm-executor.js');
-  const { ToolCallExecutor } = await import('../../dist/execution/executors/tool-call-executor.js');
-  const { InterpolativeExecutor } = await import('../../dist/execution/executors/interpolative-executor.js');
-  const { SubEntityExecutor } = await import('../../dist/execution/executors/sub-entity-executor.js');
-  const { ProcedureService } = await import('../../dist/procedures/procedure-service.js');
+  const { ExecutionEngine } =
+    await import('../../dist/execution/execution-engine.js');
+  const { ContextManager } =
+    await import('../../dist/execution/context-manager.js');
+  const { LLMExecutor } =
+    await import('../../dist/execution/executors/llm-executor.js');
+  const { ToolCallExecutor } =
+    await import('../../dist/execution/executors/tool-call-executor.js');
+  const { InterpolativeExecutor } =
+    await import('../../dist/execution/executors/interpolative-executor.js');
+  const { SubEntityExecutor } =
+    await import('../../dist/execution/executors/sub-entity-executor.js');
+  const { ProcedureService } =
+    await import('../../dist/procedures/procedure-service.js');
   const { Database } = await import('@kloudi/infrastructure/database');
   const { AIClient } = await import('@kloudi/infrastructure/ai');
   const { ToolRegistry } = await import('@kloudi/tools');
@@ -180,11 +197,11 @@ describe('Trust gate — approve flow', () => {
       {},
       WORKSPACE_ID,
       {
-        onTrustGateTriggered: async (ctx) => {
+        onTrustGateTriggered: async (_ctx) => {
           gateCalled = true;
           return 'approve';
         },
-      },
+      }
     );
 
     const execution = await waitForExecution(executionId);
@@ -193,7 +210,9 @@ describe('Trust gate — approve flow', () => {
     expect(gateCalled).toBe(true);
     expect(execution.executionNodes.length).toBeGreaterThanOrEqual(2);
 
-    const toolNode = execution.executionNodes.find((n) => n.nodeId === 'tool_step');
+    const toolNode = execution.executionNodes.find(
+      (n) => n.nodeId === 'tool_step'
+    );
     expect(toolNode).toBeDefined();
     expect(toolNode.status).toBe('completed');
   }, 60000);
@@ -216,7 +235,7 @@ describe('Trust gate — reject flow', () => {
       WORKSPACE_ID,
       {
         onTrustGateTriggered: async () => 'reject',
-      },
+      }
     );
 
     const execution = await waitForExecution(executionId);
@@ -224,7 +243,9 @@ describe('Trust gate — reject flow', () => {
     expect(execution.status).toBe('failed');
     expect(execution.error).toContain('Trust gate rejected');
 
-    const llmNode = execution.executionNodes.find((n) => n.nodeId === 'llm_step');
+    const llmNode = execution.executionNodes.find(
+      (n) => n.nodeId === 'llm_step'
+    );
     expect(llmNode.status).toBe('completed');
   }, 60000);
 });
@@ -243,7 +264,7 @@ describe('Trust gate — no callback registered', () => {
     const { executionId } = await engine.execute(
       procedure.id,
       {},
-      WORKSPACE_ID,
+      WORKSPACE_ID
       // No onTrustGateTriggered callback
     );
 
@@ -262,7 +283,7 @@ describe('Trust gate — non-gated tool_call', () => {
 
   beforeAll(async () => {
     procedure = await createProcedure(
-      gatedToolGraph('tg-non-gated', { requiresApproval: false }),
+      gatedToolGraph('tg-non-gated', { requiresApproval: false })
     );
   });
 
@@ -278,7 +299,7 @@ describe('Trust gate — non-gated tool_call', () => {
           gateCalled = true;
           return 'approve';
         },
-      },
+      }
     );
 
     const execution = await waitForExecution(executionId);
@@ -296,7 +317,7 @@ describe('Trust gate — TrustGateContext shape', () => {
 
   beforeAll(async () => {
     procedure = await createProcedure(
-      gatedToolGraph('tg-context-shape', { toolName: 'Echo Tool Check' }),
+      gatedToolGraph('tg-context-shape', { toolName: 'Echo Tool Check' })
     );
   });
 
@@ -312,7 +333,7 @@ describe('Trust gate — TrustGateContext shape', () => {
           capturedContext = ctx;
           return 'approve';
         },
-      },
+      }
     );
 
     await waitForExecution(executionId);
@@ -356,7 +377,7 @@ describe('Trust gate — waiting_input concurrency', () => {
               {
                 onTrustGateTriggered: async () => 'approve',
               },
-              { concurrencyLimit: 1 },
+              { concurrencyLimit: 1 }
             );
             secondStarted = true;
             await waitForExecution(secondId);
@@ -366,7 +387,7 @@ describe('Trust gate — waiting_input concurrency', () => {
           return 'approve';
         },
       },
-      { concurrencyLimit: 1 },
+      { concurrencyLimit: 1 }
     );
 
     await waitForExecution(firstId);
