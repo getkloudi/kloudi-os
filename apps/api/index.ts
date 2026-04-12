@@ -13,6 +13,8 @@ import { setupErrorHandling, setupMiddleware } from './lib/middleware.js';
 import { authMiddleware } from './lib/auth-middleware.js';
 import { loadAllRoutes } from './lib/route-loader.js';
 import { setupWebSocket } from './lib/websocket.js';
+import { ToolRegistry } from '@kloudi/tools';
+import { registerAllTools } from '@kloudi/tools/startup';
 
 const logger = Logger.getInstance('api-server');
 const PORT = process.env['PORT'] ?? 3001;
@@ -42,6 +44,11 @@ async function startServer(): Promise<void> {
       '/health',
       createHealthEndpoint({ port: PORT, environment: ENVIRONMENT })
     );
+
+    // Register tools
+    logger.info('🔧 Registering tools...');
+    const registry = ToolRegistry.getInstance();
+    await registerAllTools(registry);
 
     // Load all routes (auto-discovery)
     logger.info('🔍 Loading routes...');
