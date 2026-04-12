@@ -2,7 +2,9 @@ import type { Application, Request, Response } from 'express';
 
 const GOOGLE_CLIENT_ID = process.env['OPS_GOOGLE_CLIENT_ID'] ?? '';
 const GOOGLE_CLIENT_SECRET = process.env['OPS_GOOGLE_CLIENT_SECRET'] ?? '';
-const GOOGLE_REDIRECT_URI = process.env['OPS_GOOGLE_REDIRECT_URI'] ?? 'http://localhost:3003/auth/callback';
+const GOOGLE_REDIRECT_URI =
+  process.env['OPS_GOOGLE_REDIRECT_URI'] ??
+  'http://localhost:3003/auth/callback';
 
 /**
  * Auth routes for Google OAuth flow.
@@ -20,7 +22,9 @@ export function setupAuthRoutes(app: Application): void {
       prompt: 'consent',
     });
 
-    res.json({ url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}` });
+    res.json({
+      url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
+    });
   });
 
   // Exchange authorization code for tokens
@@ -47,11 +51,13 @@ export function setupAuthRoutes(app: Application): void {
 
       if (!tokenRes.ok) {
         const error = await tokenRes.text();
-        res.status(401).json({ error: 'Token exchange failed', details: error });
+        res
+          .status(401)
+          .json({ error: 'Token exchange failed', details: error });
         return;
       }
 
-      const tokens = await tokenRes.json() as {
+      const tokens = (await tokenRes.json()) as {
         access_token: string;
         refresh_token?: string;
         expires_in: number;
@@ -59,14 +65,24 @@ export function setupAuthRoutes(app: Application): void {
       };
 
       // Fetch user info
-      const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-        headers: { Authorization: `Bearer ${tokens.access_token}` },
-      });
+      const userRes = await fetch(
+        'https://www.googleapis.com/oauth2/v2/userinfo',
+        {
+          headers: { Authorization: `Bearer ${tokens.access_token}` },
+        }
+      );
 
-      const user = await userRes.json() as { email: string; name: string; picture?: string };
+      const user = (await userRes.json()) as {
+        email: string;
+        name: string;
+        picture?: string;
+      };
 
       // Check allowlist
-      const allowedEmails = (process.env['OPS_ALLOWED_EMAILS'] ?? '').split(',').map(e => e.trim()).filter(Boolean);
+      const allowedEmails = (process.env['OPS_ALLOWED_EMAILS'] ?? '')
+        .split(',')
+        .map((e) => e.trim())
+        .filter(Boolean);
       if (allowedEmails.length > 0 && !allowedEmails.includes(user.email)) {
         res.status(403).json({ error: 'Email not in ops allowlist' });
         return;

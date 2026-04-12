@@ -1,5 +1,8 @@
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let projectToSkillMd;
 let walkGraph;
@@ -12,14 +15,19 @@ beforeAll(async () => {
 });
 
 function loadSeedGraph(name) {
-  const path = resolve(process.cwd(), `data/seed/procedures/${name}.json`);
-  return JSON.parse(readFileSync(path, 'utf-8'));
+  // Resolve from this test file up to the repo root (4 levels: __tests__ → projection → core → packages → root)
+  const repoRoot = resolve(__dirname, '..', '..', '..', '..');
+  const filePath = resolve(repoRoot, `data/seed/procedures/${name}.json`);
+  return JSON.parse(readFileSync(filePath, 'utf-8'));
 }
 
 describe('walkGraph', () => {
   it('returns nodes in topological order', () => {
     const nodes = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
-    const edges = [{ from: 'a', to: 'b' }, { from: 'b', to: 'c' }];
+    const edges = [
+      { from: 'a', to: 'b' },
+      { from: 'b', to: 'c' },
+    ];
     const result = walkGraph(nodes, edges);
     expect(result.map((n) => n.id)).toEqual(['a', 'b', 'c']);
   });
@@ -82,7 +90,9 @@ describe('projectToSkillMd', () => {
     const proc = loadSeedGraph('engineering-impl');
     const result = projectToSkillMd(proc);
     // engineering-impl has an interpolative node
-    const hasInterpolative = proc.graph.nodes.some((n) => n.type === 'interpolative');
+    const hasInterpolative = proc.graph.nodes.some(
+      (n) => n.type === 'interpolative'
+    );
     if (hasInterpolative) {
       expect(result).toContain('Options:');
     }

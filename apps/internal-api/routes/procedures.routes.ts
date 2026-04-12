@@ -1,5 +1,8 @@
 import type { Application, Request, Response } from 'express';
-import { PrismaManager, type PrismaModelMethods } from '@kloudi/infrastructure/database';
+import {
+  PrismaManager,
+  type PrismaModelMethods,
+} from '@kloudi/infrastructure/database';
 import { Logger } from '@kloudi/shared/logger';
 
 const logger = Logger.getInstance('ops-procedures');
@@ -18,7 +21,11 @@ export function setupProcedureRoutes(app: Application): void {
       });
       res.json({ data: procedures });
     } catch (error) {
-      logger.error('Failed to list procedures', error instanceof Error ? error : null, {});
+      logger.error(
+        'Failed to list procedures',
+        error instanceof Error ? error : null,
+        {}
+      );
       res.status(500).json({ error: 'Failed to list procedures' });
     }
   });
@@ -43,7 +50,11 @@ export function setupProcedureRoutes(app: Application): void {
 
       res.json({ data: result });
     } catch (error) {
-      logger.error('Failed to get procedure', error instanceof Error ? error : null, {});
+      logger.error(
+        'Failed to get procedure',
+        error instanceof Error ? error : null,
+        {}
+      );
       res.status(500).json({ error: 'Failed to get procedure' });
     }
   });
@@ -54,10 +65,16 @@ export function setupProcedureRoutes(app: Application): void {
       const db = await PrismaManager.getInstance().getClient();
       const procedure = db['procedure'] as PrismaModelMethods;
       const result = await procedure.create({ data: req.body });
-      logger.info('Procedure created via ops', { id: (result as Record<string, unknown>)['id'] });
+      logger.info('Procedure created via ops', {
+        id: (result as Record<string, unknown>)['id'],
+      });
       res.status(201).json({ data: result });
     } catch (error) {
-      logger.error('Failed to create procedure', error instanceof Error ? error : null, {});
+      logger.error(
+        'Failed to create procedure',
+        error instanceof Error ? error : null,
+        {}
+      );
       res.status(500).json({ error: 'Failed to create procedure' });
     }
   });
@@ -71,10 +88,16 @@ export function setupProcedureRoutes(app: Application): void {
         where: { id: req.params['id'] },
         data: req.body,
       });
-      logger.info('Procedure updated via ops', { id: (result as Record<string, unknown>)['id'] });
+      logger.info('Procedure updated via ops', {
+        id: (result as Record<string, unknown>)['id'],
+      });
       res.json({ data: result });
     } catch (error) {
-      logger.error('Failed to update procedure', error instanceof Error ? error : null, {});
+      logger.error(
+        'Failed to update procedure',
+        error instanceof Error ? error : null,
+        {}
+      );
       res.status(500).json({ error: 'Failed to update procedure' });
     }
   });
@@ -88,7 +111,11 @@ export function setupProcedureRoutes(app: Application): void {
       logger.info('Procedure deleted via ops', { id: req.params['id'] });
       res.status(204).end();
     } catch (error) {
-      logger.error('Failed to delete procedure', error instanceof Error ? error : null, {});
+      logger.error(
+        'Failed to delete procedure',
+        error instanceof Error ? error : null,
+        {}
+      );
       res.status(500).json({ error: 'Failed to delete procedure' });
     }
   });

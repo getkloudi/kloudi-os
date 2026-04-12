@@ -256,7 +256,9 @@ export const githubReadFile: ToolDefinition = {
         };
       }
 
-      throw new Error(`Unexpected content type: ${(data as { type: string }).type}`);
+      throw new Error(
+        `Unexpected content type: ${(data as { type: string }).type}`
+      );
     } catch (error) {
       const octokitError = error as OctokitError;
       if (octokitError.status === 404) {
@@ -453,9 +455,7 @@ export const githubListIssues: ToolDefinition = {
           title: issue.title,
           state: issue.state,
           url: issue.html_url,
-          labels: issue.labels.map((l) =>
-            typeof l === 'string' ? l : l.name
-          ),
+          labels: issue.labels.map((l) => (typeof l === 'string' ? l : l.name)),
           assignees: issue.assignees?.map((a) => a.login) ?? [],
           author: issue.user?.login ?? '',
           createdAt: issue.created_at,

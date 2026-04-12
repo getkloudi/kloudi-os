@@ -131,7 +131,8 @@ export class ProceduralEntity {
 
     if (
       !Object.values(ProcedureMaturity).includes(
-        this.maturity as (typeof ProcedureMaturity)[keyof typeof ProcedureMaturity]
+        this
+          .maturity as (typeof ProcedureMaturity)[keyof typeof ProcedureMaturity]
       )
     ) {
       errors.push(`Invalid maturity: ${this.maturity}`);

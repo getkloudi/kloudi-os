@@ -49,7 +49,9 @@ interface PrismaClient {
         workspaceId?: string;
       };
     }) => Promise<ProcedureRecord>;
-    findUnique: (args: { where: { id: string } }) => Promise<ProcedureRecord | null>;
+    findUnique: (args: {
+      where: { id: string };
+    }) => Promise<ProcedureRecord | null>;
     findFirst: (args: {
       where: { workspaceId?: string; slug?: string };
     }) => Promise<ProcedureRecord | null>;

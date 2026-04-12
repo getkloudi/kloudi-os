@@ -65,8 +65,12 @@ export default function RegisterPage() {
             <span className="text-xl font-bold text-white">L</span>
           </div>
           <div className="space-y-1 text-center">
-            <h1 className="text-2xl font-semibold text-foreground">Create your account</h1>
-            <p className="text-sm text-muted-foreground">Get started with lore.dev</p>
+            <h1 className="text-2xl font-semibold text-foreground">
+              Create your account
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Get started with lore.dev
+            </p>
           </div>
         </div>
 
@@ -80,7 +84,10 @@ export default function RegisterPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium text-foreground">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-foreground"
+            >
               Email
             </label>
             <input
@@ -97,7 +104,10 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="username" className="block text-sm font-medium text-foreground">
+            <label
+              htmlFor="username"
+              className="block text-sm font-medium text-foreground"
+            >
               Username
             </label>
             <input
@@ -113,7 +123,10 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="password" className="block text-sm font-medium text-foreground">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-foreground"
+            >
               Password
             </label>
             <input
@@ -129,7 +142,10 @@ export default function RegisterPage() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="confirm-password" className="block text-sm font-medium text-foreground">
+            <label
+              htmlFor="confirm-password"
+              className="block text-sm font-medium text-foreground"
+            >
               Confirm password
             </label>
             <input
@@ -163,7 +179,10 @@ export default function RegisterPage() {
         {/* Link to login */}
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{' '}
-          <Link href="/login" className="text-blue-400 hover:text-blue-300 transition-colors">
+          <Link
+            href="/login"
+            className="text-blue-400 hover:text-blue-300 transition-colors"
+          >
             Sign in
           </Link>
         </p>

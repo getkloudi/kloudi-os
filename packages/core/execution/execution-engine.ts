@@ -24,7 +24,7 @@ export class ExecutionEngine {
 
   constructor(
     private executors: Map<NodeType, NodeExecutor>,
-    private contextManager: ContextManager,
+    private contextManager: ContextManager
   ) {}
 
   /**
@@ -36,7 +36,7 @@ export class ExecutionEngine {
     params: Record<string, unknown>,
     workspaceId: string,
     callbacks?: ExecutionCallbacks,
-    options?: { userId?: string; timeoutMs?: number; concurrencyLimit?: number },
+    options?: { userId?: string; timeoutMs?: number; concurrencyLimit?: number }
   ): Promise<{ executionId: string }> {
     const db = await Database.getInstance().getClient();
 
@@ -46,7 +46,9 @@ export class ExecutionEngine {
       where: { workspaceId, status: { in: ['running', 'pending'] } },
     });
     if (activeCount >= limit) {
-      throw new Error(`Concurrent execution limit reached (${activeCount}/${limit})`);
+      throw new Error(
+        `Concurrent execution limit reached (${activeCount}/${limit})`
+      );
     }
 
     // Look up procedure
@@ -107,7 +109,7 @@ export class ExecutionEngine {
     params: Record<string, unknown>,
     workspaceId: string,
     callbacks?: ExecutionCallbacks,
-    options?: { userId?: string; timeoutMs?: number; concurrencyLimit?: number },
+    options?: { userId?: string; timeoutMs?: number; concurrencyLimit?: number }
   ): Promise<{ executionId: string; result: unknown; status: string }> {
     const db = await Database.getInstance().getClient();
 
@@ -117,7 +119,9 @@ export class ExecutionEngine {
       where: { workspaceId, status: { in: ['running', 'pending'] } },
     });
     if (activeCount >= limit) {
-      throw new Error(`Concurrent execution limit reached (${activeCount}/${limit})`);
+      throw new Error(
+        `Concurrent execution limit reached (${activeCount}/${limit})`
+      );
     }
 
     const entity = await this.procedureRepository.findById(procedureId);
@@ -177,7 +181,7 @@ export class ExecutionEngine {
     graph: Graph,
     callbacks: ExecutionCallbacks | undefined,
     db: any,
-    timeoutMs: number,
+    timeoutMs: number
   ): Promise<void> {
     const startTime = Date.now();
     let currentNodeId: string | null = ctx.currentNodeId;
@@ -202,7 +206,10 @@ export class ExecutionEngine {
         });
         if (current?.status === 'cancelled') {
           logger.info('Execution cancelled', { executionId: ctx.executionId });
-          callbacks?.onExecutionFailed?.(ctx.executionId, 'Execution cancelled');
+          callbacks?.onExecutionFailed?.(
+            ctx.executionId,
+            'Execution cancelled'
+          );
           return;
         }
 
@@ -218,13 +225,17 @@ export class ExecutionEngine {
             const response = await callbacks.onHumanApprovalNeeded(
               ctx.executionId,
               currentNodeId,
-              `Node '${node.name}' is about to run again (visit #${visitCount + 1}). Continue or abort?`,
+              `Node '${node.name}' is about to run again (visit #${visitCount + 1}). Continue or abort?`
             );
             if (response !== 'continue') {
-              throw new Error(`Human aborted at node '${node.name}' (visit #${visitCount + 1})`);
+              throw new Error(
+                `Human aborted at node '${node.name}' (visit #${visitCount + 1})`
+              );
             }
           } else {
-            throw new Error(`Cycle detected at node '${node.name}' (visit #${visitCount + 1}, no approval callback)`);
+            throw new Error(
+              `Cycle detected at node '${node.name}' (visit #${visitCount + 1}, no approval callback)`
+            );
           }
         }
         ctx.visitedNodes.set(currentNodeId, visitCount + 1);
@@ -296,8 +307,7 @@ export class ExecutionEngine {
           });
 
           if (callbacks?.onTrustGateTriggered) {
-            const decision =
-              await callbacks.onTrustGateTriggered(gateContext);
+            const decision = await callbacks.onTrustGateTriggered(gateContext);
 
             // Resume execution status
             await db.execution.update({
@@ -320,9 +330,7 @@ export class ExecutionEngine {
                   output: { decision: 'rejected' } as any,
                 },
               });
-              throw new Error(
-                `Trust gate rejected at node '${node.name}'`
-              );
+              throw new Error(`Trust gate rejected at node '${node.name}'`);
             }
 
             // Approved — update gate node and continue to execution
@@ -408,12 +416,12 @@ export class ExecutionEngine {
             ctx.contextWindow,
             currentNodeId,
             result.output,
-            result.tokensUsed,
+            result.tokensUsed
           );
         }
 
         // Update execution record
-        const totalTokens = (result.tokensUsed ?? 0);
+        const totalTokens = result.tokensUsed ?? 0;
         await db.execution.update({
           where: { id: ctx.executionId },
           data: {
@@ -438,12 +446,20 @@ export class ExecutionEngine {
             where: { id: ctx.executionId },
             data: { status: 'waiting_input' },
           });
-          callbacks?.onNodeComplete?.(ctx.executionId, currentNodeId, result.output);
+          callbacks?.onNodeComplete?.(
+            ctx.executionId,
+            currentNodeId,
+            result.output
+          );
           // Execution pauses here — will be resumed externally
           return;
         }
 
-        callbacks?.onNodeComplete?.(ctx.executionId, currentNodeId, result.output);
+        callbacks?.onNodeComplete?.(
+          ctx.executionId,
+          currentNodeId,
+          result.output
+        );
         logger.info('Node completed', {
           executionId: ctx.executionId,
           nodeId: currentNodeId,
@@ -491,10 +507,14 @@ export class ExecutionEngine {
       });
 
       callbacks?.onExecutionFailed?.(ctx.executionId, errorMsg);
-      logger.error('Execution failed', err instanceof Error ? err : new Error(errorMsg), {
-        executionId: ctx.executionId,
-        durationMs,
-      });
+      logger.error(
+        'Execution failed',
+        err instanceof Error ? err : new Error(errorMsg),
+        {
+          executionId: ctx.executionId,
+          durationMs,
+        }
+      );
     }
   }
 
@@ -506,11 +526,13 @@ export class ExecutionEngine {
     const entryNodes = graph.nodes.filter((n) => !nodesWithIncoming.has(n.id));
 
     if (entryNodes.length === 0) {
-      throw new Error('Graph has no entry node (all nodes have incoming edges)');
+      throw new Error(
+        'Graph has no entry node (all nodes have incoming edges)'
+      );
     }
     if (entryNodes.length > 1) {
       throw new Error(
-        `Graph has multiple entry nodes: ${entryNodes.map((n) => n.id).join(', ')}`,
+        `Graph has multiple entry nodes: ${entryNodes.map((n) => n.id).join(', ')}`
       );
     }
 
@@ -526,12 +548,12 @@ export class ExecutionEngine {
     currentNode: GraphNode,
     result: NodeResult,
     ctx: ExecutionContext,
-    graph: Graph,
+    graph: Graph
   ): string | null {
     // For interpolative nodes, the result specifies which node to go to
     if (currentNode.type === 'interpolative' && result.chosenOption) {
       const targetEdge = graph.edges.find(
-        (e) => e.from === currentNode.id && e.to === result.chosenOption,
+        (e) => e.from === currentNode.id && e.to === result.chosenOption
       );
       if (targetEdge) return targetEdge.to;
       // If chosenOption is a node ID directly
@@ -568,23 +590,26 @@ export class ExecutionEngine {
    */
   private resolveInputs(
     node: GraphNode,
-    ctx: ExecutionContext,
+    ctx: ExecutionContext
   ): Record<string, unknown> {
     const config = node.config;
     const resolved: Record<string, unknown> = {};
 
     for (const [key, value] of Object.entries(config)) {
       if (typeof value === 'string') {
-        resolved[key] = value.replace(/\{\{([^}]+)\}\}/g, (_match, path: string) => {
-          const trimmed = path.trim();
-          const result = getNestedValue(ctx, trimmed);
-          if (result === undefined) {
-            throw new Error(
-              `Variable '${trimmed}' not found in execution context (node: ${node.id})`,
-            );
+        resolved[key] = value.replace(
+          /\{\{([^}]+)\}\}/g,
+          (_match, path: string) => {
+            const trimmed = path.trim();
+            const result = getNestedValue(ctx, trimmed);
+            if (result === undefined) {
+              throw new Error(
+                `Variable '${trimmed}' not found in execution context (node: ${node.id})`
+              );
+            }
+            return typeof result === 'string' ? result : JSON.stringify(result);
           }
-          return typeof result === 'string' ? result : JSON.stringify(result);
-        });
+        );
       } else {
         resolved[key] = value;
       }

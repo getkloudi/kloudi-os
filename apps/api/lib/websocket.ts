@@ -73,11 +73,13 @@ export function setupWebSocket(server: Server | null): WebSocketServer | null {
     });
 
     // Send welcome message
-    ws.send(JSON.stringify({
-      type: 'connected',
-      clientId,
-      timestamp: new Date().toISOString(),
-    }));
+    ws.send(
+      JSON.stringify({
+        type: 'connected',
+        clientId,
+        timestamp: new Date().toISOString(),
+      })
+    );
 
     // Handle incoming messages
     ws.on('message', (data: Buffer) => {
@@ -85,10 +87,14 @@ export function setupWebSocket(server: Server | null): WebSocketServer | null {
         const message = JSON.parse(data.toString()) as WebSocketMessage;
         handleMessage(clientId, message);
       } catch (error) {
-        logger.error('Failed to parse WebSocket message', error instanceof Error ? error : null, {
-          context: 'ws-parse-error',
-          clientId,
-        });
+        logger.error(
+          'Failed to parse WebSocket message',
+          error instanceof Error ? error : null,
+          {
+            context: 'ws-parse-error',
+            clientId,
+          }
+        );
       }
     });
 
@@ -138,7 +144,10 @@ function handleMessage(clientId: string, message: WebSocketMessage): void {
       break;
 
     case 'ping':
-      sendToClient(clientId, { type: 'pong', timestamp: new Date().toISOString() });
+      sendToClient(clientId, {
+        type: 'pong',
+        timestamp: new Date().toISOString(),
+      });
       break;
 
     default:
@@ -214,7 +223,10 @@ function sendToClient(clientId: string, message: BroadcastMessage): void {
 /**
  * Broadcast execution progress to subscribed clients
  */
-export function emitExecutionProgress(executionId: string, progress: ExecutionProgress): void {
+export function emitExecutionProgress(
+  executionId: string,
+  progress: ExecutionProgress
+): void {
   const message = JSON.stringify({
     type: 'execution.progress',
     executionId,
@@ -223,7 +235,10 @@ export function emitExecutionProgress(executionId: string, progress: ExecutionPr
   });
 
   clients.forEach((ws: ExtendedWebSocket, _clientId: string) => {
-    if (ws.subscriptions?.has(executionId) && ws.readyState === WebSocket.OPEN) {
+    if (
+      ws.subscriptions?.has(executionId) &&
+      ws.readyState === WebSocket.OPEN
+    ) {
       ws.send(message);
     }
   });
@@ -232,7 +247,10 @@ export function emitExecutionProgress(executionId: string, progress: ExecutionPr
 /**
  * Broadcast execution completion
  */
-export function emitExecutionComplete(executionId: string, result: unknown): void {
+export function emitExecutionComplete(
+  executionId: string,
+  result: unknown
+): void {
   const message = JSON.stringify({
     type: 'execution.complete',
     executionId,
@@ -241,7 +259,10 @@ export function emitExecutionComplete(executionId: string, result: unknown): voi
   });
 
   clients.forEach((ws: ExtendedWebSocket) => {
-    if (ws.subscriptions?.has(executionId) && ws.readyState === WebSocket.OPEN) {
+    if (
+      ws.subscriptions?.has(executionId) &&
+      ws.readyState === WebSocket.OPEN
+    ) {
       ws.send(message);
     }
   });
@@ -251,7 +272,11 @@ export function emitExecutionComplete(executionId: string, result: unknown): voi
  * Request user input via WebSocket
  * Returns a promise that resolves when user responds
  */
-export function requestUserInput(clientId: string, question: string, options: AskOptions = {}): Promise<string> {
+export function requestUserInput(
+  clientId: string,
+  question: string,
+  options: AskOptions = {}
+): Promise<string> {
   return new Promise((resolve, reject) => {
     const askId = generateAskId();
     const timeout = options.timeout ?? 300000; // 5 minute default
@@ -282,7 +307,7 @@ export function requestUserInput(clientId: string, question: string, options: As
  */
 export function requestTrustGateApproval(
   executionId: string,
-  gateContext: Record<string, unknown>,
+  gateContext: Record<string, unknown>
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const askId = generateAskId();
@@ -299,7 +324,10 @@ export function requestTrustGateApproval(
     });
 
     clients.forEach((ws: ExtendedWebSocket) => {
-      if (ws.subscriptions?.has(executionId) && ws.readyState === WebSocket.OPEN) {
+      if (
+        ws.subscriptions?.has(executionId) &&
+        ws.readyState === WebSocket.OPEN
+      ) {
         ws.send(message);
       }
     });
@@ -329,14 +357,18 @@ export function broadcast(message: BroadcastMessage): void {
  * Generate unique client ID
  */
 function generateClientId(): string {
-  return 'client_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+  return (
+    'client_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11)
+  );
 }
 
 /**
  * Generate unique ask ID
  */
 function generateAskId(): string {
-  return 'ask_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+  return (
+    'ask_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11)
+  );
 }
 
 export default setupWebSocket;

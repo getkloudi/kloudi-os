@@ -103,10 +103,7 @@ function validatePath(filePath: string, context: FilesystemContext): string {
   const relativePath = relative(workspaceRoot, absolutePath);
 
   // Check if path escapes workspace (starts with ..)
-  if (
-    relativePath.startsWith('..') ||
-    resolve(absolutePath) !== absolutePath
-  ) {
+  if (relativePath.startsWith('..') || resolve(absolutePath) !== absolutePath) {
     throw new Error(`Path "${filePath}" is outside workspace boundaries`);
   }
 

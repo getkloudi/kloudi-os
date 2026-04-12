@@ -8,21 +8,21 @@ Built on [node-config](https://github.com/node-config/node-config) for hierarchi
 default.yml → {NODE_ENV}.yml → local-{NODE_ENV}.yml → env vars
 ```
 
-| NODE_ENV | Files loaded |
-|----------|--------------|
+| NODE_ENV    | Files loaded                                   |
+| ----------- | ---------------------------------------------- |
 | development | default.yml → local-development.yml → env vars |
-| test | default.yml → test.yml → env vars |
-| production | default.yml → production.yml → env vars |
+| test        | default.yml → test.yml → env vars              |
+| production  | default.yml → production.yml → env vars        |
 
 ## Files
 
-| File | Purpose | Git |
-|------|---------|-----|
-| `default.yml` | Base defaults for all environments | ✅ Committed |
-| `test.yml` | Test environment settings | ✅ Committed |
-| `production.yml` | Production environment settings | ✅ Committed |
-| `local-development.yml` | Development config (from 1Password) | ❌ Gitignored |
-| `custom-environment-variables.yml` | Env var → config mapping | ✅ Committed |
+| File                               | Purpose                             | Git           |
+| ---------------------------------- | ----------------------------------- | ------------- |
+| `default.yml`                      | Base defaults for all environments  | ✅ Committed  |
+| `test.yml`                         | Test environment settings           | ✅ Committed  |
+| `production.yml`                   | Production environment settings     | ✅ Committed  |
+| `local-development.yml`            | Development config (from 1Password) | ❌ Gitignored |
+| `custom-environment-variables.yml` | Env var → config mapping            | ✅ Committed  |
 
 ## Setup
 
@@ -56,10 +56,11 @@ CI/CD uses environment variables which override config via `custom-environment-v
 ```yaml
 # custom-environment-variables.yml
 database:
-  url: 'DATABASE_URL'  # DATABASE_URL env var → database.url
+  url: 'DATABASE_URL' # DATABASE_URL env var → database.url
 ```
 
 Set these in your CI/CD secrets:
+
 - `DATABASE_URL`
 - `REDIS_URL`
 - `JWT_SECRET`

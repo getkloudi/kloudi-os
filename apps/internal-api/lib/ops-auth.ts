@@ -9,14 +9,19 @@ const logger = Logger.getInstance('ops-auth');
  */
 function getAllowedEmails(): string[] {
   const raw = process.env['OPS_ALLOWED_EMAILS'] ?? '';
-  return raw.split(',').map(e => e.trim()).filter(Boolean);
+  return raw
+    .split(',')
+    .map((e) => e.trim())
+    .filter(Boolean);
 }
 
 /**
  * Verify a Google OAuth access token by calling Google's userinfo endpoint.
  * Returns the user's email if valid, null otherwise.
  */
-async function verifyGoogleToken(accessToken: string): Promise<{ email: string; name: string } | null> {
+async function verifyGoogleToken(
+  accessToken: string
+): Promise<{ email: string; name: string } | null> {
   try {
     const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -26,7 +31,7 @@ async function verifyGoogleToken(accessToken: string): Promise<{ email: string; 
       return null;
     }
 
-    const data = await res.json() as { email?: string; name?: string };
+    const data = (await res.json()) as { email?: string; name?: string };
     if (!data.email) {
       return null;
     }
@@ -55,7 +60,11 @@ declare global {
  * Ops auth middleware — validates Bearer token against Google OAuth
  * and checks email against allowlist.
  */
-export async function opsAuthMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function opsAuthMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
   // Skip preflight
   if (req.method === 'OPTIONS') {
     next();

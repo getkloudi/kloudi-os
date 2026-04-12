@@ -1,7 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Play, Loader2, CheckCircle, XCircle, Clock, BookOpen, Zap, Target, Folder } from 'lucide-react';
+import {
+  Play,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  BookOpen,
+  Zap,
+  Target,
+  Folder,
+} from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -47,12 +57,22 @@ const typeLabels = {
 
 const statusConfig = {
   pending: { icon: Clock, color: 'text-muted-foreground', label: 'Pending' },
-  running: { icon: Loader2, color: 'text-blue-400', label: 'Running', animate: true },
+  running: {
+    icon: Loader2,
+    color: 'text-blue-400',
+    label: 'Running',
+    animate: true,
+  },
   completed: { icon: CheckCircle, color: 'text-green-400', label: 'Completed' },
   failed: { icon: XCircle, color: 'text-red-400', label: 'Failed' },
 };
 
-export function EntityPanel({ entity, onRun, isRunning = false, logs = [] }: EntityPanelProps) {
+export function EntityPanel({
+  entity,
+  onRun,
+  isRunning = false,
+  logs = [],
+}: EntityPanelProps) {
   const [showLogs, setShowLogs] = useState(false);
 
   if (!entity) {
@@ -77,20 +97,33 @@ export function EntityPanel({ entity, onRun, isRunning = false, logs = [] }: Ent
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold text-foreground">{entity.name}</h1>
+              <h1 className="text-xl font-semibold text-foreground">
+                {entity.name}
+              </h1>
               <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                 {typeLabels[entity.type]}
               </span>
             </div>
             {entity.description && (
-              <p className="mt-1 text-sm text-muted-foreground">{entity.description}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {entity.description}
+              </p>
             )}
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className={cn('flex items-center gap-1.5', statusConfig[status].color)}>
+          <div
+            className={cn(
+              'flex items-center gap-1.5',
+              statusConfig[status].color
+            )}
+          >
             <StatusIcon
-              className={cn('h-4 w-4', (statusConfig[status] as { animate?: boolean }).animate && 'animate-spin')}
+              className={cn(
+                'h-4 w-4',
+                (statusConfig[status] as { animate?: boolean }).animate &&
+                  'animate-spin'
+              )}
             />
             <span className="text-sm">{statusConfig[status].label}</span>
           </div>
@@ -153,7 +186,9 @@ export function EntityPanel({ entity, onRun, isRunning = false, logs = [] }: Ent
                     log.level === 'info' && 'text-muted-foreground'
                   )}
                 >
-                  <span className="text-muted-foreground">[{log.timestamp}]</span>{' '}
+                  <span className="text-muted-foreground">
+                    [{log.timestamp}]
+                  </span>{' '}
                   <span className="uppercase">[{log.level}]</span> {log.message}
                 </div>
               ))}

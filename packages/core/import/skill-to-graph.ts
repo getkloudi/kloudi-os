@@ -20,19 +20,40 @@ interface GraphEdge {
 }
 
 const WRITE_COMMANDS = [
-  'git push', 'git commit', 'git merge', 'git checkout -b',
-  'gh pr create', 'gh issue create',
-  'rm ', 'mv ', 'cp ',
-  'kubectl apply', 'kubectl delete',
+  'git push',
+  'git commit',
+  'git merge',
+  'git checkout -b',
+  'gh pr create',
+  'gh issue create',
+  'rm ',
+  'mv ',
+  'cp ',
+  'kubectl apply',
+  'kubectl delete',
   'docker push',
-  'npm publish', 'pnpm publish',
+  'npm publish',
+  'pnpm publish',
 ];
 
 const READ_COMMANDS = [
-  'git log', 'git status', 'git diff', 'git branch',
-  'gh pr list', 'gh issue list', 'gh pr view', 'gh issue view',
-  'ls', 'cat', 'head', 'tail', 'grep', 'rg', 'find',
-  'kubectl get', 'docker ps',
+  'git log',
+  'git status',
+  'git diff',
+  'git branch',
+  'gh pr list',
+  'gh issue list',
+  'gh pr view',
+  'gh issue view',
+  'ls',
+  'cat',
+  'head',
+  'tail',
+  'grep',
+  'rg',
+  'find',
+  'kubectl get',
+  'docker ps',
 ];
 
 export function convertToGraph(parsed: ParsedSkill): {
@@ -102,7 +123,7 @@ export function convertToGraph(parsed: ParsedSkill): {
 function sectionToNode(id: string, section: ParsedSection): GraphNode {
   // Has bash code blocks → tool_call
   const bashBlocks = section.codeBlocks.filter(
-    (b) => b.lang === 'bash' || b.lang === 'sh' || b.lang === '',
+    (b) => b.lang === 'bash' || b.lang === 'sh' || b.lang === ''
   );
 
   if (bashBlocks.length > 0) {
@@ -130,7 +151,8 @@ function sectionToNode(id: string, section: ParsedSection): GraphNode {
       name: section.heading,
       type: 'interpolative',
       config: {
-        decision_prompt: section.content.split('Options:')[0]?.trim() ?? section.content,
+        decision_prompt:
+          section.content.split('Options:')[0]?.trim() ?? section.content,
         options,
         reasoning_required: true,
       },

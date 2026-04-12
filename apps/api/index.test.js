@@ -35,6 +35,7 @@ const mockAuth = {
 const mockEventBus = {
   emit: jest.fn(),
   on: jest.fn(),
+  publish: jest.fn().mockResolvedValue(undefined),
 };
 
 const mockInitializeInfrastructure = jest.fn().mockResolvedValue(undefined);

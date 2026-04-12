@@ -40,9 +40,7 @@ export async function registerJiraMCPTools(
   registry: ToolRegistry
 ): Promise<string[]> {
   if (!process.env['JIRA_API_TOKEN']) {
-    logger.warn(
-      'JIRA_API_TOKEN not set, skipping Jira MCP tool registration'
-    );
+    logger.warn('JIRA_API_TOKEN not set, skipping Jira MCP tool registration');
     return [];
   }
 

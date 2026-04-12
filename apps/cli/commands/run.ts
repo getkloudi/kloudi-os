@@ -48,7 +48,10 @@ export function registerRunCommand(program: Command): void {
       {} as Record<string, string>
     )
     .action(
-      async (slug: string, opts: { apiUrl: string; param: Record<string, string> }) => {
+      async (
+        slug: string,
+        opts: { apiUrl: string; param: Record<string, string> }
+      ) => {
         const client = new KloudiClient({ baseUrl: opts.apiUrl });
 
         // 1. Look up procedure by slug
@@ -220,36 +223,32 @@ function handleTrustGate(
   if (options.config && Object.keys(options.config).length > 0) {
     console.log(chalk.gray('  Config:'));
     for (const [key, value] of Object.entries(options.config)) {
-      const display =
-        typeof value === 'string' ? value : JSON.stringify(value);
+      const display = typeof value === 'string' ? value : JSON.stringify(value);
       console.log(chalk.gray(`    ${key}: ${display}`));
     }
   }
 
   console.log(chalk.yellow('━'.repeat(60)));
 
-  rl.question(
-    chalk.yellow.bold('  Approve? (y/n): '),
-    (answer: string) => {
-      const approved = answer.trim().toLowerCase() === 'y';
-      ws.send(
-        JSON.stringify({
-          type: 'user.ask.response',
-          payload: {
-            askId,
-            response: approved ? 'approve' : 'reject',
-          },
-        })
-      );
+  rl.question(chalk.yellow.bold('  Approve? (y/n): '), (answer: string) => {
+    const approved = answer.trim().toLowerCase() === 'y';
+    ws.send(
+      JSON.stringify({
+        type: 'user.ask.response',
+        payload: {
+          askId,
+          response: approved ? 'approve' : 'reject',
+        },
+      })
+    );
 
-      if (approved) {
-        console.log(chalk.green('  Approved. Continuing...'));
-      } else {
-        console.log(chalk.red('  Rejected. Aborting execution.'));
-      }
-      console.log('');
+    if (approved) {
+      console.log(chalk.green('  Approved. Continuing...'));
+    } else {
+      console.log(chalk.red('  Rejected. Aborting execution.'));
     }
-  );
+    console.log('');
+  });
 }
 
 function collectParams(

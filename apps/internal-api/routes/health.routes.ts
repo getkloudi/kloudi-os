@@ -1,5 +1,8 @@
 import type { Application, Request, Response } from 'express';
-import { PrismaManager, type PrismaModelMethods } from '@kloudi/infrastructure/database';
+import {
+  PrismaManager,
+  type PrismaModelMethods,
+} from '@kloudi/infrastructure/database';
 import { Logger } from '@kloudi/shared/logger';
 
 const logger = Logger.getInstance('ops-health');
@@ -17,17 +20,13 @@ export function setupHealthRoutes(app: Application): void {
       const user = client['user'] as PrismaModelMethods;
 
       // Gather stats
-      const [
-        procedureCount,
-        executionCount,
-        runningCount,
-        userCount,
-      ] = await Promise.all([
-        procedure.count(),
-        execution.count(),
-        execution.count({ where: { status: 'running' } }),
-        user.count(),
-      ]);
+      const [procedureCount, executionCount, runningCount, userCount] =
+        await Promise.all([
+          procedure.count(),
+          execution.count(),
+          execution.count({ where: { status: 'running' } }),
+          user.count(),
+        ]);
 
       res.json({
         status: dbHealth.status,
@@ -42,7 +41,11 @@ export function setupHealthRoutes(app: Application): void {
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      logger.error('Health check failed', error instanceof Error ? error : null, {});
+      logger.error(
+        'Health check failed',
+        error instanceof Error ? error : null,
+        {}
+      );
       res.status(503).json({
         status: 'unhealthy',
         error: error instanceof Error ? error.message : 'Unknown error',

@@ -1,6 +1,10 @@
 import type { GraphNode } from '@kloudi/shared/types';
 import type {
-  ExecutionContext, NodeResult, NodeExecutor, ExecutionEngine, InterpolativeConfig,
+  ExecutionContext,
+  NodeResult,
+  NodeExecutor,
+  ExecutionEngine,
+  InterpolativeConfig,
 } from '../types.js';
 import type { ContextManager } from '../context-manager.js';
 import { Logger } from '@kloudi/shared/logger';
@@ -10,20 +14,20 @@ const logger = Logger.getInstance('interpolative-executor');
 interface AIClient {
   generateText(
     messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-    options?: Record<string, unknown>,
+    options?: Record<string, unknown>
   ): Promise<{ text: string; usage?: { totalTokens?: number } }>;
 }
 
 export class InterpolativeExecutor implements NodeExecutor {
   constructor(
     private aiClient: AIClient,
-    private contextManager: ContextManager,
+    private contextManager: ContextManager
   ) {}
 
   async execute(
     node: GraphNode,
     ctx: ExecutionContext,
-    _engine?: ExecutionEngine,
+    _engine?: ExecutionEngine
   ): Promise<NodeResult> {
     const config = node.config as unknown as InterpolativeConfig;
 
@@ -43,8 +47,14 @@ ${config.reasoning_required ? 'Explain your reasoning, then state your choice.' 
 Respond with JSON: { "reasoning": "...", "choice": "..." }
 The "choice" MUST be exactly one of the option values listed above.`;
 
-    const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
-      { role: 'system', content: this.contextManager.assemble(ctx.contextWindow) },
+    const messages: Array<{
+      role: 'system' | 'user' | 'assistant';
+      content: string;
+    }> = [
+      {
+        role: 'system',
+        content: this.contextManager.assemble(ctx.contextWindow),
+      },
       { role: 'user', content: prompt },
     ];
 
@@ -56,7 +66,9 @@ The "choice" MUST be exactly one of the option values listed above.`;
         decision = this.extractJson(result.text);
       } catch {
         // Retry once on parse failure
-        logger.warn('JSON extraction failed, retrying LLM call', { nodeId: node.id });
+        logger.warn('JSON extraction failed, retrying LLM call', {
+          nodeId: node.id,
+        });
         const retry = await this.aiClient.generateText(messages);
         decision = this.extractJson(retry.text);
       }
@@ -84,9 +96,13 @@ The "choice" MUST be exactly one of the option values listed above.`;
       };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      logger.error('Interpolative execution failed', err instanceof Error ? err : new Error(errorMsg), {
-        nodeId: node.id,
-      });
+      logger.error(
+        'Interpolative execution failed',
+        err instanceof Error ? err : new Error(errorMsg),
+        {
+          nodeId: node.id,
+        }
+      );
       return { status: 'failed', output: null, error: errorMsg };
     }
   }
@@ -124,6 +140,8 @@ The "choice" MUST be exactly one of the option values listed above.`;
       }
     }
 
-    throw new Error(`Could not extract JSON from LLM response: ${text.slice(0, 200)}`);
+    throw new Error(
+      `Could not extract JSON from LLM response: ${text.slice(0, 200)}`
+    );
   }
 }

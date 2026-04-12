@@ -3,7 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar, TreeNode } from '@/components/sidebar';
-import { EntityPanel, EntityData, ExecutionLog } from '@/components/entity-panel';
+import {
+  EntityPanel,
+  EntityData,
+  ExecutionLog,
+} from '@/components/entity-panel';
 import { Omnibox, CommandItem, useOmnibox } from '@/components/omnibox';
 import { Command, LogOut, User } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -67,7 +71,9 @@ export default function Home() {
       } catch (err) {
         if (!cancelled) {
           console.error('Failed to load procedures:', err);
-          setError('Failed to load procedures. Make sure the API server is running.');
+          setError(
+            'Failed to load procedures. Make sure the API server is running.'
+          );
         }
       } finally {
         if (!cancelled) {
@@ -77,7 +83,9 @@ export default function Home() {
     }
 
     loadProcedures();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isAuthenticated]);
 
   // Load entity detail when selection changes
@@ -102,76 +110,85 @@ export default function Home() {
     }
 
     loadEntity();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedId, isAuthenticated]);
 
-  const handleRun = useCallback(async (id: string) => {
-    setIsRunning(true);
-    setLogs([]);
+  const handleRun = useCallback(
+    async (id: string) => {
+      setIsRunning(true);
+      setLogs([]);
 
-    try {
-      const execution = await api.executeProcedure(id);
+      try {
+        const execution = await api.executeProcedure(id);
 
-      // Add initial log
-      setLogs([{
-        timestamp: new Date().toISOString(),
-        level: 'info',
-        message: execution.message || 'Execution started...',
-      }]);
+        // Add initial log
+        setLogs([
+          {
+            timestamp: new Date().toISOString(),
+            level: 'info',
+            message: execution.message || 'Execution started...',
+          },
+        ]);
 
-      // Poll for execution status updates
-      const executionId = execution.id;
-      let pollCount = 0;
-      const maxPolls = 30; // Max 30 seconds of polling
+        // Poll for execution status updates
+        const executionId = execution.id;
+        let pollCount = 0;
+        const maxPolls = 30; // Max 30 seconds of polling
 
-      const poll = async () => {
-        try {
-          const status = await api.getExecution(executionId);
+        const poll = async () => {
+          try {
+            const status = await api.getExecution(executionId);
 
-          if (status.logs && status.logs.length > 0) {
-            setLogs(status.logs as ExecutionLog[]);
-          }
-
-          if (status.status === 'completed') {
-            setIsRunning(false);
-            if (entity) {
-              setEntity({ ...entity, status: 'completed' });
+            if (status.logs && status.logs.length > 0) {
+              setLogs(status.logs as ExecutionLog[]);
             }
-            return;
-          }
 
-          if (status.status === 'failed') {
-            setIsRunning(false);
-            if (entity) {
-              setEntity({ ...entity, status: 'failed' });
+            if (status.status === 'completed') {
+              setIsRunning(false);
+              if (entity) {
+                setEntity({ ...entity, status: 'completed' });
+              }
+              return;
             }
-            return;
-          }
 
-          pollCount++;
-          if (pollCount < maxPolls) {
-            setTimeout(poll, 1000);
-          } else {
+            if (status.status === 'failed') {
+              setIsRunning(false);
+              if (entity) {
+                setEntity({ ...entity, status: 'failed' });
+              }
+              return;
+            }
+
+            pollCount++;
+            if (pollCount < maxPolls) {
+              setTimeout(poll, 1000);
+            } else {
+              setIsRunning(false);
+            }
+          } catch (err) {
+            console.error('Failed to poll execution status:', err);
             setIsRunning(false);
           }
-        } catch (err) {
-          console.error('Failed to poll execution status:', err);
-          setIsRunning(false);
-        }
-      };
+        };
 
-      // Start polling after a short delay
-      setTimeout(poll, 1000);
-    } catch (err) {
-      console.error('Failed to start execution:', err);
-      setLogs([{
-        timestamp: new Date().toISOString(),
-        level: 'error',
-        message: 'Failed to start execution',
-      }]);
-      setIsRunning(false);
-    }
-  }, [entity]);
+        // Start polling after a short delay
+        setTimeout(poll, 1000);
+      } catch (err) {
+        console.error('Failed to start execution:', err);
+        setLogs([
+          {
+            timestamp: new Date().toISOString(),
+            level: 'error',
+            message: 'Failed to start execution',
+          },
+        ]);
+        setIsRunning(false);
+      }
+    },
+    [entity]
+  );
 
   const handleSelect = useCallback((id: string) => {
     setSelectedId(id);
@@ -209,7 +226,9 @@ export default function Home() {
           <div className="flex h-full items-center justify-center text-muted-foreground">
             <div className="text-center">
               <p className="text-red-400">{error}</p>
-              <p className="mt-2 text-sm">Run the API server with: pnpm dev:api</p>
+              <p className="mt-2 text-sm">
+                Run the API server with: pnpm dev:api
+              </p>
             </div>
           </div>
         ) : (
@@ -226,7 +245,9 @@ export default function Home() {
       <div className="fixed top-4 right-4 z-10">
         <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-muted-foreground shadow-lg">
           <User className="h-4 w-4" />
-          <span className="max-w-[120px] truncate">{user?.username || user?.email}</span>
+          <span className="max-w-[120px] truncate">
+            {user?.username || user?.email}
+          </span>
           <button
             onClick={logout}
             className="ml-1 rounded p-1 transition-colors hover:bg-accent hover:text-accent-foreground"

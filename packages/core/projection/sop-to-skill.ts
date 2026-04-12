@@ -34,9 +34,7 @@ export function projectToSkillMd(procedure: ProcedureInput): string {
   // Frontmatter
   const allowedTools = extractAllowedTools(orderedNodes);
   const version =
-    typeof metadata?.['version'] === 'string'
-      ? metadata['version']
-      : '1.0.0';
+    typeof metadata?.['version'] === 'string' ? metadata['version'] : '1.0.0';
 
   lines.push('---');
   lines.push(`name: ${slug}`);
@@ -91,7 +89,9 @@ export function projectToSkillMd(procedure: ProcedureInput): string {
   // Completion
   lines.push('## Completion');
   lines.push('');
-  lines.push('Report what was done: status, key outputs, any issues encountered.');
+  lines.push(
+    'Report what was done: status, key outputs, any issues encountered.'
+  );
   lines.push('');
 
   return lines.join('\n');
@@ -115,7 +115,9 @@ function projectNode(node: {
 
     case 'tool_call': {
       const toolName = config['tool_name'] as string | undefined;
-      const params = config['parameters'] as Record<string, unknown> | undefined;
+      const params = config['parameters'] as
+        | Record<string, unknown>
+        | undefined;
       const approval = config['requiresApproval'] ? ' (requires approval)' : '';
 
       lines.push(`Run tool: \`${toolName ?? 'unknown'}\`${approval}`);
@@ -124,7 +126,9 @@ function projectNode(node: {
         lines.push('```bash');
         lines.push(`# ${toolName}`);
         for (const [k, v] of Object.entries(params)) {
-          lines.push(`# ${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`);
+          lines.push(
+            `# ${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`
+          );
         }
         lines.push('```');
       }
@@ -161,7 +165,7 @@ function projectNode(node: {
 }
 
 function extractAllowedTools(
-  nodes: { type: string; config: Record<string, unknown> }[],
+  nodes: { type: string; config: Record<string, unknown> }[]
 ): string[] {
   const tools = new Set<string>();
 

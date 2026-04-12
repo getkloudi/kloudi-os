@@ -52,7 +52,9 @@ interface MemoryUsage {
  * @param config - Configuration for health check
  * @returns Express route handler
  */
-export function createHealthEndpoint(config: HealthConfig = {}): RequestHandler {
+export function createHealthEndpoint(
+  config: HealthConfig = {}
+): RequestHandler {
   const startTime = Date.now();
 
   return async (_req: Request, res: Response): Promise<void> => {

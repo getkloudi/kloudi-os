@@ -1,5 +1,8 @@
 import type { Application, Request, Response } from 'express';
-import { PrismaManager, type PrismaModelMethods } from '@kloudi/infrastructure/database';
+import {
+  PrismaManager,
+  type PrismaModelMethods,
+} from '@kloudi/infrastructure/database';
 import { Logger } from '@kloudi/shared/logger';
 
 const logger = Logger.getInstance('ops-executions');
@@ -37,7 +40,11 @@ export function setupExecutionRoutes(app: Application): void {
 
       res.json({ data: executions, total, limit, offset });
     } catch (error) {
-      logger.error('Failed to list executions', error instanceof Error ? error : null, {});
+      logger.error(
+        'Failed to list executions',
+        error instanceof Error ? error : null,
+        {}
+      );
       res.status(500).json({ error: 'Failed to list executions' });
     }
   });
@@ -62,7 +69,11 @@ export function setupExecutionRoutes(app: Application): void {
 
       res.json({ data: result });
     } catch (error) {
-      logger.error('Failed to get execution', error instanceof Error ? error : null, {});
+      logger.error(
+        'Failed to get execution',
+        error instanceof Error ? error : null,
+        {}
+      );
       res.status(500).json({ error: 'Failed to get execution' });
     }
   });
@@ -72,9 +83,9 @@ export function setupExecutionRoutes(app: Application): void {
     try {
       const db = await PrismaManager.getInstance().getClient();
       const execution = db['execution'] as PrismaModelMethods;
-      const existing = await execution.findUnique({
+      const existing = (await execution.findUnique({
         where: { id: req.params['id'] },
-      }) as Record<string, unknown> | null;
+      })) as Record<string, unknown> | null;
 
       if (!existing) {
         res.status(404).json({ error: 'Execution not found' });
@@ -82,8 +93,14 @@ export function setupExecutionRoutes(app: Application): void {
       }
 
       const existingStatus = existing['status'] as string;
-      if (existingStatus === 'completed' || existingStatus === 'failed' || existingStatus === 'cancelled') {
-        res.status(409).json({ error: `Execution already in terminal state: ${existingStatus}` });
+      if (
+        existingStatus === 'completed' ||
+        existingStatus === 'failed' ||
+        existingStatus === 'cancelled'
+      ) {
+        res.status(409).json({
+          error: `Execution already in terminal state: ${existingStatus}`,
+        });
         return;
       }
 
@@ -103,37 +120,52 @@ export function setupExecutionRoutes(app: Application): void {
 
       res.json({ data: updated });
     } catch (error) {
-      logger.error('Failed to kill execution', error instanceof Error ? error : null, {});
+      logger.error(
+        'Failed to kill execution',
+        error instanceof Error ? error : null,
+        {}
+      );
       res.status(500).json({ error: 'Failed to kill execution' });
     }
   });
 
   // Bulk cancel stuck executions (running for > threshold)
-  app.post(`${prefix}/bulk-cancel-stuck`, async (req: Request, res: Response) => {
-    try {
-      const db = await PrismaManager.getInstance().getClient();
-      const thresholdMinutes = parseInt(req.body?.thresholdMinutes as string) || 60;
-      const cutoff = new Date(Date.now() - thresholdMinutes * 60 * 1000);
+  app.post(
+    `${prefix}/bulk-cancel-stuck`,
+    async (req: Request, res: Response) => {
+      try {
+        const db = await PrismaManager.getInstance().getClient();
+        const thresholdMinutes =
+          parseInt(req.body?.thresholdMinutes as string) || 60;
+        const cutoff = new Date(Date.now() - thresholdMinutes * 60 * 1000);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const executionModel = db['execution'] as any;
-      const result = await executionModel.updateMany({
-        where: {
-          status: { in: ['running', 'waiting_input'] },
-          startedAt: { lt: cutoff },
-        },
-        data: {
-          status: 'cancelled',
-          error: `Bulk cancelled via ops — stuck for >${thresholdMinutes}m`,
-          completedAt: new Date(),
-        },
-      }) as { count: number };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const executionModel = db['execution'] as any;
+        const result = (await executionModel.updateMany({
+          where: {
+            status: { in: ['running', 'waiting_input'] },
+            startedAt: { lt: cutoff },
+          },
+          data: {
+            status: 'cancelled',
+            error: `Bulk cancelled via ops — stuck for >${thresholdMinutes}m`,
+            completedAt: new Date(),
+          },
+        })) as { count: number };
 
-      logger.info('Bulk cancelled stuck executions', { count: result.count, thresholdMinutes });
-      res.json({ cancelled: result.count, thresholdMinutes });
-    } catch (error) {
-      logger.error('Failed to bulk cancel', error instanceof Error ? error : null, {});
-      res.status(500).json({ error: 'Failed to bulk cancel executions' });
+        logger.info('Bulk cancelled stuck executions', {
+          count: result.count,
+          thresholdMinutes,
+        });
+        res.json({ cancelled: result.count, thresholdMinutes });
+      } catch (error) {
+        logger.error(
+          'Failed to bulk cancel',
+          error instanceof Error ? error : null,
+          {}
+        );
+        res.status(500).json({ error: 'Failed to bulk cancel executions' });
+      }
     }
-  });
+  );
 }

@@ -18,7 +18,10 @@ export default function ToolsPage() {
 
   useEffect(() => {
     opsApi<{ data: Integration[]; note: string }>('/ops/tools')
-      .then((res) => { setIntegrations(res.data); setNote(res.note); })
+      .then((res) => {
+        setIntegrations(res.data);
+        setNote(res.note);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -26,12 +29,18 @@ export default function ToolsPage() {
     <AuthGuard>
       <div className="space-y-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tools & Integrations</h1>
-          <p className="text-sm text-muted-foreground">Registered tools and integration status</p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Tools & Integrations
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Registered tools and integration status
+          </p>
         </div>
 
         {note && (
-          <div className="rounded-md border bg-muted/50 p-3 text-xs text-muted-foreground">{note}</div>
+          <div className="rounded-md border bg-muted/50 p-3 text-xs text-muted-foreground">
+            {note}
+          </div>
         )}
 
         {loading ? (
@@ -41,7 +50,9 @@ export default function ToolsPage() {
             {integrations.map((i) => (
               <Card key={i.name}>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium capitalize">{i.name}</CardTitle>
+                  <CardTitle className="text-sm font-medium capitalize">
+                    {i.name}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Badge variant={i.configured ? 'success' : 'destructive'}>

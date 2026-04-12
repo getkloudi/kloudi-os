@@ -6,7 +6,11 @@ import { Logger } from '@kloudi/shared/logger';
 /** Logger interface from shared package */
 interface LoggerInstance {
   info: (message: string, metadata?: Record<string, unknown>) => void;
-  error: (message: string, error?: Error | null, metadata?: Record<string, unknown>) => void;
+  error: (
+    message: string,
+    error?: Error | null,
+    metadata?: Record<string, unknown>
+  ) => void;
   warn: (message: string, metadata?: Record<string, unknown>) => void;
   debug: (message: string, metadata?: Record<string, unknown>) => void;
 }
@@ -37,7 +41,11 @@ interface TransactionOptions {
   /** Transaction timeout (ms) */
   timeout?: number;
   /** Transaction isolation level */
-  isolationLevel?: 'ReadUncommitted' | 'ReadCommitted' | 'RepeatableRead' | 'Serializable';
+  isolationLevel?:
+    | 'ReadUncommitted'
+    | 'ReadCommitted'
+    | 'RepeatableRead'
+    | 'Serializable';
   /** Additional options */
   [key: string]: unknown;
 }
@@ -67,8 +75,14 @@ export interface PrismaModelMethods<T = unknown> {
 export interface PrismaClientInstance {
   $connect: () => Promise<void>;
   $disconnect: () => Promise<void>;
-  $queryRaw: <T>(query: TemplateStringsArray | string, ...values: unknown[]) => Promise<T>;
-  $transaction: <T>(fn: (tx: PrismaClientInstance) => Promise<T>, options?: Record<string, unknown>) => Promise<T>;
+  $queryRaw: <T>(
+    query: TemplateStringsArray | string,
+    ...values: unknown[]
+  ) => Promise<T>;
+  $transaction: <T>(
+    fn: (tx: PrismaClientInstance) => Promise<T>,
+    options?: Record<string, unknown>
+  ) => Promise<T>;
   // Known models - add more as needed
   decision: PrismaModelMethods;
   decisionOutcome: PrismaModelMethods;
@@ -98,7 +112,13 @@ type BatchOperation<T> = (tx: PrismaClientInstance) => Promise<T>;
 export class PrismaManager {
   private static instance: PrismaManager | null = null;
 
-  private config: Required<Pick<PrismaManagerConfig, 'maxConnections' | 'connectionTimeout' | 'database' | 'logLevel'>> & PrismaManagerConfig;
+  private config: Required<
+    Pick<
+      PrismaManagerConfig,
+      'maxConnections' | 'connectionTimeout' | 'database' | 'logLevel'
+    >
+  > &
+    PrismaManagerConfig;
   private prisma: PrismaClientInstance | null;
   private connectionPromise: Promise<PrismaClientInstance> | null;
   private isShuttingDown: boolean;
@@ -107,10 +127,15 @@ export class PrismaManager {
   constructor(options: PrismaManagerConfig = {}) {
     this.config = {
       maxConnections:
-        options.maxConnections ?? (Config.get('database.maxConnections', 10) as number),
+        options.maxConnections ??
+        (Config.get('database.maxConnections', 10) as number),
       connectionTimeout:
-        options.connectionTimeout ?? (Config.get('database.connectionTimeout', 30000) as number),
-      database: options.database ?? process.env['DATABASE_URL'] ?? (Config.get('database.url') as string),
+        options.connectionTimeout ??
+        (Config.get('database.connectionTimeout', 30000) as number),
+      database:
+        options.database ??
+        process.env['DATABASE_URL'] ??
+        (Config.get('database.url') as string),
       logLevel:
         options.logLevel ??
         (Config.isDevelopment()
@@ -234,16 +259,19 @@ export class PrismaManager {
     };
 
     try {
-      const result = await client.$transaction(async (tx: PrismaClientInstance) => {
-        try {
-          return await callback(tx);
-        } catch (error) {
-          const err = error as Error;
-          // Transaction will auto-rollback
-          logger.error('Transaction failed:', err);
-          throw error;
-        }
-      }, transactionOptions);
+      const result = await client.$transaction(
+        async (tx: PrismaClientInstance) => {
+          try {
+            return await callback(tx);
+          } catch (error) {
+            const err = error as Error;
+            // Transaction will auto-rollback
+            logger.error('Transaction failed:', err);
+            throw error;
+          }
+        },
+        transactionOptions
+      );
 
       return result;
     } catch (error) {
@@ -293,7 +321,10 @@ export class PrismaManager {
     const client = await this.getClient();
 
     try {
-      const result = await client.$queryRaw(sql as unknown as TemplateStringsArray, ...params);
+      const result = await client.$queryRaw(
+        sql as unknown as TemplateStringsArray,
+        ...params
+      );
       return result as T;
     } catch (error) {
       const err = error as Error;
@@ -350,9 +381,7 @@ export class PrismaManager {
     const shutdown = async (signal: string): Promise<void> => {
       if (this.isShuttingDown) return;
 
-      logger.info(
-        `Received ${signal}, shutting down database gracefully...`
-      );
+      logger.info(`Received ${signal}, shutting down database gracefully...`);
       this.isShuttingDown = true;
 
       // Wait for active transactions to complete
@@ -384,7 +413,9 @@ export class PrismaManager {
 
     // Only set up handlers if they haven't been set already
     const existingListeners = process.listeners('SIGINT');
-    const hasHandler = existingListeners.some((listener) => listener.name === 'databaseShutdown');
+    const hasHandler = existingListeners.some(
+      (listener) => listener.name === 'databaseShutdown'
+    );
 
     if (!hasHandler) {
       const handler = shutdown.bind(null);

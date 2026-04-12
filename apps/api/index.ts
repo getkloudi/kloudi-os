@@ -71,12 +71,19 @@ async function startServer(): Promise<void> {
     // Setup graceful shutdown
     setupGracefulShutdown();
   } catch (error) {
-    logger.error('❌ Server startup failed', error instanceof Error ? error : null, {});
+    logger.error(
+      '❌ Server startup failed',
+      error instanceof Error ? error : null,
+      {}
+    );
     process.exit(1);
   }
 }
 
-async function startHTTPServer(app: Application, port: string | number): Promise<void> {
+async function startHTTPServer(
+  app: Application,
+  port: string | number
+): Promise<void> {
   return new Promise((resolve, reject) => {
     httpServer = app.listen(port, () => {
       logger.info(`✅ Server listening on port ${port}`);

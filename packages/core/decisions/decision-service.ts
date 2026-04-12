@@ -168,7 +168,8 @@ export class DecisionEntity {
  */
 export class DecisionRepository {
   static async create(decisionData: DecisionEntityData): Promise<Decision> {
-    const db = (await Database.getInstance().getClient()) as unknown as DecisionDbClient;
+    const db =
+      (await Database.getInstance().getClient()) as unknown as DecisionDbClient;
 
     try {
       const decision = await db.decision.create({
@@ -204,7 +205,8 @@ export class DecisionRepository {
   }
 
   static async findById(id: string): Promise<Decision | null> {
-    const db = (await Database.getInstance().getClient()) as unknown as DecisionDbClient;
+    const db =
+      (await Database.getInstance().getClient()) as unknown as DecisionDbClient;
 
     try {
       const decision = await db.decision.findUnique({
@@ -229,7 +231,8 @@ export class DecisionRepository {
     projectId: string,
     options: DecisionSearchOptions = {}
   ): Promise<Decision[]> {
-    const db = (await Database.getInstance().getClient()) as unknown as DecisionDbClient;
+    const db =
+      (await Database.getInstance().getClient()) as unknown as DecisionDbClient;
     const { status, priority, limit = 20, offset = 0 } = options;
 
     try {
@@ -261,7 +264,8 @@ export class DecisionRepository {
     id: string,
     updateData: Partial<DecisionEntityData>
   ): Promise<Decision> {
-    const db = (await Database.getInstance().getClient()) as unknown as DecisionDbClient;
+    const db =
+      (await Database.getInstance().getClient()) as unknown as DecisionDbClient;
 
     try {
       const decision = await db.decision.update({
@@ -291,7 +295,8 @@ export class DecisionRepository {
     query: string,
     options: DecisionSearchOptions = {}
   ): Promise<Decision[]> {
-    const db = (await Database.getInstance().getClient()) as unknown as DecisionDbClient;
+    const db =
+      (await Database.getInstance().getClient()) as unknown as DecisionDbClient;
     const { limit = 20, offset = 0 } = options;
 
     try {

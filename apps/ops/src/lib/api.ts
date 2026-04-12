@@ -1,7 +1,11 @@
 const API_BASE = process.env.NEXT_PUBLIC_OPS_API_URL ?? 'http://localhost:3002';
 
-export async function opsApi<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('ops_token') : null;
+export async function opsApi<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('ops_token') : null;
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
@@ -23,7 +27,9 @@ export async function opsApi<T>(path: string, options: RequestInit = {}): Promis
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error((body as { error?: string }).error ?? `API error: ${res.status}`);
+    throw new Error(
+      (body as { error?: string }).error ?? `API error: ${res.status}`
+    );
   }
 
   if (res.status === 204) {

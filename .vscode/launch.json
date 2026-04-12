@@ -42,7 +42,7 @@
   "inputs": [
     {
       "id": "fullCommand",
-      "type": "promptString", 
+      "type": "promptString",
       "description": "Full command (space-separated, e.g., 'tools execute scan_files --path=./src')",
       "default": "tools list"
     }

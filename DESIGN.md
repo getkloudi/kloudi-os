@@ -1,6 +1,7 @@
 # Design System — lore.dev
 
 ## Product Context
+
 - **What this is:** Multiplayer OS for EPD teams. Everything is an SOP. Procedures are living documents that execute — LLM calls, tool executions, decisions, sub-procedures — with full observability and human-in-the-loop control.
 - **Who it's for:** Engineering, Product, and Design teams who define, execute, and track operational procedures.
 - **Space/industry:** Developer tools / team OS. Peers: Linear, Notion, Cursor, Raycast, Claude Code.
@@ -8,6 +9,7 @@
 - **Positioning:** Tesla, not car. Airbnb, not Expedia. A new kind of tool, not an old one retrofitted.
 
 ## Design Philosophy
+
 - **Terminal-to-OS trajectory:** Starts with terminal DNA (monospace, dense, command-driven), evolves into a full OS with app marketplace, workspaces, and rich UI. The design system supports both ends of this spectrum.
 - **Content-first, chrome-last:** No window decorations, no unnecessary borders, no visual noise. Content earns its pixels. Everything else disappears.
 - **Spaces, not windows:** Users move between spaces (Home, Browse, Editor, Store), not manage windows. Context flows; the user never "opens an app."
@@ -49,18 +51,21 @@
 ```
 
 ### Navigation
+
 - **Nav rail** (left, 56px): Minimal icon-only rail. Logo at top, theme toggle + avatar at bottom. No labels — icons only. Collapses to 0px on mobile.
 - **Spaces** transition instantly — no page loads, no route changes visible to user.
 - **Breadcrumbs** in Editor replace traditional navigation — click any segment to go back.
 - **⌘K** opens spotlight/command palette from anywhere.
 
 ### Mobile
+
 - Nav rail collapses; bottom tab bar replaces it.
 - Agent panel becomes full-screen overlay.
 - Browse grid adapts (3 columns → 2 on phone).
 - Same codebase, responsive — not a separate mobile app.
 
 ## Aesthetic Direction
+
 - **Direction:** Industrial/Utilitarian with editorial maturity
 - **Decoration level:** Minimal — typography, spacing, and surface color do the work. No gradients, blobs, or decorative elements.
 - **Mood:** Calm, confident, precise. The tool disappears; the work is front and center. A senior engineer's IDE meets a designer's sense of polish. Feels inevitable, not designed.
@@ -72,6 +77,7 @@
   - Avatars: 50% (circle)
 
 ## Typography
+
 - **Display/Hero:** DM Sans 700 — geometric, modern, high readability at large sizes
 - **Body:** DM Sans 400/500 — same family, consistent, excellent at 14px
 - **UI/Labels:** DM Sans 500
@@ -95,73 +101,83 @@
 ## Color
 
 ### Approach: Restrained
+
 Color is rare and meaningful. The interface is mostly neutral; color signals status, action, or attention.
 
 ### Dark Theme (default)
+
 ```css
---bg-0: #0a0b0e;     /* deepest — terminal surfaces */
---bg-1: #101114;     /* base — primary background */
---bg-2: #161719;     /* surface — cards, panels */
---bg-3: #1c1d21;     /* elevated — popovers, dropdowns */
---bg-4: #242529;     /* hover states */
---bg-5: #2e3035;     /* active states, strong hover */
+--bg-0: #0a0b0e; /* deepest — terminal surfaces */
+--bg-1: #101114; /* base — primary background */
+--bg-2: #161719; /* surface — cards, panels */
+--bg-3: #1c1d21; /* elevated — popovers, dropdowns */
+--bg-4: #242529; /* hover states */
+--bg-5: #2e3035; /* active states, strong hover */
 
---text-1: #f0f1f4;   /* primary text — headings, body */
---text-2: #a0a4b4;   /* secondary — descriptions, metadata */
---text-3: #636678;   /* muted — placeholders, inactive */
---text-4: #3e4050;   /* disabled, decorative */
+--text-1: #f0f1f4; /* primary text — headings, body */
+--text-2: #a0a4b4; /* secondary — descriptions, metadata */
+--text-3: #636678; /* muted — placeholders, inactive */
+--text-4: #3e4050; /* disabled, decorative */
 
---accent: #636bff;   /* indigo — interactive/active states ONLY */
---accent-s: rgba(99,107,255,0.12);  /* subtle accent background */
+--accent: #636bff; /* indigo — interactive/active states ONLY */
+--accent-s: rgba(99, 107, 255, 0.12); /* subtle accent background */
 --accent-h: #7b82ff; /* accent hover */
 
---green: #36d89a;    /* success, completed */
---green-s: rgba(54,216,154,0.12);
---amber: #e8a63e;    /* warning, waiting */
---amber-s: rgba(232,166,62,0.12);
---red: #e85b5b;      /* error, failed */
---red-s: rgba(232,91,91,0.12);
---blue: #4fa0e8;     /* info, running */
---blue-s: rgba(79,160,232,0.12);
+--green: #36d89a; /* success, completed */
+--green-s: rgba(54, 216, 154, 0.12);
+--amber: #e8a63e; /* warning, waiting */
+--amber-s: rgba(232, 166, 62, 0.12);
+--red: #e85b5b; /* error, failed */
+--red-s: rgba(232, 91, 91, 0.12);
+--blue: #4fa0e8; /* info, running */
+--blue-s: rgba(79, 160, 232, 0.12);
 
---border: #1e2024;   /* default border */
+--border: #1e2024; /* default border */
 ```
 
 ### Light Theme
-```css
---bg-0: #f5f6f8;     /* deepest — page background */
---bg-1: #ffffff;     /* base — primary surfaces */
---bg-2: #f0f1f4;     /* surface — cards */
---bg-3: #e8e9ee;     /* elevated */
---bg-4: #dfe0e6;     /* hover */
---bg-5: #d3d5dc;     /* active */
 
---text-1: #131520;   /* primary */
---text-2: #5c5f70;   /* secondary */
---text-3: #9a9dac;   /* muted */
---text-4: #c4c6d0;   /* disabled */
+```css
+--bg-0: #f5f6f8; /* deepest — page background */
+--bg-1: #ffffff; /* base — primary surfaces */
+--bg-2: #f0f1f4; /* surface — cards */
+--bg-3: #e8e9ee; /* elevated */
+--bg-4: #dfe0e6; /* hover */
+--bg-5: #d3d5dc; /* active */
+
+--text-1: #131520; /* primary */
+--text-2: #5c5f70; /* secondary */
+--text-3: #9a9dac; /* muted */
+--text-4: #c4c6d0; /* disabled */
 
 --accent: #4a52e0;
---accent-s: rgba(74,82,224,0.08);
+--accent-s: rgba(74, 82, 224, 0.08);
 --accent-h: #5b63f0;
 
---green: #1a9960;    --green-s: rgba(26,153,96,0.08);
---amber: #c48a1a;    --amber-s: rgba(196,138,26,0.08);
---red: #c93d3d;      --red-s: rgba(201,61,61,0.08);
---blue: #2b7cc9;     --blue-s: rgba(43,124,201,0.08);
+--green: #1a9960;
+--green-s: rgba(26, 153, 96, 0.08);
+--amber: #c48a1a;
+--amber-s: rgba(196, 138, 26, 0.08);
+--red: #c93d3d;
+--red-s: rgba(201, 61, 61, 0.08);
+--blue: #2b7cc9;
+--blue-s: rgba(43, 124, 201, 0.08);
 
 --border: #e4e5ea;
 ```
 
 ### Auto Theme
+
 Respects `prefers-color-scheme`. User can override to light/dark/auto.
 
 ### Color Rules
+
 1. **Accent is for interactive states only.** Active nav item, focused input, primary button, keyboard shortcut highlight. Never as decoration or background fill.
 2. **Semantic colors signal status.** Green = success/completed. Red = error/failed. Amber = warning/waiting. Blue = info/running. No other meanings.
 3. **Subtle variants (`-s`) for backgrounds.** Badge backgrounds, alert backgrounds, hover states on status items. Full-saturation colors only for dots, icons, and small indicators.
 
 ## Spacing
+
 - **Base unit:** 4px
 - **Density:** Compact — closer to Linear/VS Code than Notion
 - **Scale:**
@@ -177,6 +193,7 @@ Respects `prefers-color-scheme`. User can override to light/dark/auto.
   ```
 
 ## Layout
+
 - **Approach:** Space-based, not window-based. Each space fills the viewport minus the nav rail.
 - **Nav rail:** 56px fixed left, icon-only. Collapses on mobile.
 - **Agent panel:** 320px right-side slide-in, togglable. Collapses on mobile.
@@ -188,6 +205,7 @@ Respects `prefers-color-scheme`. User can override to light/dark/auto.
   - Quick access: horizontal scroll row
 
 ## Motion
+
 - **Approach:** Minimal-functional — only transitions that aid spatial comprehension
 - **Easing:**
   - Enter: `ease-out` (elements arriving)
@@ -207,7 +225,9 @@ Respects `prefers-color-scheme`. User can override to light/dark/auto.
 ## Components
 
 ### Status Badges
+
 Pill-shaped (border-radius: 12px), monospace, semantic color background with matching text:
+
 ```
 ● completed  — green-s bg, green text
 ● failed     — red-s bg, red text
@@ -219,12 +239,14 @@ Pill-shaped (border-radius: 12px), monospace, semantic color background with mat
 ```
 
 ### Buttons
+
 - **Primary:** Accent background, white text, 4px radius. Hover lifts slightly.
 - **Secondary:** Transparent, border, text-2. Hover fills bg-3.
 - **Danger:** Red background, white text.
 - **Ghost:** No background, no border, text-3. Hover → text-2.
 
 ### Cards
+
 - Background: bg-1 (one step above base)
 - Border: 1px solid border
 - Radius: 8px (not sharp like containers)
@@ -232,6 +254,7 @@ Pill-shaped (border-radius: 12px), monospace, semantic color background with mat
 - Used for: quick access items, feed posts, store apps, node execution cards
 
 ### Inputs
+
 - Background: bg-2
 - Border: 1px solid border
 - Radius: 6-8px
@@ -239,21 +262,25 @@ Pill-shaped (border-radius: 12px), monospace, semantic color background with mat
 - Placeholder: text-4
 
 ### Progress Bars
+
 - Height: 2-3px
 - Background: bg-3
 - Fill colors match semantic status (green/blue/red/amber)
 - Border-radius: 1-2px
 
 ### Avatars
+
 - Size: 28-30px
 - Border-radius: 50%
 - Background: bg-4
 - Text: 11-12px, font-weight 600, text-2
 
 ## Feed / Activity Stream
+
 The Home space's primary surface. Social-media-style posts showing team activity:
 
 ### Post Types
+
 1. **Execution run** — avatar, user, "ran a procedure", timestamp. Card with procedure name, status badge, node-by-node progress dots, progress bar.
 2. **Execution completed** — same structure, green status, full progress bar.
 3. **Execution failed** — red border on card, error context in metadata.
@@ -261,12 +288,14 @@ The Home space's primary surface. Social-media-style posts showing team activity
 5. **Procedure edited** — "edited" badge, description of change.
 
 ### Post Interactions
+
 - Reactions: emoji + count (👀 2, ✅ 1)
 - Reply: opens thread
 - Retry: on failed posts, triggers re-run
 - Clicking the card navigates to Editor space for that procedure
 
 ## Accessibility
+
 - **Keyboard navigation:** All spaces navigable via keyboard. Tab through nav rail, cards, buttons. Enter to activate.
 - **Focus indicators:** Accent border + accent-s box-shadow (same as input focus).
 - **Touch targets:** Minimum 44px on mobile, 36px on desktop.
@@ -275,6 +304,7 @@ The Home space's primary surface. Social-media-style posts showing team activity
 - **Reduced motion:** Respect `prefers-reduced-motion` — disable all transitions.
 
 ## Anti-Patterns (never do these)
+
 1. Purple/violet gradients as default accent
 2. 3-column feature grid with icons in colored circles
 3. Centered everything with uniform spacing
@@ -287,13 +317,14 @@ The Home space's primary surface. Social-media-style posts showing team activity
 10. "App within an app" windowing — spaces flow, they don't stack
 
 ## Decisions Log
-| Date | Decision | Rationale |
-|------|----------|-----------|
-| 2026-03-25 | Initial design system created | Created by /design-consultation based on product context — OS for EPD teams with terminal-to-OS trajectory |
-| 2026-03-25 | Spaces over windows (v5→v6) | MercuryOS-inspired. Windows feel like old OS retrofitted. Spaces feel native to the web. |
-| 2026-03-25 | DM Sans + JetBrains Mono | DM Sans: geometric, modern, readable at 14px. JetBrains Mono: terminal DNA, first-class system font. |
-| 2026-03-25 | Activity feed on Home | Merged social feed with home — team sees SOP runs as posts with progress, approvals, reactions. |
-| 2026-03-25 | Store as a Space | Marketplace for apps/integrations. Categories: Workspace, Agent, Analytics, Integrations. |
-| 2026-03-25 | Restrained color approach | Color is rare and meaningful. Accent only for interactive states. Neutral everything else. |
-| 2026-03-25 | Sharp containers, rounded cards | Industrial signal on structural elements. Friendly radius on interactive cards. |
-| 2026-03-25 | Mobile via responsive, not separate app | Same codebase. Nav rail → bottom tabs. Agent panel → full-screen overlay. |
+
+| Date       | Decision                                | Rationale                                                                                                  |
+| ---------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 2026-03-25 | Initial design system created           | Created by /design-consultation based on product context — OS for EPD teams with terminal-to-OS trajectory |
+| 2026-03-25 | Spaces over windows (v5→v6)             | MercuryOS-inspired. Windows feel like old OS retrofitted. Spaces feel native to the web.                   |
+| 2026-03-25 | DM Sans + JetBrains Mono                | DM Sans: geometric, modern, readable at 14px. JetBrains Mono: terminal DNA, first-class system font.       |
+| 2026-03-25 | Activity feed on Home                   | Merged social feed with home — team sees SOP runs as posts with progress, approvals, reactions.            |
+| 2026-03-25 | Store as a Space                        | Marketplace for apps/integrations. Categories: Workspace, Agent, Analytics, Integrations.                  |
+| 2026-03-25 | Restrained color approach               | Color is rare and meaningful. Accent only for interactive states. Neutral everything else.                 |
+| 2026-03-25 | Sharp containers, rounded cards         | Industrial signal on structural elements. Friendly radius on interactive cards.                            |
+| 2026-03-25 | Mobile via responsive, not separate app | Same codebase. Nav rail → bottom tabs. Agent panel → full-screen overlay.                                  |

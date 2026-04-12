@@ -174,11 +174,25 @@
       { "id": "e2", "source": "read_spec", "target": "plan_approach" },
       { "id": "e3", "source": "plan_approach", "target": "create_branch" },
       { "id": "e4", "source": "create_branch", "target": "generate_impl_plan" },
-      { "id": "e5", "source": "generate_impl_plan", "target": "implement_code" },
+      {
+        "id": "e5",
+        "source": "generate_impl_plan",
+        "target": "implement_code"
+      },
       { "id": "e6", "source": "implement_code", "target": "run_tests" },
       { "id": "e7", "source": "run_tests", "target": "assess_results" },
-      { "id": "e8", "source": "assess_results", "target": "create_pr", "condition": "tests_pass" },
-      { "id": "e9", "source": "assess_results", "target": "implement_code", "condition": "tests_fail" }
+      {
+        "id": "e8",
+        "source": "assess_results",
+        "target": "create_pr",
+        "condition": "tests_pass"
+      },
+      {
+        "id": "e9",
+        "source": "assess_results",
+        "target": "implement_code",
+        "condition": "tests_fail"
+      }
     ]
   }
 }

@@ -17,7 +17,7 @@ interface WalkableEdge {
 
 export function walkGraph<T extends WalkableNode>(
   nodes: T[],
-  edges: WalkableEdge[],
+  edges: WalkableEdge[]
 ): T[] {
   if (nodes.length === 0) return [];
 

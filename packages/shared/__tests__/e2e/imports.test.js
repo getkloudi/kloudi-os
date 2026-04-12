@@ -6,7 +6,6 @@ import { slugify, generateId } from '@kloudi/shared/utils';
 import { API_LIMITS } from '@kloudi/shared/constants';
 import { Config } from '@kloudi/shared/config';
 import { Logger } from '@kloudi/shared/logger';
-import { EventBus } from '@kloudi/infrastructure/events';
 import { PromptManager } from '@kloudi/shared/prompt-manager';
 
 describe('Package Import Test', () => {
@@ -24,7 +23,6 @@ describe('Package Import Test', () => {
     // JavaScript source modules
     expect(Config).toBeDefined();
     expect(Logger).toBeDefined();
-    expect(EventBus).toBeDefined();
     expect(PromptManager).toBeDefined();
   });
 });

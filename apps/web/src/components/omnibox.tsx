@@ -149,7 +149,9 @@ export function Omnibox({ items, onSelect, onClose, isOpen }: OmniboxProps) {
                 >
                   <Icon className={cn('h-4 w-4', typeColors[item.type])} />
                   <div className="flex-1 min-w-0">
-                    <div className="truncate text-sm font-medium">{item.name}</div>
+                    <div className="truncate text-sm font-medium">
+                      {item.name}
+                    </div>
                     {item.description && (
                       <div className="truncate text-xs text-muted-foreground">
                         {item.description}
@@ -168,11 +170,15 @@ export function Omnibox({ items, onSelect, onClose, isOpen }: OmniboxProps) {
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-border px-4 py-2 text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
-            <kbd className="rounded border border-border bg-muted px-1.5 py-0.5">↑↓</kbd>
+            <kbd className="rounded border border-border bg-muted px-1.5 py-0.5">
+              ↑↓
+            </kbd>
             <span>navigate</span>
           </div>
           <div className="flex items-center gap-2">
-            <kbd className="rounded border border-border bg-muted px-1.5 py-0.5">↵</kbd>
+            <kbd className="rounded border border-border bg-muted px-1.5 py-0.5">
+              ↵
+            </kbd>
             <span>select</span>
           </div>
         </div>

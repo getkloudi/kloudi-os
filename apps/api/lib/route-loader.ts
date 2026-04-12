@@ -120,13 +120,17 @@ function findSetupFunction(routeModule: RouteModule): SetupFunction | null {
 /**
  * Load routes matching a glob pattern
  */
-async function loadRoutesFromPattern(app: Application, pattern: string, type: string): Promise<number> {
+async function loadRoutesFromPattern(
+  app: Application,
+  pattern: string,
+  type: string
+): Promise<number> {
   const routeFiles = findRouteFiles(pattern);
   let loadedCount = 0;
 
   for (const filePath of routeFiles) {
     try {
-      const routeModule = await import(`file://${filePath}`) as RouteModule;
+      const routeModule = (await import(`file://${filePath}`)) as RouteModule;
       const setupFunction = findSetupFunction(routeModule);
 
       if (setupFunction) {
@@ -147,10 +151,14 @@ async function loadRoutesFromPattern(app: Application, pattern: string, type: st
         });
       }
     } catch (error) {
-      logger.error('❌ Failed to load route file', error instanceof Error ? error : null, {
-        context: 'route-file-error',
-        file: path.basename(filePath),
-      });
+      logger.error(
+        '❌ Failed to load route file',
+        error instanceof Error ? error : null,
+        {
+          context: 'route-file-error',
+          file: path.basename(filePath),
+        }
+      );
     }
   }
 

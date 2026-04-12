@@ -1,14 +1,18 @@
 export default {
   testEnvironment: 'node',
-  transform: {},
+  transform: {
+    '^.+\\.tsx?$': '@swc/jest',
+  },
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
   collectCoverage: true,
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],
   collectCoverageFrom: [
-    'apps/*/src/**/*.js',
-    'packages/*/src/**/*.js',
+    'apps/*/src/**/*.{js,ts}',
+    'packages/*/**/*.{js,ts}',
     '!**/node_modules/**',
     '!**/coverage/**',
+    '!**/dist/**',
   ],
   coverageThreshold: {
     global: {

@@ -58,7 +58,11 @@ interface Timer {
 /** Fallback logger interface */
 interface FallbackLogger {
   info: (message: string, metadata?: LogMetadata) => void;
-  error: (message: string, error?: Error | null, metadata?: LogMetadata) => void;
+  error: (
+    message: string,
+    error?: Error | null,
+    metadata?: LogMetadata
+  ) => void;
   warn: (message: string, metadata?: LogMetadata) => void;
   debug: (message: string, metadata?: LogMetadata) => void;
   audit: (action: string, metadata?: LogMetadata) => void;
@@ -129,12 +133,15 @@ class Logger {
 
     // Get log level from: globalLogLevel > config > default
     const configLogLevel =
-      (Config.get('LOG_LEVEL') as string | null) ?? (Config.get('environment.logLevel', 'error') as string | null);
+      (Config.get('LOG_LEVEL') as string | null) ??
+      (Config.get('environment.logLevel', 'error') as string | null);
     this.level = this.parseLogLevel(Logger.globalLogLevel ?? configLogLevel);
 
-    this.format = options.format ?? (Config.get('LOG_FORMAT') as string | null) ?? 'json';
+    this.format =
+      options.format ?? (Config.get('LOG_FORMAT') as string | null) ?? 'json';
     this.enableCorrelation =
-      options.enableCorrelation ?? (Config.get('LOG_CORRELATION') as string | null) !== 'false';
+      options.enableCorrelation ??
+      (Config.get('LOG_CORRELATION') as string | null) !== 'false';
     this.metadata = options.metadata ?? {};
 
     // Log levels with numeric values for comparison
@@ -159,7 +166,8 @@ class Logger {
       return Logger.instances.get(context) as Logger;
     } catch (error) {
       // Fallback to console logging if Logger initialization fails
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       console.warn(
         `Logger initialization failed for context "${context}":`,
         errorMessage
@@ -189,7 +197,11 @@ class Logger {
       info: (message: string, metadata: LogMetadata = {}): void => {
         console.log(`[${context}] INFO: ${message}`, metadata);
       },
-      error: (message: string, error: Error | null = null, metadata: LogMetadata = {}): void => {
+      error: (
+        message: string,
+        error: Error | null = null,
+        metadata: LogMetadata = {}
+      ): void => {
         console.error(
           `[${context}] ERROR: ${message}`,
           error?.message ?? error,
@@ -235,10 +247,19 @@ class Logger {
   shouldLog(level: LogLevel): boolean {
     const levelPriority = this.levels[level];
     const currentLevelPriority = this.levels[this.level as LogLevel];
-    return levelPriority !== undefined && currentLevelPriority !== undefined && levelPriority <= currentLevelPriority;
+    return (
+      levelPriority !== undefined &&
+      currentLevelPriority !== undefined &&
+      levelPriority <= currentLevelPriority
+    );
   }
 
-  formatMessage(level: string, message: string, metadata: LogMetadata = {}, error: LoggableError | null = null): string {
+  formatMessage(
+    level: string,
+    message: string,
+    metadata: LogMetadata = {},
+    error: LoggableError | null = null
+  ): string {
     const timestamp = new Date().toISOString();
     const correlationId =
       metadata.correlationId ?? this.generateCorrelationId();
@@ -272,7 +293,9 @@ class Logger {
     }
 
     // Add OpenTelemetry trace context if available
-    const otel = (globalThis as unknown as { opentelemetry?: OpenTelemetryGlobal }).opentelemetry;
+    const otel = (
+      globalThis as unknown as { opentelemetry?: OpenTelemetryGlobal }
+    ).opentelemetry;
     if (otel?.trace?.getActiveSpan) {
       const span = otel.trace.getActiveSpan();
       if (span) {
@@ -340,7 +363,12 @@ class Logger {
     return this.enableCorrelation ? Logger.createCorrelationId() : undefined;
   }
 
-  writeLog(level: LogLevel, message: string, metadata: LogMetadata = {}, error: LoggableError | null = null): void {
+  writeLog(
+    level: LogLevel,
+    message: string,
+    metadata: LogMetadata = {},
+    error: LoggableError | null = null
+  ): void {
     try {
       if (!this.shouldLog(level)) {
         return;
@@ -372,14 +400,20 @@ class Logger {
       }
 
       // Try to log the logging error itself (recursive fallback protection)
-      const logErrorMessage = logError instanceof Error ? logError.message : String(logError);
+      const logErrorMessage =
+        logError instanceof Error ? logError.message : String(logError);
       if (logErrorMessage !== 'Logger writeLog failed') {
         console.warn('Logger writeLog failed:', logErrorMessage);
       }
     }
   }
 
-  sendToObservabilityPlatform(level: LogLevel, message: string, metadata: LogMetadata, error: LoggableError | null): void {
+  sendToObservabilityPlatform(
+    level: LogLevel,
+    message: string,
+    metadata: LogMetadata,
+    error: LoggableError | null
+  ): void {
     // Hook for integration with monitoring platforms
     // DataDog, New Relic, Splunk, etc. can be integrated here
     if (process.env['OBSERVABILITY_WEBHOOK_URL']) {
@@ -393,7 +427,12 @@ class Logger {
     // - Custom metrics: this.incrementMetric(`log.${level}.count`);
   }
 
-  async sendToWebhook(level: LogLevel, message: string, metadata: LogMetadata, error: LoggableError | null): Promise<void> {
+  async sendToWebhook(
+    level: LogLevel,
+    message: string,
+    metadata: LogMetadata,
+    error: LoggableError | null
+  ): Promise<void> {
     try {
       const webhook = process.env['OBSERVABILITY_WEBHOOK_URL'];
       if (!webhook) return;
@@ -427,7 +466,11 @@ class Logger {
     this.writeLog('info', message, metadata);
   }
 
-  error(message: string, error: LoggableError | null = null, metadata: LogMetadata = {}): void {
+  error(
+    message: string,
+    error: LoggableError | null = null,
+    metadata: LogMetadata = {}
+  ): void {
     this.writeLog('error', message, metadata, error);
   }
 
@@ -464,7 +507,11 @@ class Logger {
   }
 
   // Request/Response logging for Express middleware
-  logRequest(req: ExpressRequest, res: ExpressResponse, next?: ExpressNextFunction): void {
+  logRequest(
+    req: ExpressRequest,
+    res: ExpressResponse,
+    next?: ExpressNextFunction
+  ): void {
     const correlationId = Logger.createCorrelationId();
     req.correlationId = correlationId;
 
@@ -512,4 +559,11 @@ class Logger {
 
 // Export only the Logger class as named export (consistent with other modules)
 export { Logger };
-export type { LogMetadata, LogLevel, LoggerOptions, Timer, FallbackLogger, LoggableError };
+export type {
+  LogMetadata,
+  LogLevel,
+  LoggerOptions,
+  Timer,
+  FallbackLogger,
+  LoggableError,
+};

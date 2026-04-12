@@ -7,6 +7,7 @@ This file contains essential information for agentic coding agents working in th
 Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
 
 Available skills:
+
 - `/plan-ceo-review` — Founder/CEO mode: rethink the problem, find the 10-star product
 - `/plan-eng-review` — Eng manager mode: lock in architecture, data flow, edge cases, tests
 - `/plan-design-review` — Designer mode: 80-item design audit with letter grades
@@ -25,10 +26,10 @@ Available skills:
 **READ FIRST:** `docs/specs/execution-engine-plan.md` contains all locked architecture decisions, PR breakdown, file plan, error handling, state machine, and UI design from CEO/eng/design reviews.
 
 **Key rules for implementation:**
+
 - Always use `git pull --rebase` — never create merge commits on pull
 - All work happens on `develop` — never commit directly to `main`
 - `main` only receives code through PRs from `develop`
-- Do not create or modify GitHub Actions workflows
 - Engine-first build order — don't build CRUD for tables the engine doesn't use yet
 - Async execution — POST /procedures/:id/run returns 202, graph runs via setImmediate
 - Node revisit guard — any node visited >1 triggers waiting_input + WebSocket human approval
@@ -334,78 +335,78 @@ jest --testNamePattern="failing test name"
 
 ### Branching & Environments
 
-| Branch | Environment | Deploy trigger |
-|---|---|---|
-| `develop` | Beta | Auto on push |
-| `main` | Production | Auto on push |
+| Branch    | Environment | Deploy trigger |
+| --------- | ----------- | -------------- |
+| `develop` | Beta        | Auto on push   |
+| `main`    | Production  | Auto on push   |
 
 CLI publishes to npm only from `main` via `cli-v*` GitHub release tags.
 
 ### Platform Layout
 
-| | Beta | Production |
-|---|---|---|
-| **API** (Render) | `kloudi-api-beta` → https://kloudi-api-beta-wivn.onrender.com | `kloudi-api-prod` → https://kloudi-api-prod.onrender.com |
-| **Database** (Neon) | `kloudi-os-beta` (curly-grass-31791879) | `kloudi-os` (dry-fog-30866369) |
-| **Cache** (Upstash) | `kloudios-beta-redis` (KloudiOS Beta team) | `kloudios-prod-redis` (KloudiOS Prod team) |
-| **Web** (Vercel) | `kloudi-web-beta` | `kloudi-web-prod` |
-| **CLI** (npm) | — | `@kloudi/cli` on `cli-v*` tag |
-| **MCP** | Mounted on API (future) | Mounted on API (future) |
-| **Internal API** (Render) | `kloudi-internal-api` (srv-d7dtopkvikkc73ed2sag) | — |
-| **Ops Dashboard** (Vercel) | `kloudi-internal-web-beta` | `kloudi-internal-web-prod` |
+|                            | Beta                                                          | Production                                               |
+| -------------------------- | ------------------------------------------------------------- | -------------------------------------------------------- |
+| **API** (Render)           | `kloudi-api-beta` → https://kloudi-api-beta-wivn.onrender.com | `kloudi-api-prod` → https://kloudi-api-prod.onrender.com |
+| **Database** (Neon)        | `kloudi-os-beta` (curly-grass-31791879)                       | `kloudi-os` (dry-fog-30866369)                           |
+| **Cache** (Upstash)        | `kloudios-beta-redis` (KloudiOS Beta team)                    | `kloudios-prod-redis` (KloudiOS Prod team)               |
+| **Web** (Vercel)           | `kloudi-web-beta`                                             | `kloudi-web-prod`                                        |
+| **CLI** (npm)              | —                                                             | `@kloudi/cli` on `cli-v*` tag                            |
+| **MCP**                    | Mounted on API (future)                                       | Mounted on API (future)                                  |
+| **Internal API** (Render)  | `kloudi-internal-api` (srv-d7dtopkvikkc73ed2sag)              | —                                                        |
+| **Ops Dashboard** (Vercel) | `kloudi-internal-web-beta`                                    | `kloudi-internal-web-prod`                               |
 
 All services in **us-east / Virginia**. All free tier. Each environment has fully isolated workspaces across Render, Neon, and Upstash.
 
 ### Render
 
-| | Beta | Prod |
-|---|---|---|
-| **Workspace** | KloudiOS Beta (tea-d7dq40jeo5us73fr9ve0) | KloudiOS Prod (tea-d7dnd8vaqgkc73fomlmg) |
-| **Product API** | `kloudi-api-beta` (srv-d7dqddt7vvec73fog8ng) | `kloudi-api-prod` (srv-d7dqhre7r5hc73d5regg) |
+|                  | Beta                                                  | Prod                                                  |
+| ---------------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| **Workspace**    | KloudiOS Beta (tea-d7dq40jeo5us73fr9ve0)              | KloudiOS Prod (tea-d7dnd8vaqgkc73fomlmg)              |
+| **Product API**  | `kloudi-api-beta` (srv-d7dqddt7vvec73fog8ng)          | `kloudi-api-prod` (srv-d7dqhre7r5hc73d5regg)          |
 | **Internal API** | `kloudi-internal-api-beta` (srv-d7dvdke7r5hc73a4faog) | `kloudi-internal-api-prod` (srv-d7dtopkvikkc73ed2sag) |
-| **Branch** | `develop` | `main` |
-| **Runtime** | Docker (`Dockerfile` / `Dockerfile.internal-api`) | Docker |
-| **Region** | Virginia | Virginia |
-| **Plan** | Free | Free |
-| **Health** | `GET /health` | `GET /health` |
+| **Branch**       | `develop`                                             | `main`                                                |
+| **Runtime**      | Docker (`Dockerfile` / `Dockerfile.internal-api`)     | Docker                                                |
+| **Region**       | Virginia                                              | Virginia                                              |
+| **Plan**         | Free                                                  | Free                                                  |
+| **Health**       | `GET /health`                                         | `GET /health`                                         |
 
 ### Neon (PostgreSQL)
 
-| | Beta | Prod |
-|---|---|---|
-| **Org** | KloudiOS Beta | KloudiOS Prod |
-| **Project** | `kloudi-os-beta` (curly-grass-31791879) | `kloudi-os` (dry-fog-30866369) |
-| **Region** | aws-us-east-1 | aws-us-east-1 |
-| **PG version** | 17 | 17 |
+|                | Beta                                    | Prod                           |
+| -------------- | --------------------------------------- | ------------------------------ |
+| **Org**        | KloudiOS Beta                           | KloudiOS Prod                  |
+| **Project**    | `kloudi-os-beta` (curly-grass-31791879) | `kloudi-os` (dry-fog-30866369) |
+| **Region**     | aws-us-east-1                           | aws-us-east-1                  |
+| **PG version** | 17                                      | 17                             |
 
 ### Upstash (Redis)
 
-| | Beta | Prod |
-|---|---|---|
-| **Team** | KloudiOS Beta | KloudiOS Prod |
+|              | Beta                  | Prod                  |
+| ------------ | --------------------- | --------------------- |
+| **Team**     | KloudiOS Beta         | KloudiOS Prod         |
 | **Database** | `kloudios-beta-redis` | `kloudios-prod-redis` |
-| **Region** | us-east-1 | us-east-1 |
+| **Region**   | us-east-1             | us-east-1             |
 
 ### Vercel (Web + Ops)
 
 All Vercel projects are on the **kloudi** team (`team_7bbzc2nIu43AyJHvuR2rk3VD`).
 
-| Project | App | Root Dir | Branch | URL |
-|---|---|---|---|---|
-| `kloudi-web-beta` | `apps/web` | `apps/web` | `develop` | https://kloudi-web-beta.vercel.app |
-| `kloudi-web-prod` | `apps/web` | `apps/web` | `main` | — |
+| Project                    | App        | Root Dir   | Branch    | URL                                         |
+| -------------------------- | ---------- | ---------- | --------- | ------------------------------------------- |
+| `kloudi-web-beta`          | `apps/web` | `apps/web` | `develop` | https://kloudi-web-beta.vercel.app          |
+| `kloudi-web-prod`          | `apps/web` | `apps/web` | `main`    | —                                           |
 | `kloudi-internal-web-beta` | `apps/ops` | `apps/ops` | `develop` | https://kloudi-internal-web-beta.vercel.app |
-| `kloudi-internal-web-prod` | `apps/ops` | `apps/ops` | `main` | — |
+| `kloudi-internal-web-prod` | `apps/ops` | `apps/ops` | `main`    | —                                           |
 
 ### Internal Dashboard
 
 **Internal API** (Render):
 
-| | Beta | Prod |
-|---|---|---|
+|             | Beta                                                  | Prod                                                  |
+| ----------- | ----------------------------------------------------- | ----------------------------------------------------- |
 | **Service** | `kloudi-internal-api-beta` (srv-d7dvdke7r5hc73a4faog) | `kloudi-internal-api-prod` (srv-d7dtopkvikkc73ed2sag) |
-| **URL** | https://kloudi-internal-api-beta.onrender.com | https://kloudi-internal-api-prod.onrender.com |
-| **Branch** | `develop` | `main` |
+| **URL**     | https://kloudi-internal-api-beta.onrender.com         | https://kloudi-internal-api-prod.onrender.com         |
+| **Branch**  | `develop`                                             | `main`                                                |
 
 - **Dockerfile**: `Dockerfile.internal-api` (at repo root, no root-directory)
 - **Port**: 3002
@@ -414,6 +415,7 @@ All Vercel projects are on the **kloudi** team (`team_7bbzc2nIu43AyJHvuR2rk3VD`)
 - **DB**: Same Neon instance per environment (shared `DATABASE_URL`)
 
 **Ops Dashboard** (Vercel):
+
 - **Project**: `kloudi-internal-web-beta` / `kloudi-internal-web-prod`
 - **Root Directory**: `apps/ops`
 - **Port**: 3003 (dev)
@@ -461,6 +463,7 @@ Dashboard         # Production values (Render, Vercel, etc.)
 - Production: set env vars in the hosting dashboard (Render, Vercel, etc.)
 
 ## Design System
+
 Always read `DESIGN.md` before making any visual or UI decisions.
 All font choices, colors, spacing, and aesthetic direction are defined there.
 Do not deviate without explicit user approval.
