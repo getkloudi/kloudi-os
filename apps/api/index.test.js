@@ -1,3 +1,6 @@
+// TODO: This test imports TS source (./lib/middleware.js → middleware.ts)
+// which Jest can't parse without a TS transform (ts-jest or @swc/jest).
+// Skipped in CI via test:ci --testPathIgnorePatterns. Works locally after pnpm build.
 import { jest } from '@jest/globals';
 import express from 'express';
 import request from 'supertest';
