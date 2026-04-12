@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals';
 import { UsageTracker } from '@kloudi/infrastructure/ai';
 
 describe('UsageTracker', () => {
