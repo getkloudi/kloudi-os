@@ -1,14 +1,13 @@
-import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { UsageTracker } from '../monitoring/usage-tracker.js';
+import { describe, test, expect, beforeEach, afterEach } from '@jest/globals';
+import { UsageTracker } from '@kloudi/infrastructure/ai';
 
 describe('UsageTracker', () => {
   let consoleLogSpy;
   let consoleErrorSpy;
 
   beforeEach(() => {
-    // Mock console methods to avoid cluttering test output
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -55,9 +54,8 @@ describe('UsageTracker', () => {
         costCenter: 'TEST_CENTER',
       });
 
-      // Mock the underlying tracker
       usageTracker.tracker = {
-        track: vi.fn().mockResolvedValue(true),
+        track: jest.fn().mockResolvedValue(true),
       };
     });
 
@@ -81,12 +79,10 @@ describe('UsageTracker', () => {
     });
 
     test('should not throw when tracking fails', async () => {
-      // Mock the tracker to throw an error
-      usageTracker.tracker.track = vi
+      usageTracker.tracker.track = jest
         .fn()
         .mockRejectedValue(new Error('Tracking failed'));
 
-      // Should not throw
       await expect(
         usageTracker.track('generateText', {}, {})
       ).resolves.toBeUndefined();

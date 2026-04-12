@@ -1,5 +1,6 @@
 import { ProviderManager } from './providers/index.js';
 import { UsageTracker } from './monitoring/usage-tracker.js';
+export { ProviderManager, UsageTracker };
 import { Logger } from '@kloudi/shared/logger';
 import { Config } from '@kloudi/shared/config';
 

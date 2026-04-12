@@ -1,6 +1,5 @@
 import { describe, test, expect, beforeEach } from '@jest/globals';
-import AIClient from '../index.js';
-import { ProviderManager } from '../providers/index.js';
+import AIClient, { ProviderManager } from '@kloudi/infrastructure/ai';
 
 describe('AIClient', () => {
   let client;
