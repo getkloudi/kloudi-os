@@ -23,8 +23,8 @@ dist/
 build/
 .next/
 
-# Generated Prisma schema (rebuilt by pnpm schema:build)
-schema.prisma
+# Generated Prisma schema — committed to git to avoid Docker build cycle
+# Rebuild with: pnpm schema:build
 
 # Logs
 *.log

@@ -1,0 +1,161 @@
+// ===========================================
+// GENERATED SCHEMA - DO NOT EDIT DIRECTLY
+// ===========================================
+// This file is auto-generated from domain schemas.
+// Edit individual domain schema.prisma files instead.
+// Run: pnpm build:schema to regenerate.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+
+// ===========================================
+// PACKAGES/AUTH DOMAIN
+// ===========================================
+
+// Auth Domain Models
+// User authentication and session management
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String   // Hashed password
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions  Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+
+// ===========================================
+// PACKAGES/CORE DOMAIN
+// ===========================================
+
+// Core Domain Models
+// Decision management, pattern templates, and procedural entities
+
+model Decision {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("draft")  // draft, published, archived
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("decisions")
+}
+
+model Pattern {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  content     Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("patterns")
+}
+
+model Procedure {
+  id              String   @id @default(cuid())
+  slug            String
+  name            String
+  description     String?
+  level           String   @default("task")      // guide, project, task, skill
+  maturity        String   @default("draft")     // draft, curated, validated
+  graph           Json     @default("{\"nodes\": [], \"edges\": []}")
+  parameters      Json     @default("{}")
+  constraints     Json     @default("{}")
+  workspaceId     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Added for execution engine
+  parentEntityId  String?
+  tags            String[] @default([])
+  metadata        Json     @default("{}")
+  executionCount  Int      @default(0)
+  successCount    Int      @default(0)
+  avgDurationMs   Int?
+  avgTokensUsed   Int?
+
+  // Relations
+  parentEntity    Procedure?  @relation("ProcedureHierarchy", fields: [parentEntityId], references: [id])
+  childEntities   Procedure[] @relation("ProcedureHierarchy")
+  executions      Execution[]
+
+  @@unique([workspaceId, slug])
+  @@index([workspaceId])
+  @@index([level])
+  @@index([maturity])
+  @@index([parentEntityId])
+  @@map("procedures")
+}
+
+model Execution {
+  id            String    @id @default(cuid())
+  procedureId   String
+  status        String    @default("pending")  // pending, running, waiting_input, completed, failed, cancelled
+  parameters    Json      @default("{}")
+  variables     Json      @default("{}")        // accumulated node outputs
+  currentNodeId String?
+  result        Json?
+  error         String?
+  tokensUsed    Int       @default(0)
+  durationMs    Int?
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+  workspaceId   String
+  userId        String?                         // who triggered this execution (for activity feed)
+
+  procedure      Procedure       @relation(fields: [procedureId], references: [id], onDelete: Cascade)
+  executionNodes ExecutionNode[]
+
+  @@index([procedureId])
+  @@index([workspaceId])
+  @@index([status])
+  @@map("executions")
+}
+
+model ExecutionNode {
+  id            String    @id @default(cuid())
+  executionId   String
+  nodeId        String
+  status        String    @default("pending")  // pending, running, completed, failed, waiting_input
+  attemptNumber Int       @default(1)
+  input         Json?
+  output        Json?
+  decisionTrace Json?
+  tokensUsed    Int       @default(0)
+  durationMs    Int?
+  startedAt     DateTime?
+  completedAt   DateTime?
+
+  execution     Execution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+
+  @@unique([executionId, nodeId, attemptNumber])
+  @@index([executionId])
+  @@map("execution_nodes")
+}
+

@@ -10,11 +10,7 @@ COPY . .
 # Install dependencies
 RUN corepack enable && pnpm install --frozen-lockfile
 
-# Build shared + infrastructure first (needed for schema:build)
-RUN pnpm exec turbo run build --filter=@kloudi/infrastructure...
-
-# Build combined Prisma schema, then generate client
-RUN node packages/infrastructure/dist/database/build-schema.js build
+# Generate Prisma client (schema.prisma is committed to git)
 RUN npx prisma generate
 
 # Build API and all its dependencies (turbo resolves the graph automatically)
