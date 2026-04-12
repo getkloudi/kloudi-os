@@ -160,6 +160,63 @@ kloudi.os is an agent-first organizational OS. SOPs are the universal file forma
 
 **Explicitly deferred:** Continuous execution, marketplace, extraction engine, cross-department personas, AIGNE integration, FUSE mounting, heartbeat/cron.
 
+### SOP ↔ SKILL.md projection (Sprint 2 deliverable)
+
+The projection layer converts between kloudi.os SOPs (graph in Postgres) and agent-native skill files (SKILL.md, .cursorrules, etc.). Decision #11 says "full-fidelity, lossless." Here's what that means concretely.
+
+**SOP → SKILL.md (projection):**
+
+An SOP record contains:
+```
+Procedure { name, slug, description, level, maturity,
+            graph: { nodes: GraphNode[], edges: GraphEdge[] },
+            parameters, constraints, tags, metadata }
+```
+
+A SKILL.md file contains:
+```yaml
+---
+name: {slug}
+version: {metadata.version || "1.0.0"}
+description: {description}
+allowed-tools: {derived from node types — llm nodes need no tools, tool_call nodes declare their tools}
+---
+{markdown body: instructions derived from graph traversal}
+```
+
+**The translation algorithm:**
+1. Topological sort the graph (entry node first, terminal nodes last)
+2. For each node, emit a markdown section:
+   - `llm_generate` → prose instruction with the prompt template
+   - `tool_call` → bash code block with the tool invocation
+   - `interpolative` → numbered decision list ("If X, do Y. Otherwise, do Z.")
+   - `sub_entity` → reference to another SOP (`Run /path/to/child-sop`)
+3. Conditional edges become "If [condition]..." prose
+4. Constraints (MUST/SHOULD/MAY) become inline annotations
+5. Parameters become a "## Parameters" section at the top
+
+**SKILL.md → SOP (import):**
+1. Parse YAML frontmatter → name, description, version
+2. Parse markdown body → sections become nodes
+3. Bash code blocks → `tool_call` nodes
+4. Decision lists (numbered, "If...") → `interpolative` nodes
+5. Prose instructions → `llm_generate` nodes
+6. Cross-references (`Run /path/...`) → `sub_entity` nodes
+7. Section order → edges (linear by default, branching where "If" detected)
+8. Set level based on path: `/guides/` → guide, `/projects/` → project, `/skills/` → skill
+
+**What "full-fidelity" means in practice:**
+- Delete the SKILL.md → regenerate from SOP → identical output (modulo whitespace)
+- The SOP is the source of truth. The SKILL.md is a view.
+- Edits to SKILL.md in a repo are detected as drift and flagged (not auto-merged in v1)
+
+**What's NOT full-fidelity in Sprint 2:**
+- Preamble bash (gstack-specific boilerplate) — not round-trippable, stripped on import
+- Complex control flow (loops, parallel nodes) — deferred node types
+- Codex challenged this: "not credible without canonical AST." Sprint 2 proves it works for the 4 node types we have. Complex cases are acknowledged as future work.
+
+**Sprint 2 exit criterion:** Import 3 existing gstack skills → SOP records in Postgres → regenerate SKILL.md → output works identically when used via Claude Code.
+
 ---
 
 ## WHO — The First User
@@ -486,7 +543,8 @@ POST /api/executions/:id/approve
 |Governance density|✓|✓|✓|?|?|ALMOST: scaling story defined|
 |Trust layer|—|✓|—|—|✓|LOCKED: state machine, WebSocket protocol, approval triggers defined|
 |Agent-first|✓|✓|✓|?|?|ALMOST: vision locked, impl pending|
-|Agent-agnostic|✓|✓|—|—|?|ALMOST: projection layer design needed|
+|SOP projection|—|✓|—|—|✓|LOCKED: bidirectional mapping, translation algorithm, exit criterion|
+|Agent-agnostic|✓|✓|—|—|✓|ALMOST: projection designed, .cursorrules format TBD|
 |First user|✓|✓|✓|—|—|LOCKED: JTBD before/after story, named contacts, adoption blockers|
 |Interaction model|—|—|—|✓|—|ALMOST: terminal-first + v6 mockup exists|
 |Trace format|—|✓|—|—|✓|LOCKED: per-node-type trace schema, approval events defined|
