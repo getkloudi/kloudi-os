@@ -9,6 +9,15 @@
     "noEmit": false
   },
   "include": ["**/*.ts"],
-  "exclude": ["**/*.test.ts", "**/*.spec.ts", "dist", "node_modules"],
-  "references": [{ "path": "../shared" }, { "path": "../infrastructure" }]
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "prisma/seed.ts",
+    "dist",
+    "node_modules"
+  ],
+  "references": [
+    { "path": "../shared" },
+    { "path": "../infrastructure" }
+  ]
 }

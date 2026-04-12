@@ -1,10 +1,6 @@
 import type { GraphNode } from '@kloudi/shared/types';
 import type {
-  ExecutionContext,
-  NodeResult,
-  NodeExecutor,
-  ExecutionEngine,
-  SubEntityConfig,
+  ExecutionContext, NodeResult, NodeExecutor, ExecutionEngine, SubEntityConfig,
 } from '../types.js';
 import { getNestedValue } from '../resolve-path.js';
 import { Logger } from '@kloudi/shared/logger';
@@ -12,10 +8,7 @@ import { Logger } from '@kloudi/shared/logger';
 const logger = Logger.getInstance('sub-entity-executor');
 
 interface ProcedureServiceLike {
-  getProcedure(
-    workspaceId: string,
-    slug: string
-  ): Promise<{ id: string } | null>;
+  getProcedure(organizationId: string, slug: string): Promise<{ id: string } | null>;
 }
 
 export class SubEntityExecutor implements NodeExecutor {
@@ -24,7 +17,7 @@ export class SubEntityExecutor implements NodeExecutor {
   async execute(
     node: GraphNode,
     ctx: ExecutionContext,
-    engine?: ExecutionEngine
+    engine?: ExecutionEngine,
   ): Promise<NodeResult> {
     if (!engine) {
       return {
@@ -37,9 +30,7 @@ export class SubEntityExecutor implements NodeExecutor {
     const config = node.config as unknown as SubEntityConfig;
 
     // Circular reference guard
-    const parentSlug = (ctx.entity as unknown as Record<string, unknown>)[
-      'slug'
-    ] as string | undefined;
+    const parentSlug = (ctx.entity as unknown as Record<string, unknown>)['slug'] as string | undefined;
     if (config.entity_ref === parentSlug) {
       return {
         status: 'failed',
@@ -52,19 +43,15 @@ export class SubEntityExecutor implements NodeExecutor {
     let childProcedure: { id: string } | null;
     try {
       childProcedure = await this.procedureService.getProcedure(
-        ctx.workspaceId,
-        config.entity_ref
+        ctx.organizationId,
+        config.entity_ref,
       );
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      logger.error(
-        'Failed to look up child procedure',
-        err instanceof Error ? err : new Error(errorMsg),
-        {
-          nodeId: node.id,
-          entityRef: config.entity_ref,
-        }
-      );
+      logger.error('Failed to look up child procedure', err instanceof Error ? err : new Error(errorMsg), {
+        nodeId: node.id,
+        entityRef: config.entity_ref,
+      });
       return { status: 'failed', output: null, error: errorMsg };
     }
 
@@ -78,9 +65,7 @@ export class SubEntityExecutor implements NodeExecutor {
 
     // Map parameters from parent context to child
     const childParams: Record<string, unknown> = {};
-    for (const [childKey, contextPath] of Object.entries(
-      config.parameter_mapping
-    )) {
+    for (const [childKey, contextPath] of Object.entries(config.parameter_mapping)) {
       childParams[childKey] = getNestedValue(ctx, contextPath);
     }
 
@@ -89,7 +74,7 @@ export class SubEntityExecutor implements NodeExecutor {
       const { result, status } = await engine.executeAndWait(
         childProcedure.id,
         childParams,
-        ctx.workspaceId
+        ctx.organizationId,
       );
 
       if (status === 'completed') {
@@ -103,14 +88,10 @@ export class SubEntityExecutor implements NodeExecutor {
       };
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
-      logger.error(
-        'Child execution failed',
-        err instanceof Error ? err : new Error(errorMsg),
-        {
-          nodeId: node.id,
-          childProcedure: config.entity_ref,
-        }
-      );
+      logger.error('Child execution failed', err instanceof Error ? err : new Error(errorMsg), {
+        nodeId: node.id,
+        childProcedure: config.entity_ref,
+      });
       return { status: 'failed', output: null, error: errorMsg };
     }
   }

@@ -14,12 +14,7 @@ import { resolve } from 'path';
 const envTestPath = resolve(process.cwd(), '.env.test');
 const envPath = resolve(process.cwd(), '.env');
 const envFile = (() => {
-  try {
-    readFileSync(envTestPath, 'utf8');
-    return envTestPath;
-  } catch {
-    return envPath;
-  }
+  try { readFileSync(envTestPath, 'utf8'); return envTestPath; } catch { return envPath; }
 })();
 try {
   const envContent = readFileSync(envFile, 'utf8');
@@ -37,8 +32,9 @@ try {
   // .env file not found — rely on existing env vars
 }
 
-const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
-const describeIfKey = hasApiKey ? describe : describe.skip;
+if (!process.env.ANTHROPIC_API_KEY) {
+  throw new Error('ANTHROPIC_API_KEY not set — cannot run E2E tests');
+}
 
 const WORKSPACE_ID = 'test-workspace-e2e';
 
@@ -54,17 +50,12 @@ async function waitForExecution(executionId, timeoutMs = 60000) {
       where: { id: executionId },
       include: { executionNodes: { orderBy: { startedAt: 'asc' } } },
     });
-    if (
-      execution &&
-      ['completed', 'failed', 'cancelled'].includes(execution.status)
-    ) {
+    if (execution && ['completed', 'failed', 'cancelled'].includes(execution.status)) {
       return execution;
     }
     await new Promise((r) => setTimeout(r, 500));
   }
-  throw new Error(
-    `Execution ${executionId} did not complete within ${timeoutMs}ms`
-  );
+  throw new Error(`Execution ${executionId} did not complete within ${timeoutMs}ms`);
 }
 
 async function createProcedure(data) {
@@ -78,30 +69,23 @@ async function createProcedure(data) {
       graph: data.graph,
       parameters: data.parameters ?? {},
       constraints: {},
-      workspaceId: WORKSPACE_ID,
+      organizationId: WORKSPACE_ID,
     },
   });
 }
 
 beforeAll(async () => {
   // Dynamic imports after env is loaded
-  const { ExecutionEngine } =
-    await import('../../dist/execution/execution-engine.js');
+  const { ExecutionEngine } = await import('../../dist/execution/execution-engine.js');
   const CM = await import('../../dist/execution/context-manager.js');
   ContextManager = CM.ContextManager;
-  const { LLMExecutor } =
-    await import('../../dist/execution/executors/llm-executor.js');
-  const { ToolCallExecutor } =
-    await import('../../dist/execution/executors/tool-call-executor.js');
-  const { InterpolativeExecutor } =
-    await import('../../dist/execution/executors/interpolative-executor.js');
-  const { SubEntityExecutor } =
-    await import('../../dist/execution/executors/sub-entity-executor.js');
-  const { getNestedValue: gnv } =
-    await import('../../dist/execution/resolve-path.js');
+  const { LLMExecutor } = await import('../../dist/execution/executors/llm-executor.js');
+  const { ToolCallExecutor } = await import('../../dist/execution/executors/tool-call-executor.js');
+  const { InterpolativeExecutor } = await import('../../dist/execution/executors/interpolative-executor.js');
+  const { SubEntityExecutor } = await import('../../dist/execution/executors/sub-entity-executor.js');
+  const { getNestedValue: gnv } = await import('../../dist/execution/resolve-path.js');
   getNestedValue = gnv;
-  const { ProcedureService } =
-    await import('../../dist/procedures/procedure-service.js');
+  const { ProcedureService } = await import('../../dist/procedures/procedure-service.js');
   const { Database } = await import('@kloudi/infrastructure/database');
   const { AIClient } = await import('@kloudi/infrastructure/ai');
   const { ToolRegistry } = await import('@kloudi/tools');
@@ -133,11 +117,11 @@ afterAll(async () => {
   if (!db) return;
   try {
     await db.executionNode.deleteMany({
-      where: { execution: { workspaceId: WORKSPACE_ID } },
+      where: { execution: { organizationId: WORKSPACE_ID } },
     });
-    await db.execution.deleteMany({ where: { workspaceId: WORKSPACE_ID } });
-    await db.procedure.deleteMany({ where: { workspaceId: WORKSPACE_ID } });
-  } catch (_e) {
+    await db.execution.deleteMany({ where: { organizationId: WORKSPACE_ID } });
+    await db.procedure.deleteMany({ where: { organizationId: WORKSPACE_ID } });
+  } catch (e) {
     // ignore cleanup errors
   }
   const { Database } = await import('@kloudi/infrastructure/database');
@@ -147,7 +131,7 @@ afterAll(async () => {
 // ============================================================
 // 1. SINGLE LLM NODE
 // ============================================================
-describeIfKey('Single LLM node execution', () => {
+describe('Single LLM node execution', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -172,11 +156,7 @@ describeIfKey('Single LLM node execution', () => {
   });
 
   it('executes a single LLM node and completes', async () => {
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID
-    );
+    const { executionId } = await engine.execute(procedure.id, {}, WORKSPACE_ID);
     expect(executionId).toBeDefined();
 
     const execution = await waitForExecution(executionId);
@@ -197,7 +177,7 @@ describeIfKey('Single LLM node execution', () => {
 // ============================================================
 // 2. LINEAR GRAPH — A → B → C with variable passing
 // ============================================================
-describeIfKey('Linear 3-node graph with variable interpolation', () => {
+describe('Linear 3-node graph with variable interpolation', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -211,8 +191,7 @@ describeIfKey('Linear 3-node graph with variable interpolation', () => {
             type: 'llm_generate',
             name: 'Generate a color',
             config: {
-              prompt_template:
-                'Name one color. Reply with just the color name, nothing else.',
+              prompt_template: 'Name one color. Reply with just the color name, nothing else.',
             },
           },
           {
@@ -243,11 +222,7 @@ describeIfKey('Linear 3-node graph with variable interpolation', () => {
   });
 
   it('traverses A→B→C, passes variables between nodes', async () => {
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID
-    );
+    const { executionId } = await engine.execute(procedure.id, {}, WORKSPACE_ID);
     const execution = await waitForExecution(executionId);
 
     expect(execution.status).toBe('completed');
@@ -273,7 +248,7 @@ describeIfKey('Linear 3-node graph with variable interpolation', () => {
 // ============================================================
 // 3. INTERPOLATIVE DECISION NODE
 // ============================================================
-describeIfKey('Interpolative decision node', () => {
+describe('Interpolative decision node', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -287,8 +262,7 @@ describeIfKey('Interpolative decision node', () => {
             type: 'interpolative',
             name: 'Pick a direction',
             config: {
-              decision_prompt:
-                'You are at a fork. You MUST pick exactly one of the options below. Respond ONLY with valid JSON.',
+              decision_prompt: 'You are at a fork. You MUST pick exactly one of the options below. Respond ONLY with valid JSON.',
               options: ['north', 'south'],
               reasoning_required: false,
             },
@@ -298,8 +272,7 @@ describeIfKey('Interpolative decision node', () => {
             type: 'llm_generate',
             name: 'North path',
             config: {
-              prompt_template:
-                'You went north. Describe what you see in one sentence.',
+              prompt_template: 'You went north. Describe what you see in one sentence.',
             },
           },
           {
@@ -307,8 +280,7 @@ describeIfKey('Interpolative decision node', () => {
             type: 'llm_generate',
             name: 'South path',
             config: {
-              prompt_template:
-                'You went south. Describe what you see in one sentence.',
+              prompt_template: 'You went south. Describe what you see in one sentence.',
             },
           },
         ],
@@ -321,11 +293,7 @@ describeIfKey('Interpolative decision node', () => {
   });
 
   it('makes a decision and follows the chosen path', async () => {
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID
-    );
+    const { executionId } = await engine.execute(procedure.id, {}, WORKSPACE_ID);
     const execution = await waitForExecution(executionId);
 
     expect(execution.status).toBe('completed');
@@ -345,7 +313,7 @@ describeIfKey('Interpolative decision node', () => {
 // ============================================================
 // 4. PARAMETER INTERPOLATION
 // ============================================================
-describeIfKey('Parameter interpolation from run params', () => {
+describe('Parameter interpolation from run params', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -358,9 +326,7 @@ describeIfKey('Parameter interpolation from run params', () => {
             id: 'greet',
             type: 'llm_generate',
             name: 'Greet user',
-            config: {
-              prompt_template: 'Say hello to {{user_name}} in one sentence.',
-            },
+            config: { prompt_template: 'Say hello to {{user_name}} in one sentence.' },
           },
         ],
         edges: [],
@@ -372,7 +338,7 @@ describeIfKey('Parameter interpolation from run params', () => {
     const { executionId } = await engine.execute(
       procedure.id,
       { user_name: 'Nitish' },
-      WORKSPACE_ID
+      WORKSPACE_ID,
     );
     const execution = await waitForExecution(executionId);
 
@@ -385,7 +351,7 @@ describeIfKey('Parameter interpolation from run params', () => {
 // ============================================================
 // 5. MISSING VARIABLE — fails gracefully
 // ============================================================
-describeIfKey('Missing variable interpolation', () => {
+describe('Missing variable interpolation', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -407,11 +373,7 @@ describeIfKey('Missing variable interpolation', () => {
   });
 
   it('fails with descriptive error when variable not found', async () => {
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID
-    );
+    const { executionId } = await engine.execute(procedure.id, {}, WORKSPACE_ID);
     const execution = await waitForExecution(executionId);
 
     expect(execution.status).toBe('failed');
@@ -423,7 +385,7 @@ describeIfKey('Missing variable interpolation', () => {
 // ============================================================
 // 6. CONCURRENCY LIMIT
 // ============================================================
-describeIfKey('Concurrency limit enforcement', () => {
+describe('Concurrency limit enforcement', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -437,8 +399,7 @@ describeIfKey('Concurrency limit enforcement', () => {
             type: 'llm_generate',
             name: 'Slow node',
             config: {
-              prompt_template:
-                'Write a 3-paragraph essay about the history of computing.',
+              prompt_template: 'Write a 3-paragraph essay about the history of computing.',
             },
           },
         ],
@@ -449,23 +410,15 @@ describeIfKey('Concurrency limit enforcement', () => {
 
   it('rejects execution when concurrency limit is reached', async () => {
     // Start first execution (don't await — let it run)
-    const firstPromise = engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID,
-      undefined,
-      {
-        concurrencyLimit: 1,
-      }
-    );
+    const firstPromise = engine.execute(procedure.id, {}, WORKSPACE_ID, undefined, {
+      concurrencyLimit: 1,
+    });
     const { executionId } = await firstPromise;
 
     // Wait for it to transition to 'running'
     let attempts = 0;
     while (attempts < 20) {
-      const exec = await db.execution.findUnique({
-        where: { id: executionId },
-      });
+      const exec = await db.execution.findUnique({ where: { id: executionId } });
       if (exec && exec.status === 'running') break;
       await new Promise((r) => setTimeout(r, 200));
       attempts++;
@@ -475,7 +428,7 @@ describeIfKey('Concurrency limit enforcement', () => {
     await expect(
       engine.execute(procedure.id, {}, WORKSPACE_ID, undefined, {
         concurrencyLimit: 1,
-      })
+      }),
     ).rejects.toThrow('Concurrent execution limit');
   }, 30000);
 });
@@ -483,7 +436,7 @@ describeIfKey('Concurrency limit enforcement', () => {
 // ============================================================
 // 7. EXECUTION CANCEL
 // ============================================================
-describeIfKey('Execution cancellation', () => {
+describe('Execution cancellation', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -520,11 +473,7 @@ describeIfKey('Execution cancellation', () => {
   });
 
   it('stops execution when status is set to cancelled', async () => {
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID
-    );
+    const { executionId } = await engine.execute(procedure.id, {}, WORKSPACE_ID);
 
     // Wait for execution to start running, then cancel
     await new Promise((r) => setTimeout(r, 2000));
@@ -541,9 +490,7 @@ describeIfKey('Execution cancellation', () => {
     });
 
     expect(execution.status).toBe('cancelled');
-    const completedNodes = execution.executionNodes.filter(
-      (n) => n.status === 'completed'
-    );
+    const completedNodes = execution.executionNodes.filter((n) => n.status === 'completed');
     expect(completedNodes.length).toBeLessThan(3);
   }, 30000);
 });
@@ -551,7 +498,7 @@ describeIfKey('Execution cancellation', () => {
 // ============================================================
 // 8. EXECUTION TIMEOUT
 // ============================================================
-describeIfKey('Execution timeout', () => {
+describe('Execution timeout', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -564,9 +511,7 @@ describeIfKey('Execution timeout', () => {
             id: 'slow1',
             type: 'llm_generate',
             name: 'Node 1',
-            config: {
-              prompt_template: 'Write a long essay about mathematics.',
-            },
+            config: { prompt_template: 'Write a long essay about mathematics.' },
           },
           {
             id: 'slow2',
@@ -586,7 +531,7 @@ describeIfKey('Execution timeout', () => {
       {},
       WORKSPACE_ID,
       undefined,
-      { timeoutMs: 100 } // 100ms — will trigger after first LLM call
+      { timeoutMs: 100 }, // 100ms — will trigger after first LLM call
     );
 
     const execution = await waitForExecution(executionId);
@@ -599,7 +544,7 @@ describeIfKey('Execution timeout', () => {
 // ============================================================
 // 9. CALLBACKS FIRE CORRECTLY
 // ============================================================
-describeIfKey('WebSocket callbacks', () => {
+describe('WebSocket callbacks', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -623,16 +568,11 @@ describeIfKey('WebSocket callbacks', () => {
   it('fires onNodeStart, onNodeComplete, onExecutionComplete in order', async () => {
     const events = [];
 
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID,
-      {
-        onNodeStart: (_execId, nodeId) => events.push(`start:${nodeId}`),
-        onNodeComplete: (_execId, nodeId) => events.push(`complete:${nodeId}`),
-        onExecutionComplete: (_execId) => events.push('exec_complete'),
-      }
-    );
+    const { executionId } = await engine.execute(procedure.id, {}, WORKSPACE_ID, {
+      onNodeStart: (execId, nodeId) => events.push(`start:${nodeId}`),
+      onNodeComplete: (execId, nodeId) => events.push(`complete:${nodeId}`),
+      onExecutionComplete: (execId) => events.push('exec_complete'),
+    });
 
     await waitForExecution(executionId);
 
@@ -651,10 +591,10 @@ describeIfKey('WebSocket callbacks', () => {
 // ============================================================
 // 10. ERROR HANDLING
 // ============================================================
-describeIfKey('Error handling', () => {
+describe('Error handling', () => {
   it('throws when procedure does not exist', async () => {
     await expect(
-      engine.execute('nonexistent-id-12345', {}, WORKSPACE_ID)
+      engine.execute('nonexistent-id-12345', {}, WORKSPACE_ID),
     ).rejects.toThrow('Procedure not found');
   });
 
@@ -664,18 +604,8 @@ describeIfKey('Error handling', () => {
       name: 'No Entry Node',
       graph: {
         nodes: [
-          {
-            id: 'a',
-            type: 'llm_generate',
-            name: 'A',
-            config: { prompt_template: 'hi' },
-          },
-          {
-            id: 'b',
-            type: 'llm_generate',
-            name: 'B',
-            config: { prompt_template: 'hi' },
-          },
+          { id: 'a', type: 'llm_generate', name: 'A', config: { prompt_template: 'hi' } },
+          { id: 'b', type: 'llm_generate', name: 'B', config: { prompt_template: 'hi' } },
         ],
         edges: [
           { from: 'a', to: 'b' },
@@ -684,9 +614,7 @@ describeIfKey('Error handling', () => {
       },
     });
 
-    await expect(engine.execute(proc.id, {}, WORKSPACE_ID)).rejects.toThrow(
-      'no entry node'
-    );
+    await expect(engine.execute(proc.id, {}, WORKSPACE_ID)).rejects.toThrow('no entry node');
   });
 
   it('throws when graph has multiple entry nodes', async () => {
@@ -695,25 +623,15 @@ describeIfKey('Error handling', () => {
       name: 'Multiple Entry Nodes',
       graph: {
         nodes: [
-          {
-            id: 'a',
-            type: 'llm_generate',
-            name: 'A',
-            config: { prompt_template: 'hi' },
-          },
-          {
-            id: 'b',
-            type: 'llm_generate',
-            name: 'B',
-            config: { prompt_template: 'hi' },
-          },
+          { id: 'a', type: 'llm_generate', name: 'A', config: { prompt_template: 'hi' } },
+          { id: 'b', type: 'llm_generate', name: 'B', config: { prompt_template: 'hi' } },
         ],
         edges: [],
       },
     });
 
     await expect(engine.execute(proc.id, {}, WORKSPACE_ID)).rejects.toThrow(
-      'multiple entry nodes'
+      'multiple entry nodes',
     );
   });
 });
@@ -721,7 +639,7 @@ describeIfKey('Error handling', () => {
 // ============================================================
 // 11. getNestedValue utility
 // ============================================================
-describeIfKey('getNestedValue', () => {
+describe('getNestedValue', () => {
   const ctx = {
     variables: { step1: 'hello', nested: { inner: { deep: 42 } } },
     parameters: { user_name: 'Nitish', config: { timeout: 5000 } },
@@ -730,6 +648,7 @@ describeIfKey('getNestedValue', () => {
   it('resolves simple variable', () => {
     expect(getNestedValue(ctx, 'step1')).toBe('hello');
   });
+
 
   it('resolves nested path', () => {
     expect(getNestedValue(ctx, 'nested.inner.deep')).toBe(42);
@@ -763,7 +682,7 @@ describeIfKey('getNestedValue', () => {
 // ============================================================
 // 12. ContextManager
 // ============================================================
-describeIfKey('ContextManager', () => {
+describe('ContextManager', () => {
   const makeProcedure = () => ({
     id: 'test',
     slug: 'test',
@@ -774,7 +693,7 @@ describeIfKey('ContextManager', () => {
     graph: { nodes: [], edges: [] },
     parameters: {},
     constraints: {},
-    workspaceId: 'test',
+    organizationId: 'test',
     createdAt: new Date(),
     updatedAt: new Date(),
   });

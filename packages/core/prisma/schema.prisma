@@ -33,7 +33,7 @@ model Procedure {
   graph           Json     @default("{\"nodes\": [], \"edges\": []}")
   parameters      Json     @default("{}")
   constraints     Json     @default("{}")
-  workspaceId     String
+  organizationId  String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -51,8 +51,8 @@ model Procedure {
   childEntities   Procedure[] @relation("ProcedureHierarchy")
   executions      Execution[]
 
-  @@unique([workspaceId, slug])
-  @@index([workspaceId])
+  @@unique([organizationId, slug])
+  @@index([organizationId])
   @@index([level])
   @@index([maturity])
   @@index([parentEntityId])
@@ -72,14 +72,14 @@ model Execution {
   durationMs    Int?
   startedAt     DateTime  @default(now())
   completedAt   DateTime?
-  workspaceId   String
-  userId        String?                         // who triggered this execution (for activity feed)
+  organizationId String
+  userId         String?                        // who triggered this execution (for activity feed)
 
   procedure      Procedure       @relation(fields: [procedureId], references: [id], onDelete: Cascade)
   executionNodes ExecutionNode[]
 
   @@index([procedureId])
-  @@index([workspaceId])
+  @@index([organizationId])
   @@index([status])
   @@map("executions")
 }
@@ -104,4 +104,20 @@ model ExecutionNode {
   @@unique([executionId, nodeId, attemptNumber])
   @@index([executionId])
   @@map("execution_nodes")
+}
+
+model Integration {
+  id             String   @id @default(cuid())
+  organizationId String
+  type           String   // github, jira, openai, anthropic
+  name           String
+  credentials    Json     @default("{}")  // plain JSON for now
+  config         Json     @default("{}")  // non-secret settings
+  status         String   @default("active") // active, inactive, error
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, type])
+  @@index([organizationId])
+  @@map("integrations")
 }

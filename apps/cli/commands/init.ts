@@ -1,16 +1,16 @@
 /**
  * kloudi init
  *
- * Bootstrap a kloudi.os workspace:
- *   1. Push Prisma schema to the target database
- *   2. Seed the 3 default SOPs
- *   3. Optionally configure integrations (Jira, GitHub)
+ * Bootstrap a kloudi.os organization:
+ *   1. Push Prisma schema to the database
+ *   2. Create organization
+ *   3. Seed the 3 default SOPs under the org
  *   4. Print status and next steps
  */
 
 import { Command } from 'commander';
 import { readFileSync, readdirSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
+import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import { config as loadDotenv } from 'dotenv';
@@ -24,7 +24,6 @@ const SEED_DIR = join(
 function resolveDbUrl(): string {
   if (process.env['DATABASE_URL']) return process.env['DATABASE_URL'];
 
-  // Try loading .env from cwd
   const envPath = join(process.cwd(), '.env');
   if (existsSync(envPath)) {
     loadDotenv({ path: envPath });
@@ -41,41 +40,37 @@ function resolveDbUrl(): string {
 export function registerInitCommand(program: Command): void {
   program
     .command('init')
-    .description('Bootstrap a kloudi.os workspace')
+    .description('Bootstrap a kloudi.os organization')
+    .option('--org-name <name>', 'Organization name')
     .option('--skip-seed', 'Skip seeding default SOPs', false)
-    .option('--skip-integrations', 'Skip integration setup', false)
     .action(async (opts: {
+      orgName?: string;
       skipSeed: boolean;
-      skipIntegrations: boolean;
     }) => {
       const dbUrl = resolveDbUrl();
 
       console.log('');
       console.log(
         chalk.cyan.bold('  kloudi init'),
-        chalk.gray('— bootstrapping workspace')
+        chalk.gray('— bootstrapping organization')
       );
       console.log('');
 
       // Step 1: Push Prisma schema
       await pushSchema(dbUrl);
 
-      // Step 2: Seed default SOPs
+      // Step 2: Create organization
+      const org = await createOrganization(dbUrl, opts.orgName);
+
+      // Step 3: Seed default SOPs
       if (!opts.skipSeed) {
-        await seedProcedures(dbUrl);
+        await seedProcedures(dbUrl, org.id);
       } else {
         console.log(chalk.gray('  [skip] SOP seeding'));
       }
 
-      // Step 3: Integration checks
-      if (!opts.skipIntegrations) {
-        await checkIntegrations();
-      } else {
-        console.log(chalk.gray('  [skip] Integration checks'));
-      }
-
       // Step 4: Print status
-      printNextSteps();
+      printNextSteps(org);
     });
 }
 
@@ -105,12 +100,53 @@ async function pushSchema(dbUrl: string): Promise<void> {
   }
 }
 
-async function seedProcedures(dbUrl: string): Promise<void> {
-  console.log(chalk.blue('  [2/3]'), 'Seeding default SOPs...');
+async function createOrganization(
+  dbUrl: string,
+  orgName?: string,
+): Promise<{ id: string; name: string; slug: string }> {
+  console.log(chalk.blue('  [2/3]'), 'Creating organization...');
 
   const { PrismaPg } = await import('@prisma/adapter-pg');
+  const mod = await import('@prisma/client') as any;
+  const PClient = mod.PrismaClient ?? mod.default?.PrismaClient ?? mod.default;
+  const adapter = new PrismaPg({ connectionString: dbUrl });
+  const prisma = new PClient({ adapter });
 
-  // Dynamic import handles both CJS and ESM re-exports
+  try {
+    await prisma.$connect();
+
+    const name = orgName || basename(process.cwd());
+    const slug = name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+
+    // Upsert: find existing or create new
+    const existing = await (prisma as any).organization.findFirst({
+      where: { slug },
+    });
+
+    if (existing) {
+      console.log(chalk.green(`        Organization exists: ${existing.name} (${existing.slug})`));
+      return { id: existing.id, name: existing.name, slug: existing.slug };
+    }
+
+    const org = await (prisma as any).organization.create({
+      data: { name, slug },
+    });
+
+    console.log(chalk.green(`        Created: ${org.name} (${org.slug})`));
+    return { id: org.id, name: org.name, slug: org.slug };
+  } catch (error) {
+    const err = error as Error;
+    console.error(chalk.red(`        Org creation failed: ${err.message}`));
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+async function seedProcedures(dbUrl: string, organizationId: string): Promise<void> {
+  console.log(chalk.blue('  [3/3]'), 'Seeding default SOPs...');
+
+  const { PrismaPg } = await import('@prisma/adapter-pg');
   const mod = await import('@prisma/client') as any;
   const PClient = mod.PrismaClient ?? mod.default?.PrismaClient ?? mod.default;
   const adapter = new PrismaPg({ connectionString: dbUrl });
@@ -122,7 +158,6 @@ async function seedProcedures(dbUrl: string): Promise<void> {
     const files = readdirSync(SEED_DIR).filter((f: string) =>
       f.endsWith('.json')
     );
-    const workspaceId = 'default-workspace';
 
     for (const file of files) {
       const raw = readFileSync(join(SEED_DIR, file), 'utf-8');
@@ -131,7 +166,7 @@ async function seedProcedures(dbUrl: string): Promise<void> {
         data;
 
       const existing = await (prisma as any).procedure.findFirst({
-        where: { slug, workspaceId },
+        where: { slug, organizationId },
       });
 
       if (existing) {
@@ -158,7 +193,7 @@ async function seedProcedures(dbUrl: string): Promise<void> {
             graph,
             parameters: parameters || {},
             constraints: constraints || {},
-            workspaceId,
+            organizationId,
             maturity: 'draft',
             metadata: data.metadata || {},
           },
@@ -179,34 +214,9 @@ async function seedProcedures(dbUrl: string): Promise<void> {
   }
 }
 
-async function checkIntegrations(): Promise<void> {
-  console.log(chalk.blue('  [3/3]'), 'Checking integrations...');
-
-  // GitHub CLI
-  try {
-    execSync('gh auth status', { stdio: 'pipe' });
-    console.log(chalk.green('        GitHub CLI: authenticated'));
-  } catch {
-    console.log(
-      chalk.yellow('        GitHub CLI: not authenticated'),
-      chalk.gray('(run: gh auth login)')
-    );
-  }
-
-  // Jira token
-  if (process.env['JIRA_API_TOKEN']) {
-    console.log(chalk.green('        Jira: token configured'));
-  } else {
-    console.log(
-      chalk.yellow('        Jira: no token found'),
-      chalk.gray('(set JIRA_API_TOKEN in .env)')
-    );
-  }
-}
-
-function printNextSteps(): void {
+function printNextSteps(org: { name: string; slug: string }): void {
   console.log('');
-  console.log(chalk.green.bold('  Workspace ready.'));
+  console.log(chalk.green.bold(`  Organization "${org.name}" ready.`));
   console.log('');
   console.log(chalk.white('  Next steps:'));
   console.log(chalk.gray('    1.'), 'pnpm dev:api');

@@ -34,7 +34,7 @@ export class ExecutionEngine {
   async execute(
     procedureId: string,
     params: Record<string, unknown>,
-    workspaceId: string,
+    organizationId: string,
     callbacks?: ExecutionCallbacks,
     options?: { userId?: string; timeoutMs?: number; concurrencyLimit?: number }
   ): Promise<{ executionId: string }> {
@@ -43,7 +43,7 @@ export class ExecutionEngine {
     // Concurrency limit check (counts both top-level and child executions)
     const limit = options?.concurrencyLimit ?? DEFAULT_CONCURRENCY_LIMIT;
     const activeCount = await (db as any).execution.count({
-      where: { workspaceId, status: { in: ['running', 'pending'] } },
+      where: { organizationId, status: { in: ['running', 'pending'] } },
     });
     if (activeCount >= limit) {
       throw new Error(
@@ -68,14 +68,14 @@ export class ExecutionEngine {
         parameters: params,
         variables: {},
         currentNodeId: null,
-        workspaceId,
+        organizationId,
         userId: options?.userId ?? null,
         tokensUsed: 0,
       },
     });
 
     const executionId = execution.id;
-    logger.info('Execution started', { executionId, procedureId, workspaceId });
+    logger.info('Execution started', { executionId, procedureId, organizationId });
 
     // Build context
     const ctx: ExecutionContext = {
@@ -86,7 +86,7 @@ export class ExecutionEngine {
       currentNodeId: entryNodeId,
       contextWindow: this.contextManager.initialize(entity as ProcedureRecord),
       visitedNodes: new Map(),
-      workspaceId,
+      organizationId,
     };
 
     // Kick off async traversal
@@ -107,7 +107,7 @@ export class ExecutionEngine {
   async executeAndWait(
     procedureId: string,
     params: Record<string, unknown>,
-    workspaceId: string,
+    organizationId: string,
     callbacks?: ExecutionCallbacks,
     options?: { userId?: string; timeoutMs?: number; concurrencyLimit?: number }
   ): Promise<{ executionId: string; result: unknown; status: string }> {
@@ -116,7 +116,7 @@ export class ExecutionEngine {
     // Concurrency check (child executions count against the same limit)
     const limit = options?.concurrencyLimit ?? DEFAULT_CONCURRENCY_LIMIT;
     const activeCount = await (db as any).execution.count({
-      where: { workspaceId, status: { in: ['running', 'pending'] } },
+      where: { organizationId, status: { in: ['running', 'pending'] } },
     });
     if (activeCount >= limit) {
       throw new Error(
@@ -139,7 +139,7 @@ export class ExecutionEngine {
         parameters: params,
         variables: {},
         currentNodeId: null,
-        workspaceId,
+        organizationId,
         userId: options?.userId ?? null,
         tokensUsed: 0,
       },
@@ -155,7 +155,7 @@ export class ExecutionEngine {
       currentNodeId: entryNodeId,
       contextWindow: this.contextManager.initialize(entity as ProcedureRecord),
       visitedNodes: new Map(),
-      workspaceId,
+      organizationId,
     };
 
     const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;

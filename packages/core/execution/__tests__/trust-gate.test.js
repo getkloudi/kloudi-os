@@ -76,7 +76,7 @@ async function createProcedure(data) {
       graph: data.graph,
       parameters: data.parameters ?? {},
       constraints: {},
-      workspaceId: WORKSPACE_ID,
+      organizationId: WORKSPACE_ID,
     },
   });
 }
@@ -136,10 +136,10 @@ afterAll(async () => {
   if (!db) return;
   try {
     await db.executionNode.deleteMany({
-      where: { execution: { workspaceId: WORKSPACE_ID } },
+      where: { execution: { organizationId: WORKSPACE_ID } },
     });
-    await db.execution.deleteMany({ where: { workspaceId: WORKSPACE_ID } });
-    await db.procedure.deleteMany({ where: { workspaceId: WORKSPACE_ID } });
+    await db.execution.deleteMany({ where: { organizationId: WORKSPACE_ID } });
+    await db.procedure.deleteMany({ where: { organizationId: WORKSPACE_ID } });
   } catch {
     // ignore cleanup errors
   }

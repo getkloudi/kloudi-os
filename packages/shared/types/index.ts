@@ -128,7 +128,7 @@ export interface WorkspaceFile extends BaseEntity {
   path: string;
   content: string;
   hash: string;
-  workspaceId: string;
+  organizationId: string;
   lastSyncedAt: Date;
 }
 
@@ -220,7 +220,7 @@ export interface ProcedureEntity {
   graph: Graph;
   parameters: Record<string, ParameterDefinition>;
   constraints: Record<string, string>;
-  workspaceId: string;
+  organizationId: string;
   systemPrompt?: string;
   parentEntityId?: string;
   tags?: string[];
@@ -297,7 +297,7 @@ export interface ToolParameterProperty {
 }
 
 export interface ToolContext {
-  workspaceId?: string;
+  organizationId?: string;
   userId?: string;
   tokens?: Record<string, string>;
   [key: string]: unknown;

@@ -50,7 +50,8 @@ export interface ExecutionContext {
   currentNodeId: string | null;
   contextWindow: ContextWindow;
   visitedNodes: Map<string, number>;
-  workspaceId: string;
+  organizationId: string;
+  credentials?: Record<string, Record<string, string>>;
 }
 
 export interface NodeExecutor {

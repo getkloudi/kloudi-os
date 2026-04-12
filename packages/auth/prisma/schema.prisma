@@ -1,5 +1,5 @@
 // Auth Domain Models
-// User authentication and session management
+// User authentication, session management, organization membership
 
 model User {
   id        String   @id @default(cuid())
@@ -9,7 +9,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sessions  Session[]
+  sessions    Session[]
+  memberships Membership[]
 
   @@map("users")
 }
@@ -25,4 +26,32 @@ model Session {
 
   @@index([userId])
   @@map("sessions")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+
+  @@map("organizations")
+}
+
+model Membership {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  role           String   @default("member") // owner, admin, member
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@map("memberships")
 }
