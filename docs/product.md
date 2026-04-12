@@ -59,6 +59,21 @@ kloudi.os is an agent-first organizational OS. SOPs are the universal file forma
 - Define, Design, Implement, Test, Deploy, Monitor, Learn
 - Every software team does exactly these 7 things
 - The OS makes all 7 executable, traceable, governable
+- All 7 already have gstack skill implementations (44 skills across these categories):
+
+| Workflow | What it does | Existing gstack skills | Sprint |
+|----------|-------------|----------------------|--------|
+| Define | Scope problems, write PRDs | office-hours, draft-prd, plan-ceo-review | 2 |
+| Design | Design systems, review UI | design-consultation, design-review, plan-design-review | 2 |
+| Implement | Write code from specs | engineering:impl, engineering:write-erd | **1** |
+| Test | QA, find + fix bugs | qa, qa-only, engineering:qa-sign-off | **1** |
+| Deploy | Ship, merge, verify | ship, land-and-deploy, setup-deploy | **1** |
+| Monitor | Post-deploy health | canary, benchmark | 3 |
+| Learn | Retrospectives, patterns | retro, learn | 3 |
+
+- Sprint 1 imports 3 skills: one from Implement, Test, and Deploy (the inner loop)
+- Sprint 2 projection layer enables bulk import of remaining skills
+- The 7 workflows are the SOP taxonomy — `/guides/` contains the workflow definitions, `/projects/` contains instances
 
 **6. Intelligent VM pattern (can ship incrementally)**
 
@@ -538,6 +553,7 @@ POST /api/executions/:id/approve
 |Section|WHY|WHAT|WHO|HOW (Design)|HOW (Eng)|Status|
 |---|---|---|---|---|---|---|
 |Core insight|✓|✓|✓|—|—|ALMOST: WHO sharpened with JTBD story|
+|7 workflows|✓|✓|—|—|✓|LOCKED: mapped to gstack skills, sprint assignment, taxonomy role|
 |Everything is SOP|✓|✓|✓|?|✓|ALMOST: PRDs-as-SOPs clarified|
 |Filesystem-first|✓|✓|✓|?|✓|ALMOST: 3 defaults locked|
 |Governance density|✓|✓|✓|?|?|ALMOST: scaling story defined|
