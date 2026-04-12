@@ -28,6 +28,8 @@
     --blue: #3080d0;
     --blue-s: rgba(48,128,208,0.08);
     --border: #e2e4ea;
+    --glow: rgba(74,82,224,0.03);
+    --rail-bg: rgba(255,255,255,0.92);
 
     --background: 0 0% 100%;
     --foreground: 230 30% 10%;
@@ -62,6 +64,8 @@
     --blue: #4fa0e8;
     --blue-s: rgba(79,160,232,0.12);
     --border: #1e2024;
+    --glow: rgba(99,107,255,0.04);
+    --rail-bg: rgba(16,17,20,0.92);
 
     --background: 228 22% 6%;
     --foreground: 228 12% 95%;
@@ -101,4 +105,23 @@
 }
 .dark ::-webkit-scrollbar-thumb:hover {
   background: var(--bg-5);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

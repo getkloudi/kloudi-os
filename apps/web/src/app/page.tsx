@@ -2,282 +2,421 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sidebar, TreeNode } from '@/components/sidebar';
-import {
-  EntityPanel,
-  EntityData,
-  ExecutionLog,
-} from '@/components/entity-panel';
-import { Omnibox, CommandItem, useOmnibox } from '@/components/omnibox';
-import { Command, LogOut, User } from 'lucide-react';
-import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
+import { api } from '@/lib/api';
+import { useWebSocket } from '@/lib/hooks/use-websocket';
+import { NavRail } from '@/components/nav-rail';
+import { HomeSpace, type QuickAccessItem } from '@/components/spaces/home-space';
+import { BrowseSpace } from '@/components/spaces/browse-space';
+import { EditorSpace } from '@/components/spaces/editor-space';
+import { StoreSpace } from '@/components/spaces/store-space';
+import { Omnibox, useOmnibox } from '@/components/omnibox';
+import { TrustGateDialog } from '@/components/trust-gate-dialog';
+import type {
+  Space,
+  ActivityPost,
+  ProcedureFile,
+  ExecutionDetail,
+  StoreApp,
+  AgentMessage,
+  TrustGateEvent,
+  ExecutionStatus,
+} from '@/types';
+import type { CommandItem, TreeNode } from '@/lib/api';
 
 function flattenTree(nodes: TreeNode[]): CommandItem[] {
   const result: CommandItem[] = [];
-
   function traverse(items: TreeNode[]) {
     for (const item of items) {
       if (item.type !== 'folder') {
-        result.push({
-          id: item.id,
-          name: item.name,
-          type: item.type,
-        });
+        result.push({ id: item.id, name: item.name, type: item.type });
       }
-      if (item.children) {
-        traverse(item.children);
-      }
+      if (item.children) traverse(item.children);
     }
   }
-
   traverse(nodes);
   return result;
+}
+
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
+// Mock data for development — these will come from the API when endpoints are ready
+function getMockPosts(): ActivityPost[] {
+  return [
+    {
+      id: '1',
+      type: 'execution_run',
+      user: { username: 'sarah', initials: 'S' },
+      procedure: { id: 'p1', name: 'deploy-auth-flow', slug: 'engineering/deploy-auth-flow' },
+      execution: {
+        id: 'exec_9kp2',
+        status: 'running' as ExecutionStatus,
+        progress: 55,
+        nodes: [
+          { id: 'n1', label: 'Validate Config', type: 'tool_call', status: 'completed' as ExecutionStatus, duration: '0.4s' },
+          { id: 'n2', label: 'Generate Auth Module', type: 'llm_generate', status: 'completed' as ExecutionStatus, duration: '2.1s' },
+          { id: 'n3', label: 'Deploy to Staging', type: 'tool_call', status: 'running' as ExecutionStatus },
+          { id: 'n4', label: 'Verify Health', type: 'tool_call', status: 'pending' as ExecutionStatus },
+        ],
+      },
+      reactions: [{ emoji: '👀', count: 2 }],
+      replyCount: 0,
+      timestamp: new Date().toISOString(),
+      relativeTime: 'now',
+    },
+    {
+      id: '2',
+      type: 'execution_completed',
+      user: { username: 'nitish', initials: 'N' },
+      procedure: { id: 'p2', name: 'analyze-codebase', slug: 'engineering/analyze-codebase' },
+      execution: {
+        id: 'exec_clx8k2m',
+        status: 'completed' as ExecutionStatus,
+        progress: 100,
+        tokens: 2847,
+        duration: '4.2s',
+      },
+      reactions: [{ emoji: '✅', count: 1 }],
+      replyCount: 0,
+      timestamp: new Date(Date.now() - 120000).toISOString(),
+      relativeTime: '2m ago',
+    },
+    {
+      id: '3',
+      type: 'execution_failed',
+      user: { username: 'alex', initials: 'A' },
+      procedure: { id: 'p3', name: 'migrate-database', slug: 'engineering/migrate-database' },
+      execution: {
+        id: 'exec_fail1',
+        status: 'failed' as ExecutionStatus,
+        progress: 25,
+        error: 'LLM timeout',
+      },
+      replyCount: 3,
+      timestamp: new Date(Date.now() - 1080000).toISOString(),
+      relativeTime: '18m ago',
+    },
+    {
+      id: '4',
+      type: 'awaiting_approval',
+      user: { username: 'sarah', initials: 'S' },
+      procedure: { id: 'p4', name: 'security-review', slug: 'engineering/security-review' },
+      execution: {
+        id: 'exec_wait1',
+        status: 'waiting_input' as ExecutionStatus,
+        progress: 60,
+      },
+      trustGate: {
+        id: 'tg1',
+        question: "Node 'deep-scan' about to run again (visit #3). Continue?",
+        nodeLabel: 'deep-scan',
+        visitCount: 3,
+      },
+      timestamp: new Date(Date.now() - 2520000).toISOString(),
+      relativeTime: '42m ago',
+    },
+    {
+      id: '5',
+      type: 'procedure_edited',
+      user: { username: 'nitish', initials: 'N' },
+      procedure: { id: 'p2', name: 'analyze-codebase', slug: 'engineering/analyze-codebase' },
+      editSummary: 'added "security-scan" node',
+      timestamp: new Date(Date.now() - 3600000).toISOString(),
+      relativeTime: '1h ago',
+    },
+  ];
+}
+
+function getMockQuickAccess(): QuickAccessItem[] {
+  return [
+    { id: 'p2', name: 'analyze-codebase', icon: '⚡', status: 'completed' as ExecutionStatus, meta: 'completed · 2m ago', progress: 100 },
+    { id: 'p1', name: 'deploy-auth-flow', icon: '⚡', status: 'running' as ExecutionStatus, meta: 'running · 2/4 nodes', progress: 55 },
+    { id: 'p5', name: 'onboard-user', icon: '🎯', status: 'completed' as ExecutionStatus, meta: 'completed · 3h ago', progress: 100 },
+    { id: 'p4', name: 'security-review', icon: '⚡', status: 'waiting_input' as ExecutionStatus, meta: '⚠ awaiting approval', progress: 60 },
+  ];
+}
+
+function getMockExecution(): ExecutionDetail {
+  return {
+    id: 'exec_clx8k2m',
+    procedureId: 'p2',
+    procedureName: 'analyze-codebase',
+    procedureSlug: 'procedures/engineering/analyze-codebase',
+    procedureDescription:
+      'Analyzes repository structure, determines authentication strategy, and runs security scanning. Outputs a structured report with actionable recommendations.',
+    status: 'completed',
+    nodes: [
+      { id: 'n1', label: 'Analyze Repository Structure', type: 'llm_generate', status: 'completed', duration: '1.8s', tokens: 1204 },
+      { id: 'n2', label: 'Determine Auth Strategy', type: 'interpolative → "jwt-based"', status: 'completed', duration: '0.9s', tokens: 847 },
+      { id: 'n3', label: 'Run Security Scanner', type: 'tool_call → security-scan', status: 'completed', duration: '1.5s', tokens: 796 },
+    ],
+    stats: { duration: '4.2s', tokens: 2847, nodesCompleted: 3, nodesTotal: 3 },
+    startedAt: new Date(Date.now() - 300000).toISOString(),
+    completedAt: new Date(Date.now() - 120000).toISOString(),
+  };
+}
+
+function getMockAgentMessages(): AgentMessage[] {
+  return [
+    {
+      id: 'm1',
+      role: 'agent',
+      timestamp: '12:04:22',
+      content: 'Starting <code>analyze-codebase</code><br>Workspace: default · Timeout: 600s',
+    },
+    {
+      id: 'm2',
+      role: 'agent',
+      timestamp: '12:04:22',
+      content:
+        '<span style="color:var(--accent)">▸</span> node/analyze <span style="color:var(--text-4)">llm_generate</span><br><span style="color:var(--text-4)">  "Analyze the repository at {{repo_path}}..."</span><br><span style="color:var(--green)">✓</span> 1.8s · 1,204 tk<br><span style="color:var(--text-4)">  → { language: "typescript", auth: "jwt" }</span>',
+    },
+    {
+      id: 'm3',
+      role: 'agent',
+      timestamp: '12:04:24',
+      content:
+        '<span style="color:var(--accent)">▸</span> node/decide <span style="color:var(--text-4)">interpolative</span><br><span style="color:var(--green)">✓</span> chose <code>jwt-based</code> <span style="color:var(--text-4)">(0.92)</span><br><span style="color:var(--text-4)">  "Existing JWT manager found"</span>',
+    },
+    {
+      id: 'm4',
+      role: 'agent',
+      timestamp: '12:04:25',
+      content:
+        '<span style="color:var(--accent)">▸</span> node/execute <span style="color:var(--text-4)">tool_call</span><br><span style="color:var(--green)">✓</span> 1.5s · 0 critical, 2 warnings',
+    },
+    {
+      id: 'm5',
+      role: 'agent',
+      timestamp: '12:04:27',
+      content: '<span style="color:var(--green)">✓</span> <strong>Done</strong> — 3/3 · 2,847 tk · 4.2s',
+    },
+  ];
 }
 
 export default function Home() {
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const router = useRouter();
-  const [procedures, setProcedures] = useState<TreeNode[]>([]);
-  const [selectedId, setSelectedId] = useState<string | undefined>();
-  const [entity, setEntity] = useState<EntityData | undefined>();
-  const [isRunning, setIsRunning] = useState(false);
-  const [logs, setLogs] = useState<ExecutionLog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>();
   const omnibox = useOmnibox();
 
-  // Auth guard - redirect to login if not authenticated
+  // Space state
+  const [activeSpace, setActiveSpace] = useState<Space>('home');
+
+  // Data state
+  const [posts, setPosts] = useState<ActivityPost[]>([]);
+  const [quickAccess, setQuickAccess] = useState<QuickAccessItem[]>([]);
+  const [procedures, setProcedures] = useState<TreeNode[]>([]);
+  const [files, setFiles] = useState<ProcedureFile[]>([]);
+  const [execution, setExecution] = useState<ExecutionDetail | null>(null);
+  const [storeApps, setStoreApps] = useState<StoreApp[]>([]);
+  const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
+  const [trustGateEvent, setTrustGateEvent] = useState<TrustGateEvent | null>(null);
+
+  // WebSocket
+  const { sendTrustGateResponse } = useWebSocket({
+    onTrustGate: (event) => setTrustGateEvent(event),
+    onActivity: (post) => setPosts((prev) => [post, ...prev]),
+    onExecutionUpdate: () => {
+      // Refresh execution detail if currently viewing
+    },
+  });
+
+  // Auth guard
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/login');
     }
   }, [authLoading, isAuthenticated, router]);
 
-  // Load procedures tree from API on mount (only when authenticated)
+  // Load data on mount
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    let cancelled = false;
+    async function loadData() {
+      // Try to load from API, fall back to mock data
+      const [activityPosts, tree, apps] = await Promise.all([
+        api.getActivity(),
+        api.getProcedureTree().catch(() => [] as TreeNode[]),
+        api.getStoreApps(),
+      ]);
 
-    async function loadProcedures() {
-      try {
-        setLoading(true);
-        setError(undefined);
-        const tree = await api.getProcedureTree();
-        if (!cancelled) {
-          setProcedures(tree);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          console.error('Failed to load procedures:', err);
-          setError(
-            'Failed to load procedures. Make sure the API server is running.'
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
+      // Use API data if available, otherwise mock
+      setPosts(activityPosts.length > 0 ? activityPosts : getMockPosts());
+      setProcedures(tree);
+      setFiles(
+        tree.length > 0
+          ? flattenTreeToFiles(tree)
+          : getMockFiles()
+      );
+      setQuickAccess(getMockQuickAccess());
+      setStoreApps(apps);
+      setExecution(getMockExecution());
+      setAgentMessages(getMockAgentMessages());
     }
 
-    loadProcedures();
-    return () => {
-      cancelled = true;
-    };
+    loadData();
   }, [isAuthenticated]);
 
-  // Load entity detail when selection changes
-  useEffect(() => {
-    if (!selectedId || !isAuthenticated) return;
-
-    let cancelled = false;
-
-    async function loadEntity() {
-      try {
-        const detail = await api.getProcedureDetail(selectedId!);
-        if (!cancelled) {
-          setEntity(detail as EntityData);
-          setLogs([]);
-        }
-      } catch (err) {
-        console.error('Failed to load procedure detail:', err);
-        if (!cancelled) {
-          setEntity(undefined);
-        }
-      }
-    }
-
-    loadEntity();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedId, isAuthenticated]);
-
-  const handleRun = useCallback(
-    async (id: string) => {
-      setIsRunning(true);
-      setLogs([]);
-
-      try {
-        const execution = await api.executeProcedure(id);
-
-        // Add initial log
-        setLogs([
-          {
-            timestamp: new Date().toISOString(),
-            level: 'info',
-            message: execution.message || 'Execution started...',
-          },
-        ]);
-
-        // Poll for execution status updates
-        const executionId = execution.id;
-        let pollCount = 0;
-        const maxPolls = 30; // Max 30 seconds of polling
-
-        const poll = async () => {
-          try {
-            const status = await api.getExecution(executionId);
-
-            if (status.logs && status.logs.length > 0) {
-              setLogs(status.logs as ExecutionLog[]);
-            }
-
-            if (status.status === 'completed') {
-              setIsRunning(false);
-              if (entity) {
-                setEntity({ ...entity, status: 'completed' });
-              }
-              return;
-            }
-
-            if (status.status === 'failed') {
-              setIsRunning(false);
-              if (entity) {
-                setEntity({ ...entity, status: 'failed' });
-              }
-              return;
-            }
-
-            pollCount++;
-            if (pollCount < maxPolls) {
-              setTimeout(poll, 1000);
-            } else {
-              setIsRunning(false);
-            }
-          } catch (err) {
-            console.error('Failed to poll execution status:', err);
-            setIsRunning(false);
-          }
-        };
-
-        // Start polling after a short delay
-        setTimeout(poll, 1000);
-      } catch (err) {
-        console.error('Failed to start execution:', err);
-        setLogs([
-          {
-            timestamp: new Date().toISOString(),
-            level: 'error',
-            message: 'Failed to start execution',
-          },
-        ]);
-        setIsRunning(false);
-      }
-    },
-    [entity]
-  );
-
-  const handleSelect = useCallback((id: string) => {
-    setSelectedId(id);
+  const handleSpaceChange = useCallback((space: Space) => {
+    setActiveSpace(space);
   }, []);
 
-  const commandItems = flattenTree(procedures);
+  const handleProcedureClick = useCallback(
+    (id: string) => {
+      // Navigate to editor with this procedure
+      setActiveSpace('editor');
+      // Load execution detail for this procedure
+      api.getExecutionDetail(id).then((detail) => {
+        if (detail) setExecution(detail);
+      });
+    },
+    []
+  );
 
-  // Show loading spinner while checking auth
+  const handleTrustGateApprove = useCallback(
+    (executionId: string, nodeId: string) => {
+      sendTrustGateResponse(executionId, nodeId, true);
+      setTrustGateEvent(null);
+    },
+    [sendTrustGateResponse]
+  );
+
+  const handleTrustGateAbort = useCallback(
+    (executionId: string, nodeId: string) => {
+      sendTrustGateResponse(executionId, nodeId, false);
+      setTrustGateEvent(null);
+    },
+    [sendTrustGateResponse]
+  );
+
+  const handleOmniboxSelect = useCallback(
+    (id: string) => {
+      handleProcedureClick(id);
+    },
+    [handleProcedureClick]
+  );
+
+  const commandItems = flattenTree(procedures);
+  const userName = user?.username || user?.email || '';
+  const userInitials = userName.charAt(0).toUpperCase();
+
   if (authLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground" />
+      <div className="flex h-screen items-center justify-center bg-[var(--bg-0)]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--text-4)] border-t-[var(--text-1)]" />
       </div>
     );
   }
 
-  // Will redirect to login
-  if (!isAuthenticated) {
-    return null;
-  }
+  if (!isAuthenticated) return null;
+
+  const greeting = `${getGreeting()}, ${userName.split('@')[0]}`;
+  const summary = `${posts.filter((p) => p.type === 'execution_run' || p.type === 'execution_completed').length} procedures ran today · ${posts.filter((p) => p.type === 'awaiting_approval').length} awaiting approval`;
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <Sidebar
-        items={procedures}
-        selectedId={selectedId}
-        onSelect={handleSelect}
+    <div className="flex h-screen overflow-hidden bg-[var(--bg-0)]">
+      <NavRail
+        activeSpace={activeSpace}
+        onSpaceChange={handleSpaceChange}
+        userInitials={userInitials}
+        hasNotification={posts.some((p) => p.type === 'awaiting_approval')}
+        onLogout={logout}
       />
-      <main className="flex-1 overflow-hidden">
-        {loading ? (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            <p>Loading procedures...</p>
-          </div>
-        ) : error ? (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <p className="text-red-400">{error}</p>
-              <p className="mt-2 text-sm">
-                Run the API server with: pnpm dev:api
-              </p>
-            </div>
-          </div>
-        ) : (
-          <EntityPanel
-            entity={entity}
-            onRun={handleRun}
-            isRunning={isRunning}
-            logs={logs}
+
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Home */}
+        {activeSpace === 'home' && (
+          <HomeSpace
+            greeting={greeting}
+            summary={summary}
+            quickAccess={quickAccess}
+            posts={posts}
+            currentUser={userName}
+            onSearch={omnibox.open}
+            onQuickAccessClick={handleProcedureClick}
+            onProcedureClick={handleProcedureClick}
+            onApprove={handleTrustGateApprove}
+            onAbort={handleTrustGateAbort}
           />
         )}
-      </main>
 
-      {/* User menu */}
-      <div className="fixed top-4 right-4 z-10">
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-muted-foreground shadow-lg">
-          <User className="h-4 w-4" />
-          <span className="max-w-[120px] truncate">
-            {user?.username || user?.email}
-          </span>
-          <button
-            onClick={logout}
-            className="ml-1 rounded p-1 transition-colors hover:bg-accent hover:text-accent-foreground"
-            title="Sign out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
+        {/* Browse */}
+        {activeSpace === 'browse' && (
+          <BrowseSpace
+            files={files}
+            currentPath="procedures / engineering"
+            onFileOpen={handleProcedureClick}
+          />
+        )}
+
+        {/* Editor */}
+        {activeSpace === 'editor' && (
+          <EditorSpace
+            execution={execution}
+            agentMessages={agentMessages}
+            onRun={(id) => {
+              api.executeProcedure(id).catch(() => {});
+            }}
+            onBrowseNavigate={() => setActiveSpace('browse')}
+          />
+        )}
+
+        {/* Store */}
+        {activeSpace === 'store' && (
+          <StoreSpace apps={storeApps} />
+        )}
       </div>
 
-      {/* Command palette trigger hint */}
-      <div className="fixed bottom-4 right-4">
-        <button
-          onClick={omnibox.open}
-          className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm text-muted-foreground shadow-lg transition-colors hover:bg-accent hover:text-accent-foreground"
-        >
-          <Command className="h-4 w-4" />
-          <span>Search</span>
-          <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-xs">
-            {'\u2318'}K
-          </kbd>
-        </button>
-      </div>
-
+      {/* Command palette */}
       <Omnibox
         items={commandItems}
-        onSelect={handleSelect}
+        onSelect={handleOmniboxSelect}
         onClose={omnibox.close}
         isOpen={omnibox.isOpen}
       />
+
+      {/* Trust gate modal */}
+      <TrustGateDialog
+        event={trustGateEvent}
+        onApprove={handleTrustGateApprove}
+        onAbort={handleTrustGateAbort}
+      />
     </div>
   );
+}
+
+function flattenTreeToFiles(nodes: TreeNode[]): ProcedureFile[] {
+  const result: ProcedureFile[] = [];
+  for (const node of nodes) {
+    result.push({
+      id: node.id,
+      name: node.name,
+      slug: node.slug || node.name,
+      type: node.type,
+      isFolder: node.type === 'folder',
+    });
+    if (node.children) {
+      result.push(...flattenTreeToFiles(node.children));
+    }
+  }
+  return result;
+}
+
+function getMockFiles(): ProcedureFile[] {
+  return [
+    { id: 'p2', name: 'analyze-codebase', slug: 'analyze-codebase', type: 'skill' },
+    { id: 'p1', name: 'deploy-auth-flow', slug: 'deploy-auth-flow', type: 'skill' },
+    { id: 'p3', name: 'migrate-database', slug: 'migrate-database', type: 'skill' },
+    { id: 'p5', name: 'onboard-user', slug: 'onboard-user', type: 'task' },
+    { id: 'p6', name: 'team-setup-guide', slug: 'team-setup-guide', type: 'guide' },
+    { id: 'p4', name: 'security-review', slug: 'security-review', type: 'skill' },
+    { id: 'f1', name: 'onboarding', slug: 'onboarding', type: 'folder', isFolder: true },
+    { id: 'f2', name: 'security', slug: 'security', type: 'folder', isFolder: true },
+    { id: 'f3', name: 'templates', slug: 'templates', type: 'folder', isFolder: true },
+  ];
 }
