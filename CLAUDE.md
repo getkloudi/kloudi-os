@@ -25,6 +25,10 @@ Available skills:
 **READ FIRST:** `docs/specs/execution-engine-plan.md` contains all locked architecture decisions, PR breakdown, file plan, error handling, state machine, and UI design from CEO/eng/design reviews.
 
 **Key rules for implementation:**
+- Always use `git pull --rebase` — never create merge commits on pull
+- All work happens on `develop` — never commit directly to `main`
+- `main` only receives code through PRs from `develop`
+- Do not create or modify GitHub Actions workflows
 - Engine-first build order — don't build CRUD for tables the engine doesn't use yet
 - Async execution — POST /procedures/:id/run returns 202, graph runs via setImmediate
 - Node revisit guard — any node visited >1 triggers waiting_input + WebSocket human approval
