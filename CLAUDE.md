@@ -328,69 +328,87 @@ jest --testNamePattern="failing test name"
 
 ## 🌐 Deployment
 
+### Branching & Environments
+
+| Branch | Environment | Deploy trigger |
+|---|---|---|
+| `develop` | Beta | Auto on push |
+| `main` | Production | Auto on push |
+
+CLI publishes to npm only from `main` via `cli-v*` GitHub release tags.
+
 ### Platform Layout
 
-| Workload | Platform | Region | URL |
-|---|---|---|---|
-| **Web** (Next.js) | Vercel | auto | `kloudi-os-web` project |
-| **API** (Express) | Render | Virginia (US East) | `https://kloudi-os.onrender.com` |
-| **Database** | Neon | us-east-1 | Neon project `kloudi-os` |
-| **Cache** | Upstash Redis | us-east-1 | `kloudios-beta-redis` |
-| **MCP server** | TBD | — | — |
-| **CLI** | npm publish | — | TBD |
+| | Beta | Production |
+|---|---|---|
+| **API** (Render) | `kloudi-api-beta` → https://kloudi-api-beta-wivn.onrender.com | `kloudi-api-prod` → https://kloudi-api-prod.onrender.com |
+| **Database** (Neon) | `kloudi-os-beta` (curly-grass-31791879) | `kloudi-os` (dry-fog-30866369) |
+| **Cache** (Upstash) | `kloudios-beta-redis` (KloudiOS Beta team) | `kloudios-prod-redis` (KloudiOS Prod team) |
+| **Web** (Vercel) | PR previews | `kloudi-os-web` on push to `main` |
+| **CLI** (npm) | — | `@kloudi/cli` on `cli-v*` tag |
+| **MCP** | Mounted on API (future) | Mounted on API (future) |
 
-All production services are in **us-east** for low latency. All free tier.
+All services in **us-east / Virginia**. All free tier. Each environment has fully isolated workspaces across Render, Neon, and Upstash.
+
+### Render
+
+| | Beta | Prod |
+|---|---|---|
+| **Workspace** | KloudiOS Beta (tea-d7dq40jeo5us73fr9ve0) | KloudiOS Prod (tea-d7dnd8vaqgkc73fomlmg) |
+| **Service** | `kloudi-api-beta` (srv-d7dqddt7vvec73fog8ng) | `kloudi-api-prod` (srv-d7dqhre7r5hc73d5regg) |
+| **Branch** | `develop` | `main` |
+| **Runtime** | Docker | Docker |
+| **Region** | Virginia | Virginia |
+| **Plan** | Free | Free |
+| **Health** | `GET /health` | `GET /health` |
+
+### Neon (PostgreSQL)
+
+| | Beta | Prod |
+|---|---|---|
+| **Org** | KloudiOS Beta | KloudiOS Prod |
+| **Project** | `kloudi-os-beta` (curly-grass-31791879) | `kloudi-os` (dry-fog-30866369) |
+| **Region** | aws-us-east-1 | aws-us-east-1 |
+| **PG version** | 17 | 17 |
+
+### Upstash (Redis)
+
+| | Beta | Prod |
+|---|---|---|
+| **Team** | KloudiOS Beta | KloudiOS Prod |
+| **Database** | `kloudios-beta-redis` | `kloudios-prod-redis` |
+| **Region** | us-east-1 | us-east-1 |
 
 ### Vercel (Web)
 
 - **Project**: `kloudi-os-web` on team `nitish-mehrotras-projects-cd0dbf7d`
 - **Root Directory**: `apps/web`
 - **Build Command**: `turbo run build` (auto-detected)
-- **GitHub repo**: `nitishMehrotra/kloudi-os` (private)
-- **PR previews**: Automatic — every push gets a unique preview URL
+- **PR previews**: Automatic
 - **Production**: Deploys on push to `main`
-
-### Render (API)
-
-- **Service**: `kloudi-os` (ID: `srv-d7dnq267r5hc73d4rksg`)
-- **Workspace**: `KloudiOS Beta` (ID: `tea-d7dnd8vaqgkc73fomlmg`)
-- **Runtime**: Docker (uses `./Dockerfile`)
-- **Plan**: Free (spins down after 15min inactivity, cold starts ~30s)
-- **Auto-deploy**: On push to `main`
-- **URL**: `https://kloudi-os.onrender.com`
-- **Health check**: `GET /health`
-
-### Neon (PostgreSQL)
-
-- **Project**: `kloudi-os` (ID: `dry-fog-30866369`)
-- **Region**: `aws-us-east-1`
-- **Postgres version**: 17
-- **Plan**: Free (0.5GB storage, auto-suspend)
-- **CLI**: `neonctl` (authenticated as `nitishmehrotra@gmail.com`)
-
-### Upstash (Redis)
-
-- **Database**: `kloudios-beta-redis`
-- **Region**: `us-east-1` (global)
-- **Plan**: Free (10K commands/day)
-- **CLI**: `npx @upstash/cli` (authenticated)
 
 ### CLI Tools
 
 ```bash
 # Render
 render login
-render deploys list srv-d7dnq267r5hc73d4rksg --output text
+render deploys list srv-d7dqhre7r5hc73d5regg --output text  # prod
+render deploys list srv-d7dqddt7vvec73fog8ng --output text   # beta
 
 # Neon
 neonctl projects list
-neonctl connection-string --project-id dry-fog-30866369
+neonctl connection-string --project-id dry-fog-30866369       # prod
+neonctl connection-string --project-id curly-grass-31791879   # beta
 
 # Upstash
 npx @upstash/cli redis list --json
 
 # Vercel (MCP configured)
 claude mcp add --transport http vercel https://mcp.vercel.com
+
+# CLI publish (from main only)
+git tag cli-v0.1.0 && git push origin cli-v0.1.0
+# Then create GitHub release from the tag
 ```
 
 ## ⚙️ Configuration System
