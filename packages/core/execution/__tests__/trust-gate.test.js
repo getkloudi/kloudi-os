@@ -37,9 +37,8 @@ try {
   // .env file not found — rely on existing env vars
 }
 
-if (!process.env.ANTHROPIC_API_KEY) {
-  throw new Error('ANTHROPIC_API_KEY not set — cannot run trust gate tests');
-}
+const hasApiKey = !!process.env.ANTHROPIC_API_KEY;
+const describeIfKey = hasApiKey ? describe : describe.skip;
 
 const WORKSPACE_ID = 'test-trust-gate';
 
@@ -182,7 +181,7 @@ function gatedToolGraph(slug, opts = {}) {
 // ============================================================
 // 1. TRUST GATE — APPROVE FLOW
 // ============================================================
-describe('Trust gate — approve flow', () => {
+describeIfKey('Trust gate — approve flow', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -221,7 +220,7 @@ describe('Trust gate — approve flow', () => {
 // ============================================================
 // 2. TRUST GATE — REJECT FLOW
 // ============================================================
-describe('Trust gate — reject flow', () => {
+describeIfKey('Trust gate — reject flow', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -253,7 +252,7 @@ describe('Trust gate — reject flow', () => {
 // ============================================================
 // 3. TRUST GATE — NO CALLBACK (AUTO-APPROVE)
 // ============================================================
-describe('Trust gate — no callback registered', () => {
+describeIfKey('Trust gate — no callback registered', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -278,7 +277,7 @@ describe('Trust gate — no callback registered', () => {
 // ============================================================
 // 4. NON-GATED TOOL_CALL — CALLBACK NOT INVOKED
 // ============================================================
-describe('Trust gate — non-gated tool_call', () => {
+describeIfKey('Trust gate — non-gated tool_call', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -312,7 +311,7 @@ describe('Trust gate — non-gated tool_call', () => {
 // ============================================================
 // 5. TRUST GATE CONTEXT SHAPE
 // ============================================================
-describe('Trust gate — TrustGateContext shape', () => {
+describeIfKey('Trust gate — TrustGateContext shape', () => {
   let procedure;
 
   beforeAll(async () => {
@@ -352,7 +351,7 @@ describe('Trust gate — TrustGateContext shape', () => {
 // ============================================================
 // 6. WAITING_INPUT NOT COUNTED FOR CONCURRENCY
 // ============================================================
-describe('Trust gate — waiting_input concurrency', () => {
+describeIfKey('Trust gate — waiting_input concurrency', () => {
   let procedure;
 
   beforeAll(async () => {

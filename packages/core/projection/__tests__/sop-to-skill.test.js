@@ -1,5 +1,8 @@
 import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let projectToSkillMd;
 let walkGraph;
@@ -12,8 +15,10 @@ beforeAll(async () => {
 });
 
 function loadSeedGraph(name) {
-  const path = resolve(process.cwd(), `data/seed/procedures/${name}.json`);
-  return JSON.parse(readFileSync(path, 'utf-8'));
+  // Resolve from this test file up to the repo root (4 levels: __tests__ → projection → core → packages → root)
+  const repoRoot = resolve(__dirname, '..', '..', '..', '..');
+  const filePath = resolve(repoRoot, `data/seed/procedures/${name}.json`);
+  return JSON.parse(readFileSync(filePath, 'utf-8'));
 }
 
 describe('walkGraph', () => {
