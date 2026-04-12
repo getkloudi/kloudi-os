@@ -510,21 +510,21 @@ POST /api/executions/:id/approve
 ### Product
 
 - [x] Start with solo dev or teams? → RESOLVED: internal-first (Flywl dogfood), external conversations concurrent
-- [ ] Is there an 8th workflow? Security? Data? Compliance?
-- [ ] Pattern extraction engine: v1 or v2? (deferred past Sprint 3)
-- [ ] Revenue model: marketplace cut? Per-seat? Usage-based?
+- [x] Is there an 8th workflow? → RESOLVED: No. Security is a cross-cutting concern (CSO skill exists as a guide-level SOP, not a separate workflow). Compliance is governance density, not a workflow. 7 is the right number.
+- [x] Pattern extraction engine: v1 or v2? → RESOLVED: deferred past Sprint 3. Sprint 1 traces are recording-only. Extraction requires real trace data to design against.
+- [ ] Revenue model: marketplace cut? Per-seat? Usage-based? (BLOCKED — needs design partner conversations to inform)
 
 ### Architecture
 
-- [ ] Will full-fidelity projection work in practice? (Codex GPT-5.4 challenged: "not credible without canonical AST per target format")
-- [ ] Source-of-truth ownership: if SOP in Postgres is canonical, how do repo edits not drift? Conflict resolution undefined.
-- [ ] AIGNE compatibility: worth revisiting?
-- [ ] Context manager: "load entire SOP" vs token budgets + eviction?
+- [x] Will full-fidelity projection work in practice? → PARTIALLY RESOLVED: Sprint 2 proves it for 4 node types (llm_generate, tool_call, interpolative, sub_entity). Complex control flow (loops, parallel) acknowledged as future work. Codex's "canonical AST" concern is valid for .cursorrules but not for SKILL.md (which is markdown, not a formal language).
+- [x] Source-of-truth ownership → RESOLVED for v1: SOP in Postgres is canonical. SKILL.md in repos is a projection (read-only view). Edits to SKILL.md are flagged as drift, not auto-merged. Conflict resolution is a v2 problem — v1 is write-from-platform-only.
+- [x] AIGNE compatibility → RESOLVED: abandoned. No mention in CEO review or Apr 11-12 session. AgentFS (decision #15) is a reference implementation, not a dependency. Build on Prisma + pluggable storage.
+- [x] Context manager → RESOLVED: token budgets + eviction (already built). ContextManager uses 128K budget with reserved slots and priority-based eviction. "Load entire SOP" is impractical for large SOPs.
 
 ### Competitive
 
-- [ ] Fabro: stealable patterns (DOT format, model stylesheets, git checkpointing)
-- [ ] Craft Agents: stealable patterns (skills system, sources abstraction)
+- [ ] Fabro: stealable patterns (DOT format, model stylesheets, git checkpointing) — worth a research pass before Sprint 2
+- [ ] Craft Agents: stealable patterns (skills system, sources abstraction) — worth a research pass before Sprint 2
 - [x] "Dark factory" vs "Intelligent VM" framing → RESOLVED: agent-first framing. The agent IS the product.
 
 ---
