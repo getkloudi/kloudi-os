@@ -43,9 +43,11 @@ program.addHelpText(
   'after',
   chalk.gray(`
 Examples:
-  $ kloudi import data/seed/procedures/engineering-impl.json
-  $ kloudi run engineering-impl -p jiraStoryId=PROJ-123
+  $ kloudi init --db-url postgresql://...
+  $ kloudi ls
   $ kloudi run shared-standup
+  $ kloudi run engineering-impl -p jiraStoryId=PROJ-123
+  $ kloudi trace <execution-id>
 `)
 );
 
