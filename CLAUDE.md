@@ -348,9 +348,11 @@ CLI publishes to npm only from `main` via `cli-v*` GitHub release tags.
 | **API** (Render) | `kloudi-api-beta` → https://kloudi-api-beta-wivn.onrender.com | `kloudi-api-prod` → https://kloudi-api-prod.onrender.com |
 | **Database** (Neon) | `kloudi-os-beta` (curly-grass-31791879) | `kloudi-os` (dry-fog-30866369) |
 | **Cache** (Upstash) | `kloudios-beta-redis` (KloudiOS Beta team) | `kloudios-prod-redis` (KloudiOS Prod team) |
-| **Web** (Vercel) | PR previews | `kloudi-os-web` on push to `main` |
+| **Web** (Vercel) | `kloudi-web-beta` | `kloudi-web-prod` |
 | **CLI** (npm) | — | `@kloudi/cli` on `cli-v*` tag |
 | **MCP** | Mounted on API (future) | Mounted on API (future) |
+| **Internal API** (Render) | `kloudi-internal-api` (srv-d7dtopkvikkc73ed2sag) | — |
+| **Ops Dashboard** (Vercel) | `kloudi-internal-web-beta` | `kloudi-internal-web-prod` |
 
 All services in **us-east / Virginia**. All free tier. Each environment has fully isolated workspaces across Render, Neon, and Upstash.
 
@@ -359,9 +361,10 @@ All services in **us-east / Virginia**. All free tier. Each environment has full
 | | Beta | Prod |
 |---|---|---|
 | **Workspace** | KloudiOS Beta (tea-d7dq40jeo5us73fr9ve0) | KloudiOS Prod (tea-d7dnd8vaqgkc73fomlmg) |
-| **Service** | `kloudi-api-beta` (srv-d7dqddt7vvec73fog8ng) | `kloudi-api-prod` (srv-d7dqhre7r5hc73d5regg) |
+| **Product API** | `kloudi-api-beta` (srv-d7dqddt7vvec73fog8ng) | `kloudi-api-prod` (srv-d7dqhre7r5hc73d5regg) |
+| **Internal API** | `kloudi-internal-api-beta` (srv-d7dvdke7r5hc73a4faog) | `kloudi-internal-api-prod` (srv-d7dtopkvikkc73ed2sag) |
 | **Branch** | `develop` | `main` |
-| **Runtime** | Docker | Docker |
+| **Runtime** | Docker (`Dockerfile` / `Dockerfile.internal-api`) | Docker |
 | **Region** | Virginia | Virginia |
 | **Plan** | Free | Free |
 | **Health** | `GET /health` | `GET /health` |
@@ -383,13 +386,38 @@ All services in **us-east / Virginia**. All free tier. Each environment has full
 | **Database** | `kloudios-beta-redis` | `kloudios-prod-redis` |
 | **Region** | us-east-1 | us-east-1 |
 
-### Vercel (Web)
+### Vercel (Web + Ops)
 
-- **Project**: `kloudi-os-web` on team `nitish-mehrotras-projects-cd0dbf7d`
-- **Root Directory**: `apps/web`
-- **Build Command**: `turbo run build` (auto-detected)
-- **PR previews**: Automatic
-- **Production**: Deploys on push to `main`
+All Vercel projects are on the **kloudi** team (`team_7bbzc2nIu43AyJHvuR2rk3VD`).
+
+| Project | App | Root Dir | Branch | URL |
+|---|---|---|---|---|
+| `kloudi-web-beta` | `apps/web` | `apps/web` | `develop` | https://kloudi-web-beta.vercel.app |
+| `kloudi-web-prod` | `apps/web` | `apps/web` | `main` | — |
+| `kloudi-internal-web-beta` | `apps/ops` | `apps/ops` | `develop` | https://kloudi-internal-web-beta.vercel.app |
+| `kloudi-internal-web-prod` | `apps/ops` | `apps/ops` | `main` | — |
+
+### Internal Dashboard
+
+**Internal API** (Render):
+
+| | Beta | Prod |
+|---|---|---|
+| **Service** | `kloudi-internal-api-beta` (srv-d7dvdke7r5hc73a4faog) | `kloudi-internal-api-prod` (srv-d7dtopkvikkc73ed2sag) |
+| **URL** | https://kloudi-internal-api-beta.onrender.com | https://kloudi-internal-api-prod.onrender.com |
+| **Branch** | `develop` | `main` |
+
+- **Dockerfile**: `Dockerfile.internal-api` (at repo root, no root-directory)
+- **Port**: 3002
+- **Health**: `GET /health`
+- **Auth**: Google OAuth + email allowlist (`OPS_ALLOWED_EMAILS`)
+- **DB**: Same Neon instance per environment (shared `DATABASE_URL`)
+
+**Ops Dashboard** (Vercel):
+- **Project**: `kloudi-internal-web-beta` / `kloudi-internal-web-prod`
+- **Root Directory**: `apps/ops`
+- **Port**: 3003 (dev)
+- **Env**: `NEXT_PUBLIC_OPS_API_URL` points to internal-api Render URL
 
 ### CLI Tools
 
