@@ -308,6 +308,34 @@ From `docs/designs/ui-design-review.md` (scored 2/10 → 6/10):
 - Agent panel slides in from right
 - DESIGN.md exists at repo root — source of truth for visual decisions
 
+### Sprint 2 web UI: what must ship
+
+The web UI ships in Sprint 2 (Days 15-28). Not a prototype — a usable product. These 4 views are required:
+
+**1. SOP Browser (BROWSE space)**
+- Filesystem tree: /guides, /projects, /{custom} with expand/collapse
+- Click an SOP → entity detail panel slides in (name, level, maturity, graph visualization, [Run] button)
+- Search/filter by name, level, tags
+
+**2. Execution view (when an SOP is running)**
+- Real-time streaming output (WebSocket) — shows each node executing, its output, timing
+- Approval prompts inline: when trust gate fires, show the question + context + [Approve] / [Reject] buttons
+- Status indicator per node: pending → running → completed/failed/waiting_input
+- This is where the before/after story comes alive — the user SEES the agent reasoning
+
+**3. Trace viewer (after execution completes)**
+- Timeline of nodes executed, with expandable detail per node
+- Each node shows its NodeTrace (prompt, response, tool calls, decision reasoning)
+- Approval events shown inline with human response + time taken
+- Total execution metrics: duration, tokens used, nodes executed
+
+**4. HOME (activity feed)**
+- Recent executions across all SOPs (most recent first)
+- Status badges: ✓ completed, ✗ failed, ⚠ needs attention, ● running
+- Click → opens trace viewer for that execution
+
+**What's NOT in Sprint 2 UI:** Graph editor (marketplace app per decision #12), role-based views (requires Organization model), SOP authoring (import via SKILL.md instead), settings/admin.
+
 <!-- AGENT: run /plan-design-review against this section before implementation -->
 
 ---
@@ -556,15 +584,15 @@ POST /api/executions/:id/approve
 |---|---|---|---|---|---|---|
 |Core insight|✓|✓|✓|—|—|LOCKED: insight, worldview, timing, flywheel all defined|
 |7 workflows|✓|✓|—|—|✓|LOCKED: mapped to gstack skills, sprint assignment, taxonomy role|
-|Everything is SOP|✓|✓|✓|?|✓|ALMOST: PRDs-as-SOPs clarified|
-|Filesystem-first|✓|✓|✓|?|✓|ALMOST: 3 defaults locked|
-|Governance density|✓|✓|✓|?|?|ALMOST: scaling story defined|
+|Everything is SOP|✓|✓|✓|✓|✓|LOCKED: PRDs-as-SOPs clarified, levels mapped|
+|Filesystem-first|✓|✓|✓|✓|✓|LOCKED: 3 defaults, tree UI in Sprint 2|
+|Governance density|✓|✓|✓|?|?|ALMOST: scaling story defined, UI for governance TBD|
 |Trust layer|—|✓|—|—|✓|LOCKED: state machine, WebSocket protocol, approval triggers defined|
 |Agent-first|✓|✓|✓|?|?|ALMOST: vision locked, impl pending|
 |SOP projection|—|✓|—|—|✓|LOCKED: bidirectional mapping, translation algorithm, exit criterion|
 |Agent-agnostic|✓|✓|—|—|✓|ALMOST: projection designed, .cursorrules format TBD|
 |First user|✓|✓|✓|—|—|LOCKED: JTBD before/after story, named contacts, adoption blockers|
-|Interaction model|—|—|—|✓|—|ALMOST: terminal-first + v6 mockup exists|
+|Interaction model|—|—|—|✓|✓|LOCKED: terminal-first, 4 Sprint 2 views defined, v6 mockup exists|
 |Trace format|—|✓|—|—|✓|LOCKED: per-node-type trace schema, approval events defined|
 |Build sequence|—|✓|—|—|✓|LOCKED: 3 sprints defined, exit criteria set|
 
