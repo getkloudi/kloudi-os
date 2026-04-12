@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lore.dev — OS Preview v5</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  [data-theme="dark"] {
+    --bg-desktop: #0c0d11;
+    --bg-base: #111318;
+    --bg-surface: #18191f;
+    --bg-elevated: #1f2028;
+    --bg-hover: #282a35;
+    --bg-editor: #13141a;
+    --bg-terminal: #0a0b0e;
+    --bg-dock: rgba(22,23,30,0.85);
+    --bg-dock-border: rgba(255,255,255,0.06);
+    --bg-overlay: rgba(0,0,0,0.5);
+    --text-primary: #dfe1e8;
+    --text-secondary: #8a8fa3;
+    --text-muted: #4e5264;
+    --text-on-accent: #ffffff;
+    --accent: #5b6af0;
+    --accent-subtle: rgba(91,106,240,0.10);
+    --accent-hover: #7280f5;
+    --success: #2ecc87;
+    --success-subtle: rgba(46,204,135,0.10);
+    --warning: #e8a83e;
+    --warning-subtle: rgba(232,168,62,0.10);
+    --error: #e55b5b;
+    --error-subtle: rgba(229,91,91,0.10);
+    --info: #4fa0e8;
+    --info-subtle: rgba(79,160,232,0.10);
+    --border: #232530;
+    --border-window: #2a2d3a;
+    --shadow-window: 0 12px 40px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3);
+    --avatar-bg: #2a2d3a;
+    --window-radius: 10px;
+  }
+  [data-theme="light"] {
+    --bg-desktop: #e8eaef;
+    --bg-base: #f7f8fa;
+    --bg-surface: #ffffff;
+    --bg-elevated: #f0f1f5;
+    --bg-hover: #e9eaf0;
+    --bg-editor: #ffffff;
+    --bg-terminal: #f4f5f8;
+    --bg-dock: rgba(255,255,255,0.82);
+    --bg-dock-border: rgba(0,0,0,0.08);
+    --bg-overlay: rgba(0,0,0,0.2);
+    --text-primary: #1b1e2b;
+    --text-secondary: #5c6070;
+    --text-muted: #9da1b0;
+    --text-on-accent: #ffffff;
+    --accent: #4a58d9;
+    --accent-subtle: rgba(74,88,217,0.08);
+    --accent-hover: #5b6af0;
+    --success: #1a9960;
+    --success-subtle: rgba(26,153,96,0.08);
+    --warning: #c48a1a;
+    --warning-subtle: rgba(196,138,26,0.08);
+    --error: #c93d3d;
+    --error-subtle: rgba(201,61,61,0.08);
+    --info: #2b7cc9;
+    --info-subtle: rgba(43,124,201,0.08);
+    --border: #e4e5eb;
+    --border-window: #d8dae0;
+    --shadow-window: 0 12px 40px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+    --avatar-bg: #e2e4ea;
+    --window-radius: 10px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg-desktop); color: var(--text-primary);
+    font-size: 14px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    height: 100vh; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:2px 7px; font-size:10px; font-weight:500; font-family:'JetBrains Mono',monospace; border-radius:3px; }
+  .badge-s { background:var(--success-subtle); color:var(--success); }
+  .badge-e { background:var(--error-subtle); color:var(--error); }
+  .badge-w { background:var(--warning-subtle); color:var(--warning); }
+  .badge-i { background:var(--info-subtle); color:var(--info); }
+  .badge-n { background:var(--bg-hover); color:var(--text-secondary); }
+  .btn { display:inline-flex; align-items:center; gap:5px; padding:5px 12px; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.1s; border-radius:4px; font-family:'DM Sans',sans-serif; }
+  .btn-primary { background:var(--accent); color:#fff; border:none; }
+  .btn-primary:hover { background:var(--accent-hover); }
+  .btn-secondary { background:transparent; color:var(--text-secondary); border:1px solid var(--border); }
+  .btn-danger { background:var(--error); color:#fff; border:none; border-radius:4px; }
+  .live-dot { width:6px; height:6px; border-radius:50%; background:var(--success); animation:pulse 2s infinite; display:inline-block; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .progress-bar { height:3px; background:var(--bg-hover); border-radius:2px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:2px; }
+
+  /* === MENU BAR (top of screen, macOS style) === */
+  .menubar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; height: 28px; flex-shrink: 0;
+    background: var(--bg-surface); border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .menubar-left { display: flex; align-items: center; gap: 16px; }
+  .menubar-logo { font-weight: 700; font-size: 13px; }
+  .menubar-logo-dot { color: var(--accent); }
+  .menubar-item { color: var(--text-secondary); cursor: pointer; }
+  .menubar-item:hover { color: var(--text-primary); }
+  .menubar-right { display: flex; align-items: center; gap: 14px; color: var(--text-muted); }
+  .menubar-right .mono { font-size: 11px; }
+
+  /* === DESKTOP AREA === */
+  .desktop {
+    flex: 1; position: relative; overflow: hidden;
+    padding: 16px;
+  }
+
+  /* === WINDOW === */
+  .window {
+    position: absolute; border-radius: var(--window-radius);
+    border: 1px solid var(--border-window);
+    box-shadow: var(--shadow-window);
+    overflow: hidden; display: flex; flex-direction: column;
+    transition: opacity 0.15s, transform 0.15s;
+  }
+  .window.hidden { display: none; }
+  .window-titlebar {
+    display: flex; align-items: center; padding: 10px 14px;
+    background: var(--bg-surface); border-bottom: 1px solid var(--border);
+    cursor: default; flex-shrink: 0;
+  }
+  .window-dots { display: flex; gap: 7px; margin-right: 12px; }
+  .window-dot { width: 11px; height: 11px; border-radius: 50%; cursor: pointer; }
+  .window-dot:hover { filter: brightness(1.2); }
+  .window-title { font-size: 13px; font-weight: 600; flex: 1; text-align: center; }
+  .window-body { flex: 1; overflow-y: auto; }
+
+  /* Finder window */
+  .w-finder { top: 20px; left: 20px; width: 520px; height: 400px; z-index: 10; }
+  .w-finder .window-body { background: var(--bg-base); display: grid; grid-template-columns: 160px 1fr; }
+  .finder-sidebar {
+    background: var(--bg-surface); border-right: 1px solid var(--border);
+    padding: 8px 0; font-size: 12px;
+  }
+  .fs-head { font-family:'JetBrains Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); padding:8px 12px 4px; }
+  .fs-item {
+    display:flex; align-items:center; gap:6px;
+    padding:4px 12px; color:var(--text-secondary);
+    cursor:pointer; font-size:12px;
+  }
+  .fs-item:hover { background:var(--bg-hover); }
+  .fs-item.active { color:var(--accent); background:var(--accent-subtle); }
+  .fs-icon { width:14px; text-align:center; font-size:11px; }
+  .finder-main { padding: 12px; }
+  .finder-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .finder-file {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 10px 6px; border-radius: 6px; cursor: pointer;
+    transition: background 0.08s; text-align: center;
+  }
+  .finder-file:hover { background: var(--bg-hover); }
+  .finder-file.selected { background: var(--accent-subtle); }
+  .finder-file-icon { font-size: 28px; }
+  .finder-file-name { font-size: 11px; color: var(--text-secondary); word-break: break-all; line-height: 1.3; }
+
+  /* Editor window */
+  .w-editor { top: 50px; left: 280px; width: 640px; height: 460px; z-index: 20; }
+  .w-editor .window-body { background: var(--bg-editor); display: flex; flex-direction: column; }
+  .editor-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 14px; background: var(--bg-surface);
+    border-bottom: 1px solid var(--border); font-size: 12px;
+  }
+  .editor-toolbar-left { display: flex; align-items: center; gap: 8px; }
+  .editor-mode-toggle { display: flex; gap: 0; }
+  .em-btn {
+    font-size: 11px; padding: 3px 10px;
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-muted); cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  .em-btn:first-child { border-radius: 3px 0 0 3px; }
+  .em-btn:last-child { border-radius: 0 3px 3px 0; border-left: 0; }
+  .em-btn.active { background: var(--accent-subtle); color: var(--accent); border-color: var(--accent); }
+  .em-btn.active + .em-btn { border-left-color: var(--accent); }
+
+  .editor-content { flex: 1; padding: 20px 24px; overflow-y: auto; }
+  .editor-content h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .editor-content .ec-meta {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--text-muted); display: flex; gap: 10px; align-items: center;
+    margin-bottom: 16px;
+  }
+  .editor-content p { color: var(--text-secondary); line-height: 1.65; margin-bottom: 14px; max-width: 560px; }
+  .sec-label { font-family:'JetBrains Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); margin-bottom:6px; margin-top:16px; }
+  .node-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; background: var(--bg-surface);
+    border: 1px solid var(--border); border-radius: 4px; margin-bottom: 4px;
+    font-size: 13px;
+  }
+  .nr-l { display:flex; align-items:center; gap:8px; }
+  .nr-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .nr-name { font-weight: 500; }
+  .nr-type { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted); }
+  .nr-r { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-secondary); display:flex; gap:10px; }
+
+  /* Terminal window */
+  .w-terminal { top: 300px; left: 100px; width: 540px; height: 260px; z-index: 15; }
+  .w-terminal .window-body {
+    background: var(--bg-terminal);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; line-height: 1.8;
+    padding: 12px 16px; color: var(--text-secondary);
+  }
+  .t-s { color:var(--success); } .t-e { color:var(--error); }
+  .t-i { color:var(--info); } .t-a { color:var(--accent); }
+  .t-m { color:var(--text-muted); } .t-w { color:var(--warning); }
+  .terminal-input-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 16px; background: var(--bg-surface);
+    border-top: 1px solid var(--border);
+  }
+  .terminal-prompt { color: var(--accent); font-family:'JetBrains Mono',monospace; font-size:12px; }
+  .terminal-input {
+    flex:1; background:transparent; border:none; outline:none;
+    font-family:'JetBrains Mono',monospace; font-size:12px;
+    color:var(--text-primary);
+  }
+  .terminal-input::placeholder { color:var(--text-muted); }
+
+  /* Store window */
+  .w-store { top: 60px; left: 340px; width: 560px; height: 420px; z-index: 5; }
+  .w-store .window-body { background: var(--bg-base); padding: 20px; }
+  .store-search {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 10px 14px; margin-bottom: 20px;
+  }
+  .store-search input {
+    flex: 1; background: transparent; border: none; outline: none;
+    font-size: 13px; color: var(--text-primary); font-family: 'DM Sans', sans-serif;
+  }
+  .store-search input::placeholder { color: var(--text-muted); }
+  .store-cats { display: flex; gap: 6px; margin-bottom: 16px; }
+  .store-cat {
+    font-size: 11px; padding: 4px 10px; border-radius: 3px;
+    background: var(--bg-surface); border: 1px solid var(--border);
+    color: var(--text-muted); cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+  .store-cat.active { background: var(--accent-subtle); color: var(--accent); border-color: var(--accent); }
+  .store-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .store-app {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 14px; cursor: pointer;
+    transition: border-color 0.1s;
+  }
+  .store-app:hover { border-color: var(--border-window); }
+  .store-app-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .store-app-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .store-app-name { font-size: 13px; font-weight: 600; }
+  .store-app-by { font-size: 11px; color: var(--text-muted); }
+  .store-app-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 10px; }
+  .store-app-footer { display: flex; align-items: center; justify-content: space-between; }
+  .store-app-tag { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-muted); }
+  .store-install {
+    font-size: 11px; padding: 4px 10px; border-radius: 4px;
+    background: var(--accent); color: #fff; border: none;
+    cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500;
+  }
+  .store-install.installed {
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+
+  /* === DOCK === */
+  .dock-wrapper {
+    position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    z-index: 1000;
+  }
+  .dock {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px;
+    background: var(--bg-dock);
+    border: 1px solid var(--bg-dock-border);
+    border-radius: 14px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+  .dock-item {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; cursor: pointer;
+    transition: transform 0.15s ease-out, background 0.1s;
+    position: relative;
+  }
+  .dock-item:hover { transform: scale(1.2) translateY(-4px); background: var(--bg-hover); }
+  .dock-item.active::after {
+    content: ''; position: absolute; bottom: -4px;
+    width: 4px; height: 4px; border-radius: 50%;
+    background: var(--text-secondary);
+  }
+  .dock-divider { width: 1px; height: 28px; background: var(--border); margin: 0 4px; }
+  .dock-tooltip {
+    position: absolute; bottom: 52px; left: 50%; transform: translateX(-50%);
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    padding: 3px 8px; border-radius: 4px; font-size: 11px;
+    white-space: nowrap; opacity: 0; pointer-events: none;
+    transition: opacity 0.1s;
+  }
+  .dock-item:hover .dock-tooltip { opacity: 1; }
+
+  /* Theme controls (in menubar) */
+  .theme-controls { display:flex; gap:0; }
+  .theme-btn {
+    font-family:'JetBrains Mono',monospace; font-size:10px; padding:2px 6px;
+    background:transparent; border:1px solid var(--border);
+    color:var(--text-muted); cursor:pointer;
+  }
+  .theme-btn:first-child { border-radius:3px 0 0 3px; }
+  .theme-btn:last-child { border-radius:0 3px 3px 0; }
+  .theme-btn:not(:first-child) { border-left:0; }
+  .theme-btn.active { background:var(--accent-subtle); color:var(--accent); border-color:var(--accent); }
+  .theme-btn.active + .theme-btn { border-left-color:var(--accent); }
+
+  /* Feed window */
+  .w-feed { top: 30px; left: 40px; width: 400px; height: 480px; z-index: 12; }
+  .w-feed .window-body { background: var(--bg-base); overflow-y: auto; }
+  .feed-search {
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    background: var(--bg-surface);
+  }
+  .feed-search input {
+    width: 100%; background: var(--bg-base); border: 1px solid var(--border);
+    border-radius: 5px; padding: 7px 12px; font-size: 12px;
+    color: var(--text-primary); outline: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .feed-search input::placeholder { color: var(--text-muted); }
+  .feed-search input:focus { border-color: var(--accent); }
+  .fp {
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+  }
+  .fp:hover { background: var(--bg-hover); }
+  .fp-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:12px; }
+  .avatar-sm { width:22px; height:22px; border-radius:50%; background:var(--avatar-bg); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:var(--text-secondary); flex-shrink:0; }
+  .fp-user { font-weight:500; font-size:12px; }
+  .fp-action { color:var(--text-secondary); font-size:11px; }
+  .fp-time { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-muted); margin-left:auto; }
+  .fp-card {
+    background:var(--bg-surface); border:1px solid var(--border);
+    border-radius:4px; padding:8px 12px; margin-left:30px;
+  }
+  .fp-card-name { font-size:12px; font-weight:500; margin-bottom:2px; }
+  .fp-card-meta { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-muted); display:flex; gap:6px; align-items:center; }
+  .fp-nodes { display:flex; flex-direction:column; gap:1px; margin-top:4px; }
+  .fp-node { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-secondary); }
+  .fp-node-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+
+  /* Notification badge on dock */
+  .dock-badge {
+    position:absolute; top:-2px; right:-2px;
+    width:14px; height:14px; border-radius:50%;
+    background:var(--error); color:#fff;
+    font-size:8px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+</style>
+</head>
+<body>
+
+<!-- MENU BAR -->
+<div class="menubar">
+  <div class="menubar-left">
+    <span class="menubar-logo">lore<span class="menubar-logo-dot">.</span>dev</span>
+    <span class="menubar-item">File</span>
+    <span class="menubar-item">Edit</span>
+    <span class="menubar-item">View</span>
+    <span class="menubar-item">Procedures</span>
+    <span class="menubar-item">Window</span>
+    <span class="menubar-item">Help</span>
+  </div>
+  <div class="menubar-right">
+    <div class="theme-controls">
+      <button class="theme-btn" onclick="setTheme('light')">☀</button>
+      <button class="theme-btn active" onclick="setTheme('dark')">☾</button>
+      <button class="theme-btn" onclick="setTheme('auto')">⊕</button>
+    </div>
+    <span class="mono">Tue 25 Mar 00:42</span>
+  </div>
+</div>
+
+<!-- DESKTOP -->
+<div class="desktop">
+
+  <!-- ===== WINDOW: HOME / FEED ===== -->
+  <div class="window w-feed" id="win-feed" onclick="bringToFront('win-feed')">
+    <div class="window-titlebar">
+      <div class="window-dots">
+        <div class="window-dot" style="background:var(--error)" onclick="event.stopPropagation();toggleWindow('win-feed')"></div>
+        <div class="window-dot" style="background:var(--warning)"></div>
+        <div class="window-dot" style="background:var(--success)"></div>
+      </div>
+      <div class="window-title">Home</div>
+      <div style="width:50px;"></div>
+    </div>
+    <div class="window-body">
+      <div class="feed-search">
+        <input placeholder="Search activity, procedures, people...">
+      </div>
+
+      <div class="fp">
+        <div class="fp-head">
+          <div class="avatar-sm">S</div>
+          <span class="fp-user">sarah</span>
+          <span class="fp-action">ran a procedure</span>
+          <span class="fp-time"><span class="live-dot"></span> now</span>
+        </div>
+        <div class="fp-card">
+          <div class="fp-card-name">deploy-auth-flow</div>
+          <div class="fp-card-meta"><span class="badge badge-i">● running</span> 2/4 nodes</div>
+          <div class="fp-nodes">
+            <div class="fp-node"><div class="fp-node-dot" style="background:var(--success)"></div> Validate Config</div>
+            <div class="fp-node"><div class="fp-node-dot" style="background:var(--success)"></div> Generate Auth Module</div>
+            <div class="fp-node"><div class="fp-node-dot" style="background:var(--info);animation:pulse 1.5s infinite"></div> <span style="color:var(--text-primary)">Deploy to Staging</span></div>
+            <div class="fp-node"><div class="fp-node-dot" style="background:var(--bg-hover)"></div> <span style="color:var(--text-muted)">Verify Health</span></div>
+          </div>
+          <div class="progress-bar" style="margin-top:6px;"><div class="progress-fill" style="width:60%;background:var(--info)"></div></div>
+        </div>
+      </div>
+
+      <div class="fp">
+        <div class="fp-head">
+          <div class="avatar-sm">N</div>
+          <span class="fp-user">nitish</span>
+          <span class="fp-action">completed</span>
+          <span class="fp-time">2m ago</span>
+        </div>
+        <div class="fp-card">
+          <div class="fp-card-name">analyze-codebase</div>
+          <div class="fp-card-meta"><span class="badge badge-s">● completed</span> 3 nodes · 4.2s</div>
+          <div class="progress-bar" style="margin-top:4px;"><div class="progress-fill" style="width:100%;background:var(--success)"></div></div>
+        </div>
+      </div>
+
+      <div class="fp">
+        <div class="fp-head">
+          <div class="avatar-sm">A</div>
+          <span class="fp-user">alex</span>
+          <span class="fp-action">execution failed</span>
+          <span class="fp-time">18m ago</span>
+        </div>
+        <div class="fp-card" style="border-color:var(--error)">
+          <div class="fp-card-name">migrate-database</div>
+          <div class="fp-card-meta"><span class="badge badge-e">● failed</span> node 2/4 · timeout</div>
+        </div>
+      </div>
+
+      <div class="fp">
+        <div class="fp-head">
+          <div class="avatar-sm">S</div>
+          <span class="fp-user">sarah</span>
+          <span class="fp-action">needs approval</span>
+          <span class="fp-time">42m ago</span>
+        </div>
+        <div class="fp-card" style="border-color:var(--warning)">
+          <div class="fp-card-name">security-review</div>
+          <div class="fp-card-meta"><span class="badge badge-w">● waiting</span> cycle guard</div>
+          <div style="margin-top:6px;display:flex;gap:6px;">
+            <button class="btn btn-primary" style="font-size:10px;padding:3px 8px;">Continue</button>
+            <button class="btn btn-danger" style="font-size:10px;padding:3px 8px;">Abort</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== WINDOW: FINDER ===== -->
+  <div class="window w-finder" id="win-finder" onclick="bringToFront('win-finder')">
+    <div class="window-titlebar">
+      <div class="window-dots">
+        <div class="window-dot" style="background:var(--error)" onclick="event.stopPropagation();toggleWindow('win-finder')"></div>
+        <div class="window-dot" style="background:var(--warning)"></div>
+        <div class="window-dot" style="background:var(--success)"></div>
+      </div>
+      <div class="window-title">Finder — procedures/engineering</div>
+      <div style="width:50px;"></div>
+    </div>
+    <div class="window-body">
+      <div class="finder-sidebar">
+        <div class="fs-head">favorites</div>
+        <div class="fs-item active"><span class="fs-icon">📁</span> procedures</div>
+        <div class="fs-item"><span class="fs-icon">📂</span> shared</div>
+        <div class="fs-item"><span class="fs-icon">🕐</span> recent</div>
+        <div class="fs-head" style="margin-top:8px;">workspaces</div>
+        <div class="fs-item"><span class="fs-icon">🏠</span> default</div>
+        <div class="fs-item"><span class="fs-icon">🧪</span> staging</div>
+        <div class="fs-head" style="margin-top:8px;">tags</div>
+        <div class="fs-item"><span class="fs-icon" style="color:var(--success)">●</span> production</div>
+        <div class="fs-item"><span class="fs-icon" style="color:var(--warning)">●</span> draft</div>
+      </div>
+      <div class="finder-main">
+        <div class="finder-grid">
+          <div class="finder-file selected">
+            <div class="finder-file-icon">⚡</div>
+            <div class="finder-file-name">analyze-codebase</div>
+          </div>
+          <div class="finder-file">
+            <div class="finder-file-icon">⚡</div>
+            <div class="finder-file-name">deploy-auth-flow</div>
+          </div>
+          <div class="finder-file">
+            <div class="finder-file-icon">⚡</div>
+            <div class="finder-file-name">migrate-database</div>
+          </div>
+          <div class="finder-file">
+            <div class="finder-file-icon">🎯</div>
+            <div class="finder-file-name">onboard-user</div>
+          </div>
+          <div class="finder-file">
+            <div class="finder-file-icon">📖</div>
+            <div class="finder-file-name">team-setup-guide</div>
+          </div>
+          <div class="finder-file">
+            <div class="finder-file-icon">⚡</div>
+            <div class="finder-file-name">security-review</div>
+          </div>
+          <div class="finder-file">
+            <div class="finder-file-icon">📁</div>
+            <div class="finder-file-name">onboarding/</div>
+          </div>
+          <div class="finder-file">
+            <div class="finder-file-icon">📁</div>
+            <div class="finder-file-name">security/</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== WINDOW: EDITOR ===== -->
+  <div class="window w-editor" id="win-editor" onclick="bringToFront('win-editor')">
+    <div class="window-titlebar">
+      <div class="window-dots">
+        <div class="window-dot" style="background:var(--error)" onclick="event.stopPropagation();toggleWindow('win-editor')"></div>
+        <div class="window-dot" style="background:var(--warning)"></div>
+        <div class="window-dot" style="background:var(--success)"></div>
+      </div>
+      <div class="window-title">Editor — analyze-codebase</div>
+      <div style="width:50px;"></div>
+    </div>
+    <div class="window-body">
+      <div class="editor-toolbar">
+        <div class="editor-toolbar-left">
+          <div class="editor-mode-toggle">
+            <button class="em-btn" onclick="setEditorMode('edit')">Edit</button>
+            <button class="em-btn active" onclick="setEditorMode('view')">View</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-primary" style="font-size:11px;padding:4px 10px;">▶ Run</button>
+          <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;">⋯</button>
+        </div>
+      </div>
+
+      <!-- View Mode -->
+      <div class="editor-content" id="editor-view">
+        <h1>analyze-codebase</h1>
+        <div class="ec-meta">
+          <span class="badge badge-s">● completed</span>
+          <span>task · curated</span>
+          <span>·</span>
+          <span>exec_clx8k2m</span>
+        </div>
+        <p>Analyzes repository structure, determines authentication strategy, and runs security scanning with actionable recommendations.</p>
+
+        <div class="sec-label">execution graph</div>
+        <div class="node-row">
+          <div class="nr-l"><div class="nr-dot" style="background:var(--success)"></div><div><div class="nr-name">Analyze Repository Structure</div><div class="nr-type">llm_generate</div></div></div>
+          <div class="nr-r"><span>1,204 tk</span><span>1.8s</span></div>
+        </div>
+        <div class="node-row">
+          <div class="nr-l"><div class="nr-dot" style="background:var(--success)"></div><div><div class="nr-name">Determine Auth Strategy</div><div class="nr-type">interpolative → "jwt-based"</div></div></div>
+          <div class="nr-r"><span>847 tk</span><span>0.9s</span></div>
+        </div>
+        <div class="node-row">
+          <div class="nr-l"><div class="nr-dot" style="background:var(--success)"></div><div><div class="nr-name">Run Security Scanner</div><div class="nr-type">tool_call</div></div></div>
+          <div class="nr-r"><span>796 tk</span><span>1.5s</span></div>
+        </div>
+
+        <div style="display:flex;gap:28px;margin-top:20px;padding-top:14px;border-top:1px solid var(--border);">
+          <div><div class="sec-label">duration</div><div class="mono" style="font-size:18px;font-weight:600;">4.2s</div></div>
+          <div><div class="sec-label">tokens</div><div class="mono" style="font-size:18px;font-weight:600;">2,847</div></div>
+          <div><div class="sec-label">status</div><div class="mono" style="font-size:18px;font-weight:600;color:var(--success)">done</div></div>
+        </div>
+      </div>
+
+      <!-- Edit Mode (hidden by default) -->
+      <div class="editor-content" id="editor-edit" style="display:none;">
+        <div contenteditable="true" style="outline:none;min-height:300px;">
+          <h1>analyze-codebase</h1>
+          <p style="color:var(--text-secondary);">Analyzes repository structure, determines authentication strategy, and runs security scanning with actionable recommendations.</p>
+          <div class="sec-label" contenteditable="false">nodes</div>
+          <p style="color:var(--text-secondary);">
+            <code style="background:var(--bg-elevated);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:12px;">node: analyze</code>
+            <span style="color:var(--text-muted)">— llm_generate</span><br>
+            prompt: "Analyze the repository structure at {{repo_path}}..."<br><br>
+            <code style="background:var(--bg-elevated);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:12px;">node: decide</code>
+            <span style="color:var(--text-muted)">— interpolative</span><br>
+            decision: "Which auth strategy fits?"<br>
+            options: [jwt-based, session-based, oauth-only]<br><br>
+            <code style="background:var(--bg-elevated);padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:12px;">node: execute</code>
+            <span style="color:var(--text-muted)">— tool_call</span><br>
+            tool: security-scan<br>
+          </p>
+        </div>
+        <div style="position:absolute;bottom:12px;right:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-muted);">
+          editing · unsaved changes
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== WINDOW: TERMINAL ===== -->
+  <div class="window w-terminal" id="win-terminal" onclick="bringToFront('win-terminal')">
+    <div class="window-titlebar">
+      <div class="window-dots">
+        <div class="window-dot" style="background:var(--error)" onclick="event.stopPropagation();toggleWindow('win-terminal')"></div>
+        <div class="window-dot" style="background:var(--warning)"></div>
+        <div class="window-dot" style="background:var(--success)"></div>
+      </div>
+      <div class="window-title">Terminal — Agent</div>
+      <div style="width:50px;"></div>
+    </div>
+    <div class="window-body">
+<span class="t-m">12:04:22</span> <span class="t-i">→</span> starting exec_clx8k2m
+<span class="t-m">12:04:22</span> <span class="t-a">▸</span> node/analyze <span class="t-m">llm_generate</span>
+<span class="t-m">12:04:24</span> <span class="t-s">✓</span> completed 1.8s <span class="t-m">(1,204 tk)</span>
+<span class="t-m">12:04:24</span> <span class="t-a">▸</span> node/decide <span class="t-m">interpolative</span>
+<span class="t-m">12:04:25</span> <span class="t-s">✓</span> chose "jwt-based" <span class="t-m">(0.92)</span>
+<span class="t-m">12:04:25</span> <span class="t-a">▸</span> node/execute <span class="t-m">tool_call</span>
+<span class="t-m">12:04:27</span> <span class="t-s">✓</span> completed 1.5s
+<span class="t-m">12:04:27</span> <span class="t-s">✓</span> done <span class="t-m">3/3 · 2,847 tk · 4.2s</span>
+    </div>
+    <div class="terminal-input-row">
+      <span class="terminal-prompt">❯</span>
+      <input class="terminal-input" placeholder="run, ask, or command...">
+    </div>
+  </div>
+
+  <!-- ===== WINDOW: STORE (hidden by default) ===== -->
+  <div class="window w-store hidden" id="win-store" onclick="bringToFront('win-store')">
+    <div class="window-titlebar">
+      <div class="window-dots">
+        <div class="window-dot" style="background:var(--error)" onclick="event.stopPropagation();toggleWindow('win-store')"></div>
+        <div class="window-dot" style="background:var(--warning)"></div>
+        <div class="window-dot" style="background:var(--success)"></div>
+      </div>
+      <div class="window-title">Store</div>
+      <div style="width:50px;"></div>
+    </div>
+    <div class="window-body">
+      <div class="store-search">
+        <span style="color:var(--text-muted)">⌕</span>
+        <input placeholder="Search apps, integrations, extensions...">
+      </div>
+      <div class="store-cats">
+        <span class="store-cat active">All</span>
+        <span class="store-cat">Workspace</span>
+        <span class="store-cat">Terminal</span>
+        <span class="store-cat">Finder</span>
+        <span class="store-cat">Analytics</span>
+      </div>
+      <div class="store-grid">
+        <div class="store-app">
+          <div class="store-app-head">
+            <div class="store-app-icon" style="background:var(--info-subtle);color:var(--info);">📊</div>
+            <div><div class="store-app-name">Analytics Dashboard</div><div class="store-app-by">by lore.dev</div></div>
+          </div>
+          <div class="store-app-desc">Execution metrics, token usage trends, success rates across procedures.</div>
+          <div class="store-app-footer">
+            <span class="store-app-tag">workspace</span>
+            <button class="store-install installed">Installed</button>
+          </div>
+        </div>
+        <div class="store-app">
+          <div class="store-app-head">
+            <div class="store-app-icon" style="background:var(--success-subtle);color:var(--success);">🔗</div>
+            <div><div class="store-app-name">Slack Notifier</div><div class="store-app-by">by community</div></div>
+          </div>
+          <div class="store-app-desc">Push execution results, failures, and approval requests to Slack channels.</div>
+          <div class="store-app-footer">
+            <span class="store-app-tag">integration</span>
+            <button class="store-install">Install</button>
+          </div>
+        </div>
+        <div class="store-app">
+          <div class="store-app-head">
+            <div class="store-app-icon" style="background:var(--warning-subtle);color:var(--warning);">🔍</div>
+            <div><div class="store-app-name">Audit Trail</div><div class="store-app-by">by lore.dev</div></div>
+          </div>
+          <div class="store-app-desc">Full history of who ran what, when, with diffs and approval chains.</div>
+          <div class="store-app-footer">
+            <span class="store-app-tag">workspace</span>
+            <button class="store-install">Install</button>
+          </div>
+        </div>
+        <div class="store-app">
+          <div class="store-app-head">
+            <div class="store-app-icon" style="background:var(--error-subtle);color:var(--error);">🛡</div>
+            <div><div class="store-app-name">Security Scanner</div><div class="store-app-by">by community</div></div>
+          </div>
+          <div class="store-app-desc">Additional security tools for the terminal: SAST, dependency audit, secret scanning.</div>
+          <div class="store-app-footer">
+            <span class="store-app-tag">terminal</span>
+            <button class="store-install installed">Installed</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOCK -->
+  <div class="dock-wrapper">
+    <div class="dock">
+      <div class="dock-item active" onclick="toggleWindow('win-feed')">
+        🏠
+        <div class="dock-tooltip">Home</div>
+        <div class="dock-badge">2</div>
+      </div>
+      <div class="dock-item active" onclick="toggleWindow('win-finder')">
+        📁
+        <div class="dock-tooltip">Finder</div>
+      </div>
+      <div class="dock-item active" onclick="toggleWindow('win-editor')">
+        📝
+        <div class="dock-tooltip">Editor</div>
+      </div>
+      <div class="dock-item active" onclick="toggleWindow('win-terminal')">
+        ⌨️
+        <div class="dock-tooltip">Terminal</div>
+      </div>
+      <div class="dock-divider"></div>
+      <div class="dock-item" onclick="toggleWindow('win-store')">
+        🏪
+        <div class="dock-tooltip">Store</div>
+      </div>
+      <div class="dock-item">
+        📊
+        <div class="dock-tooltip">Analytics</div>
+      </div>
+      <div class="dock-item">
+        ⚙️
+        <div class="dock-tooltip">Settings</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let zCounter = 30;
+
+function bringToFront(id) {
+  zCounter++;
+  document.getElementById(id).style.zIndex = zCounter;
+}
+
+function toggleWindow(id) {
+  const win = document.getElementById(id);
+  win.classList.toggle('hidden');
+  if (!win.classList.contains('hidden')) {
+    bringToFront(id);
+  }
+}
+
+function setTheme(theme) {
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  if (theme === 'auto') {
+    const pref = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', pref);
+    document.querySelectorAll('.theme-btn')[2].classList.add('active');
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+      if (document.querySelector('.theme-btn:last-child').classList.contains('active'))
+        document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+    });
+  } else {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.querySelectorAll('.theme-btn')[theme === 'light' ? 0 : 1].classList.add('active');
+  }
+}
+
+function setEditorMode(mode) {
+  document.querySelectorAll('.em-btn').forEach(b => b.classList.remove('active'));
+  if (mode === 'edit') {
+    document.querySelectorAll('.em-btn')[0].classList.add('active');
+    document.getElementById('editor-view').style.display = 'none';
+    document.getElementById('editor-edit').style.display = 'block';
+  } else {
+    document.querySelectorAll('.em-btn')[1].classList.add('active');
+    document.getElementById('editor-view').style.display = 'block';
+    document.getElementById('editor-edit').style.display = 'none';
+  }
+}
+</script>
+</body>
+</html>
