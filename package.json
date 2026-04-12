@@ -42,6 +42,8 @@
     "prepare": "husky"
   },
   "devDependencies": {
+    "@swc/core": "^1.15.24",
+    "@swc/jest": "^0.2.39",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",

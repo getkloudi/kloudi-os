@@ -27,16 +27,24 @@ const Redis = RedisPkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Test configuration (matches .env.test)
+// Test configuration — parsed from DATABASE_URL and REDIS_URL env vars (set in .env.test)
+const dbUrl = process.env.DATABASE_URL;
+const redisUrl = process.env.REDIS_URL;
+if (!dbUrl) throw new Error('DATABASE_URL not set — check .env.test');
+if (!redisUrl) throw new Error('REDIS_URL not set — check .env.test');
+
+const dbParsed = new URL(dbUrl);
+const redisParsed = new URL(redisUrl);
+
 const TEST_CONFIG = {
-  API_PORT: 3002,
-  POSTGRES_HOST: 'localhost',
-  POSTGRES_PORT: 5433,
-  POSTGRES_USER: 'kloudi_test',
-  POSTGRES_PASSWORD: 'kloudi_test_password',
-  POSTGRES_DB: 'kloudi_test',
-  REDIS_HOST: 'localhost',
-  REDIS_PORT: 6380,
+  API_PORT: Number(process.env.PORT || 3002),
+  POSTGRES_HOST: dbParsed.hostname,
+  POSTGRES_PORT: Number(dbParsed.port || 5432),
+  POSTGRES_USER: dbParsed.username,
+  POSTGRES_PASSWORD: dbParsed.password,
+  POSTGRES_DB: dbParsed.pathname.slice(1),
+  REDIS_HOST: redisParsed.hostname,
+  REDIS_PORT: Number(redisParsed.port || 6379),
   MAX_STARTUP_TIME: 30000, // 30 seconds
   MAX_TEST_TIMEOUT: 10000, // 10 seconds
 };
