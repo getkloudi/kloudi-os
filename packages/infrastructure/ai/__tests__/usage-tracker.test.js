@@ -30,7 +30,11 @@ describe('UsageTracker', () => {
     });
 
     await expect(
-      tracker.track('generateText', { provider: 'openai' }, { text: 'response' })
+      tracker.track(
+        'generateText',
+        { provider: 'openai' },
+        { text: 'response' }
+      )
     ).resolves.toBeUndefined();
   });
 });
