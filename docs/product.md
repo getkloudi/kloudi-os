@@ -50,6 +50,17 @@ kloudi.os is an agent-first organizational OS. SOPs are the universal file forma
 - Large org (500+): agent enforces governance (audit trails, multi-approval, compliance).
 - Same kernel, same SOPs, same personas. ICP detection from signals.
 
+How governance density manifests in the product:
+
+| Scale | Approval gates | Trace detail | Org model | v1 scope |
+|-------|---------------|-------------|-----------|----------|
+| Solo | None (auto-approve all) | Minimal (outcome only) | Single user, default workspace | **Sprint 1** |
+| Small team | Dangerous ops only (shell, deploy) | Standard (per-node traces) | Shared workspace, Unix perms | Sprint 2 |
+| Growing | Per-SOP configurable gates | Full (reasoning + context) | Org → departments, role-based | Sprint 3+ |
+| Enterprise | Multi-approver, escalation chains | Audit-grade (tamper-proof) | RBAC, compliance tags | Post-v1 |
+
+Sprint 1 ships solo-mode governance. The trust layer state machine supports all levels — what changes is the approval trigger configuration, not the engine.
+
 **4. 5 personas, species-agnostic**
 
 - Engineer, PM, Design, Infra, QA
@@ -102,6 +113,8 @@ kloudi.os is an agent-first organizational OS. SOPs are the universal file forma
 - The product isn't "a procedure management system." It's "an agent that joins your team."
 - Procedures are its brain. Personas are its roles. Trust gates are its governance.
 - Codex (GPT-5.4) validated: the product is a "trust-construction system" — scoped permissions, visible reasoning, approval checkpoints, replay from past runs.
+- Sprint 1 agent: the execution engine IS the agent runtime. `kloudi run /path/to/sop` invokes the engine, which traverses the graph, calls LLMs, invokes tools, and stops for approval when configured. The agent's "personality" comes from the SOP + context (guide-level SOPs provide conventions and standards).
+- Sprint 2 agent: CLI wraps the engine with `kloudi init` (workspace setup), `kloudi ls` (browse SOPs), `kloudi run` (execute), `kloudi trace` (view execution history). The web UI provides the same capabilities with visual execution streaming.
 
 **10. Agent-agnostic platform** (Apr 12, 2026)
 
@@ -586,11 +599,11 @@ POST /api/executions/:id/approve
 |7 workflows|✓|✓|—|—|✓|LOCKED: mapped to gstack skills, sprint assignment, taxonomy role|
 |Everything is SOP|✓|✓|✓|✓|✓|LOCKED: PRDs-as-SOPs clarified, levels mapped|
 |Filesystem-first|✓|✓|✓|✓|✓|LOCKED: 3 defaults, tree UI in Sprint 2|
-|Governance density|✓|✓|✓|?|?|ALMOST: scaling story defined, UI for governance TBD|
+|Governance density|✓|✓|✓|✓|✓|LOCKED: scaling matrix, Sprint 1 = solo-mode, trust layer supports all levels|
 |Trust layer|—|✓|—|—|✓|LOCKED: state machine, WebSocket protocol, approval triggers defined|
-|Agent-first|✓|✓|✓|?|?|ALMOST: vision locked, impl pending|
+|Agent-first|✓|✓|✓|✓|✓|LOCKED: engine = agent runtime, CLI + web as interfaces, sprint-by-sprint build|
 |SOP projection|—|✓|—|—|✓|LOCKED: bidirectional mapping, translation algorithm, exit criterion|
-|Agent-agnostic|✓|✓|—|—|✓|ALMOST: projection designed, .cursorrules format TBD|
+|Agent-agnostic|✓|✓|—|—|✓|LOCKED: SKILL.md projection defined for Sprint 2, .cursorrules is same algorithm + different template (additive)|
 |First user|✓|✓|✓|—|—|LOCKED: JTBD before/after story, named contacts, adoption blockers|
 |Interaction model|—|—|—|✓|✓|LOCKED: terminal-first, 4 Sprint 2 views defined, v6 mockup exists|
 |Trace format|—|✓|—|—|✓|LOCKED: per-node-type trace schema, approval events defined|
