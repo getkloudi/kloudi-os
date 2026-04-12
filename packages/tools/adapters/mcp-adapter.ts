@@ -131,7 +131,7 @@ export class MCPClientAdapter {
           };
           properties[key] = {
             type: (prop.type as string) ?? 'string',
-            description: prop.description,
+            ...(prop.description != null ? { description: prop.description } : {}),
           };
         }
       }

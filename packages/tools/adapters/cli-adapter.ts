@@ -143,7 +143,7 @@ function executeCLITool(
             return;
           }
 
-          if (nodeError.killed) {
+          if ('killed' in nodeError && nodeError.killed) {
             reject(
               new Error(
                 `CLI tool "${toolName}": command timed out after ${timeout}ms`
