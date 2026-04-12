@@ -51,3 +51,9 @@ Deferred work tracked from plan reviews. Each item has context so a future engin
 **Why:** In-process execution (setImmediate) means server restarts kill running procedures. Sprint 2 web UI needs executions to survive restarts.
 **Context:** Current architecture persists currentNodeId + variables + ExecutionNode records to Postgres. A resumeFromNode() method could reload state and continue. Temporal provides this out of the box with automatic retry, saga patterns, and activity heartbeats. Evaluate whether the simple Postgres approach is sufficient or if Temporal's guarantees are needed.
 **Effort:** S (evaluation) | **Priority:** P1 | **Depends on:** Sprint 1 complete
+
+## Internal Dashboard (Sprint 3)
+**What:** Build `apps/ops/` (Next.js admin UI) + `apps/internal-api/` (sudo APIs) as a separate internal dashboard.
+**Why:** Need a way to manage the platform without SSH — seed SOPs, view all executions/traces, manage integrations, kill stuck executions, run migrations. Also needed for the external demo (Sprint 3 exit criteria).
+**Context:** Separate from the product UI and API. Google OAuth with email allowlist for access control. Direct Prisma DB access (same Neon, elevated permissions). Deploys as a separate Render service with its own URL and env vars. Inspired by the Flywl Nexus pattern — ops UI is never mixed with customer-facing product.
+**Effort:** M | **Priority:** P1 | **Depends on:** Sprint 2 complete (product API and web UI working)
