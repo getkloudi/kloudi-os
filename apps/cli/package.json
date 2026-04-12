@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Universal CLI for all Kloudi agents and tools",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nitishMehrotra/kloudi-os.git",
+    "directory": "apps/cli"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": ["dist", "README.md"],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {

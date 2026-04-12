@@ -5,6 +5,9 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "kloudi-mcp": "./dist/index.js"
+  },
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js"
