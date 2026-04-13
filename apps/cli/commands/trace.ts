@@ -25,13 +25,8 @@ export function registerTraceCommand(program: Command): void {
           chalk.cyan.bold(`  Trace: ${execution.procedure.name}`),
           chalk.gray(`(${execution.procedure.slug})`)
         );
-        console.log(
-          chalk.gray(`  Execution: ${execution.id}`)
-        );
-        console.log(
-          chalk.gray(`  Status: `),
-          statusBadge(execution.status)
-        );
+        console.log(chalk.gray(`  Execution: ${execution.id}`));
+        console.log(chalk.gray(`  Status: `), statusBadge(execution.status));
 
         if (execution.durationMs) {
           console.log(
@@ -107,10 +102,7 @@ function renderNode(node: ExecutionNodeDetail, isLast: boolean): void {
   if (node.gateContext) {
     const gate = node.gateContext as { action?: string };
     if (gate.action) {
-      console.log(
-        chalk.gray(pipe),
-        chalk.yellow(`  gate: ${gate.action}`)
-      );
+      console.log(chalk.gray(pipe), chalk.yellow(`  gate: ${gate.action}`));
     }
   }
 
@@ -118,10 +110,7 @@ function renderNode(node: ExecutionNodeDetail, isLast: boolean): void {
   if (node.decisionTrace) {
     const trace = node.decisionTrace as { choice?: string; reasoning?: string };
     if (trace.choice) {
-      console.log(
-        chalk.gray(pipe),
-        chalk.blue(`  decision: ${trace.choice}`)
-      );
+      console.log(chalk.gray(pipe), chalk.blue(`  decision: ${trace.choice}`));
     }
   }
 

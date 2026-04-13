@@ -43,10 +43,7 @@ export function registerInitCommand(program: Command): void {
     .description('Bootstrap a kloudi.os organization')
     .option('--org-name <name>', 'Organization name')
     .option('--skip-seed', 'Skip seeding default SOPs', false)
-    .action(async (opts: {
-      orgName?: string;
-      skipSeed: boolean;
-    }) => {
+    .action(async (opts: { orgName?: string; skipSeed: boolean }) => {
       const dbUrl = resolveDbUrl();
 
       console.log('');
@@ -102,12 +99,12 @@ async function pushSchema(dbUrl: string): Promise<void> {
 
 async function createOrganization(
   dbUrl: string,
-  orgName?: string,
+  orgName?: string
 ): Promise<{ id: string; name: string; slug: string }> {
   console.log(chalk.blue('  [2/3]'), 'Creating organization...');
 
   const { PrismaPg } = await import('@prisma/adapter-pg');
-  const mod = await import('@prisma/client') as any;
+  const mod = (await import('@prisma/client')) as any;
   const PClient = mod.PrismaClient ?? mod.default?.PrismaClient ?? mod.default;
   const adapter = new PrismaPg({ connectionString: dbUrl });
   const prisma = new PClient({ adapter });
@@ -116,7 +113,10 @@ async function createOrganization(
     await prisma.$connect();
 
     const name = orgName || basename(process.cwd());
-    const slug = name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '-')
+      .replace(/-+/g, '-');
 
     // Upsert: find existing or create new
     const existing = await (prisma as any).organization.findFirst({
@@ -124,7 +124,11 @@ async function createOrganization(
     });
 
     if (existing) {
-      console.log(chalk.green(`        Organization exists: ${existing.name} (${existing.slug})`));
+      console.log(
+        chalk.green(
+          `        Organization exists: ${existing.name} (${existing.slug})`
+        )
+      );
       return { id: existing.id, name: existing.name, slug: existing.slug };
     }
 
@@ -143,11 +147,14 @@ async function createOrganization(
   }
 }
 
-async function seedProcedures(dbUrl: string, organizationId: string): Promise<void> {
+async function seedProcedures(
+  dbUrl: string,
+  organizationId: string
+): Promise<void> {
   console.log(chalk.blue('  [3/3]'), 'Seeding default SOPs...');
 
   const { PrismaPg } = await import('@prisma/adapter-pg');
-  const mod = await import('@prisma/client') as any;
+  const mod = (await import('@prisma/client')) as any;
   const PClient = mod.PrismaClient ?? mod.default?.PrismaClient ?? mod.default;
   const adapter = new PrismaPg({ connectionString: dbUrl });
   const prisma = new PClient({ adapter });
@@ -202,9 +209,7 @@ async function seedProcedures(dbUrl: string, organizationId: string): Promise<vo
       }
     }
 
-    console.log(
-      chalk.green(`        ${files.length} SOPs seeded`)
-    );
+    console.log(chalk.green(`        ${files.length} SOPs seeded`));
   } catch (error) {
     const err = error as Error;
     console.error(chalk.red(`        Seed failed: ${err.message}`));

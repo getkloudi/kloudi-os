@@ -119,7 +119,8 @@ export function authMiddleware(
         userId: session.userId,
         email: session.metadata?.email,
         username: session.metadata?.username,
-        organizationId: session.metadata?.organizationId ?? `ws_${session.userId}`,
+        organizationId:
+          session.metadata?.organizationId ?? `ws_${session.userId}`,
         permissions: session.permissions,
         roles: session.roles,
       };

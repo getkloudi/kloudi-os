@@ -93,7 +93,10 @@ export class ProcedureService {
     }
 
     // Check for duplicate slug
-    const existing = await this.repository.findBySlug(organizationId, data.slug);
+    const existing = await this.repository.findBySlug(
+      organizationId,
+      data.slug
+    );
     if (existing) {
       throw new Error(`Procedure with slug "${data.slug}" already exists`);
     }

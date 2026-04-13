@@ -54,10 +54,10 @@ export function setupRoutes(app: Application): void {
       // Look up procedure
       let procedure: { id: string; name: string; slug: string } | null = null;
       try {
-        procedure = await procedureService.getProcedure(
+        procedure = (await procedureService.getProcedure(
           req.user!.organizationId,
-          id,
-        ) as { id: string; name: string; slug: string } | null;
+          id
+        )) as { id: string; name: string; slug: string } | null;
       } catch {
         // Try by ID if slug lookup fails
         try {
@@ -78,27 +78,42 @@ export function setupRoutes(app: Application): void {
         req.user!.organizationId,
         {
           onNodeStart: (execId, nodeId, name) =>
-            emitExecutionProgress(execId, { type: 'node:start', nodeId, name } as any),
+            emitExecutionProgress(execId, {
+              type: 'node:start',
+              nodeId,
+              name,
+            } as any),
           onNodeComplete: (execId, nodeId, output) =>
-            emitExecutionProgress(execId, { type: 'node:complete', nodeId, output } as any),
+            emitExecutionProgress(execId, {
+              type: 'node:complete',
+              nodeId,
+              output,
+            } as any),
           onNodeFailed: (execId, nodeId, error) =>
-            emitExecutionProgress(execId, { type: 'node:failed', nodeId, error } as any),
+            emitExecutionProgress(execId, {
+              type: 'node:failed',
+              nodeId,
+              error,
+            } as any),
           onExecutionComplete: (execId, result) =>
             emitExecutionComplete(execId, result),
           onExecutionFailed: (execId, error) =>
-            emitExecutionProgress(execId, { type: 'execution:failed', error } as any),
+            emitExecutionProgress(execId, {
+              type: 'execution:failed',
+              error,
+            } as any),
           onTrustGateTriggered: async (gateContext) => {
             try {
               const response = await requestTrustGateApproval(
                 gateContext.executionId,
-                gateContext as unknown as Record<string, unknown>,
+                gateContext as unknown as Record<string, unknown>
               );
               return response === 'approve' ? 'approve' : 'reject';
             } catch {
               return 'reject';
             }
           },
-        },
+        }
       );
 
       res.status(202).json({
@@ -113,51 +128,72 @@ export function setupRoutes(app: Application): void {
         return;
       }
 
-      logger.error('Failed to start execution', error instanceof Error ? error : null, {
-        id: req.params['id'],
-      });
+      logger.error(
+        'Failed to start execution',
+        error instanceof Error ? error : null,
+        {
+          id: req.params['id'],
+        }
+      );
       res.status(500).json({ error: 'Failed to start execution' });
     }
   });
 
   // POST /api/executions/:id/cancel — Cancel a running execution
-  app.post('/api/executions/:id/cancel', async (req: Request, res: Response) => {
-    try {
-      const id = req.params['id'] as string;
-      const db = await Database.getInstance().getClient();
+  app.post(
+    '/api/executions/:id/cancel',
+    async (req: Request, res: Response) => {
+      try {
+        const id = req.params['id'] as string;
+        const db = await Database.getInstance().getClient();
 
-      const execution = await (db as any).execution.findUnique({
-        where: { id, organizationId: req.user!.organizationId },
-      });
+        const execution = await (db as any).execution.findUnique({
+          where: { id, organizationId: req.user!.organizationId },
+        });
 
-      if (!execution) {
-        res.status(404).json({ error: 'Execution not found' });
-        return;
+        if (!execution) {
+          res.status(404).json({ error: 'Execution not found' });
+          return;
+        }
+
+        if (
+          execution.status === 'completed' ||
+          execution.status === 'failed' ||
+          execution.status === 'cancelled'
+        ) {
+          res.json({
+            data: {
+              id,
+              status: execution.status,
+              message: 'Execution already terminal',
+            },
+          });
+          return;
+        }
+
+        // Set cancelled — engine checks this between nodes
+        await (db as any).execution.update({
+          where: { id },
+          data: { status: 'cancelled', completedAt: new Date() },
+        });
+
+        logger.info('Execution cancelled', { executionId: id });
+
+        emitExecutionProgress(id, { type: 'execution:cancelled' } as any);
+
+        res.json({ data: { id, status: 'cancelled' } });
+      } catch (error) {
+        logger.error(
+          'Failed to cancel execution',
+          error instanceof Error ? error : null,
+          {
+            id: req.params['id'],
+          }
+        );
+        res.status(500).json({ error: 'Failed to cancel execution' });
       }
-
-      if (execution.status === 'completed' || execution.status === 'failed' || execution.status === 'cancelled') {
-        res.json({ data: { id, status: execution.status, message: 'Execution already terminal' } });
-        return;
-      }
-
-      // Set cancelled — engine checks this between nodes
-      await (db as any).execution.update({
-        where: { id },
-        data: { status: 'cancelled', completedAt: new Date() },
-      });
-
-      logger.info('Execution cancelled', { executionId: id });
-
-      emitExecutionProgress(id, { type: 'execution:cancelled' } as any);
-
-      res.json({ data: { id, status: 'cancelled' } });
-    } catch (error) {
-      logger.error('Failed to cancel execution', error instanceof Error ? error : null, {
-        id: req.params['id'],
-      });
-      res.status(500).json({ error: 'Failed to cancel execution' });
     }
-  });
+  );
 
   // GET /api/executions — List executions
   app.get('/api/executions', async (req: Request, res: Response) => {
@@ -187,7 +223,10 @@ export function setupRoutes(app: Application): void {
 
       res.json({ data: results, total: results.length });
     } catch (error) {
-      logger.error('Failed to list executions', error instanceof Error ? error : null);
+      logger.error(
+        'Failed to list executions',
+        error instanceof Error ? error : null
+      );
       res.status(500).json({ error: 'Failed to list executions' });
     }
   });
@@ -213,9 +252,13 @@ export function setupRoutes(app: Application): void {
 
       res.json({ data: execution });
     } catch (error) {
-      logger.error('Failed to get execution', error instanceof Error ? error : null, {
-        id: req.params['id'],
-      });
+      logger.error(
+        'Failed to get execution',
+        error instanceof Error ? error : null,
+        {
+          id: req.params['id'],
+        }
+      );
       res.status(500).json({ error: 'Failed to get execution' });
     }
   });
@@ -233,9 +276,13 @@ export function setupRoutes(app: Application): void {
 
       res.json({ data: nodes });
     } catch (error) {
-      logger.error('Failed to get execution nodes', error instanceof Error ? error : null, {
-        id: req.params['id'],
-      });
+      logger.error(
+        'Failed to get execution nodes',
+        error instanceof Error ? error : null,
+        {
+          id: req.params['id'],
+        }
+      );
       res.status(500).json({ error: 'Failed to get execution nodes' });
     }
   });
@@ -263,7 +310,10 @@ export function setupRoutes(app: Application): void {
 
       res.json({ data: activity, total: activity.length });
     } catch (error) {
-      logger.error('Failed to load activity', error instanceof Error ? error : null);
+      logger.error(
+        'Failed to load activity',
+        error instanceof Error ? error : null
+      );
       res.status(500).json({ error: 'Failed to load activity' });
     }
   });

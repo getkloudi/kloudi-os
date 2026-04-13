@@ -75,7 +75,11 @@ export class ExecutionEngine {
     });
 
     const executionId = execution.id;
-    logger.info('Execution started', { executionId, procedureId, organizationId });
+    logger.info('Execution started', {
+      executionId,
+      procedureId,
+      organizationId,
+    });
 
     // Build context
     const ctx: ExecutionContext = {

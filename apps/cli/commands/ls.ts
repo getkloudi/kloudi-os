@@ -23,14 +23,14 @@ export function registerLsCommand(program: Command): void {
         );
 
         if (procedures.length === 0) {
-          console.log(chalk.gray('No procedures found. Run kloudi init first.'));
+          console.log(
+            chalk.gray('No procedures found. Run kloudi init first.')
+          );
           return;
         }
 
         console.log('');
-        console.log(
-          chalk.cyan.bold(`  ${procedures.length} procedures`)
-        );
+        console.log(chalk.cyan.bold(`  ${procedures.length} procedures`));
         console.log('');
 
         // Column headers

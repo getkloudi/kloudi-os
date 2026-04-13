@@ -11,7 +11,7 @@ export class OrganizationService {
   async createOrganization(
     name: string,
     slug: string,
-    ownerUserId?: string,
+    ownerUserId?: string
   ): Promise<{ id: string; slug: string }> {
     const db = await Database.getInstance().getClient();
 
@@ -40,7 +40,9 @@ export class OrganizationService {
     return { id: org.id, slug: org.slug };
   }
 
-  async getOrganizationForUser(userId: string): Promise<{ id: string; slug: string } | null> {
+  async getOrganizationForUser(
+    userId: string
+  ): Promise<{ id: string; slug: string } | null> {
     const db = await Database.getInstance().getClient();
 
     const membership = await (db as any).membership.findFirst({
@@ -50,10 +52,15 @@ export class OrganizationService {
     });
 
     if (!membership) return null;
-    return { id: membership.organization.id, slug: membership.organization.slug };
+    return {
+      id: membership.organization.id,
+      slug: membership.organization.slug,
+    };
   }
 
-  async getOrganization(id: string): Promise<{ id: string; name: string; slug: string } | null> {
+  async getOrganization(
+    id: string
+  ): Promise<{ id: string; name: string; slug: string } | null> {
     const db = await Database.getInstance().getClient();
     return (db as any).organization.findUnique({ where: { id } });
   }

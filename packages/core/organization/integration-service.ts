@@ -23,7 +23,7 @@ export class IntegrationService {
     type: string,
     name: string,
     credentials: Record<string, string>,
-    config: Record<string, string> = {},
+    config: Record<string, string> = {}
   ): Promise<IntegrationRecord> {
     const db = await Database.getInstance().getClient();
 
@@ -48,7 +48,7 @@ export class IntegrationService {
   }
 
   async getCredentialsForOrg(
-    organizationId: string,
+    organizationId: string
   ): Promise<Record<string, Record<string, string>>> {
     const db = await Database.getInstance().getClient();
 
@@ -58,7 +58,10 @@ export class IntegrationService {
 
     const result: Record<string, Record<string, string>> = {};
     for (const integration of integrations) {
-      result[integration.type] = integration.credentials as Record<string, string>;
+      result[integration.type] = integration.credentials as Record<
+        string,
+        string
+      >;
     }
     return result;
   }
