@@ -4,13 +4,13 @@ import type {
   NodeResult,
   ExecutionCallbacks,
   TrustGateContext,
-  ProcedureRecord,
+  SopRecord,
 } from './types.js';
 import type { GraphNode, Graph, NodeType } from '@kloudi/shared/types';
 import { ContextManager } from './context-manager.js';
 import { getNestedValue } from './resolve-path.js';
 import { Database } from '@kloudi/infrastructure/database';
-import { ProcedureRepository } from '../procedures/procedure-repository.js';
+import { SopRepository } from '../sops/sop-repository.js';
 import { Logger } from '@kloudi/shared/logger';
 
 const logger = Logger.getInstance('execution-engine');
@@ -20,7 +20,7 @@ const DEFAULT_CONCURRENCY_LIMIT = 5;
 const DEFAULT_CYCLE_THRESHOLD = 3;
 
 export class ExecutionEngine {
-  private procedureRepository = new ProcedureRepository();
+  private sopRepository = new SopRepository();
 
   constructor(
     private executors: Map<NodeType, NodeExecutor>,
@@ -32,7 +32,7 @@ export class ExecutionEngine {
    * returns immediately with the execution ID.
    */
   async execute(
-    procedureId: string,
+    sopId: string,
     params: Record<string, unknown>,
     organizationId: string,
     callbacks?: ExecutionCallbacks,
@@ -52,9 +52,9 @@ export class ExecutionEngine {
     }
 
     // Look up procedure
-    const entity = await this.procedureRepository.findById(procedureId);
+    const entity = await this.sopRepository.findById(sopId);
     if (!entity) {
-      throw new Error(`Procedure not found: ${procedureId}`);
+      throw new Error(`SOP not found: ${sopId}`);
     }
 
     const graph = entity.graph as Graph;
@@ -63,7 +63,7 @@ export class ExecutionEngine {
     // Create execution record
     const execution = await (db as any).execution.create({
       data: {
-        procedureId,
+        sopId,
         status: 'pending',
         parameters: params,
         variables: {},
@@ -77,18 +77,18 @@ export class ExecutionEngine {
     const executionId = execution.id;
     logger.info('Execution started', {
       executionId,
-      procedureId,
+      sopId,
       organizationId,
     });
 
     // Build context
     const ctx: ExecutionContext = {
       executionId,
-      entity: entity as ProcedureRecord,
+      entity: entity as SopRecord,
       parameters: params,
       variables: {},
       currentNodeId: entryNodeId,
-      contextWindow: this.contextManager.initialize(entity as ProcedureRecord),
+      contextWindow: this.contextManager.initialize(entity as SopRecord),
       visitedNodes: new Map(),
       organizationId,
     };
@@ -109,7 +109,7 @@ export class ExecutionEngine {
    * Used by SubEntityExecutor for child executions.
    */
   async executeAndWait(
-    procedureId: string,
+    sopId: string,
     params: Record<string, unknown>,
     organizationId: string,
     callbacks?: ExecutionCallbacks,
@@ -128,9 +128,9 @@ export class ExecutionEngine {
       );
     }
 
-    const entity = await this.procedureRepository.findById(procedureId);
+    const entity = await this.sopRepository.findById(sopId);
     if (!entity) {
-      throw new Error(`Procedure not found: ${procedureId}`);
+      throw new Error(`SOP not found: ${sopId}`);
     }
 
     const graph = entity.graph as Graph;
@@ -138,7 +138,7 @@ export class ExecutionEngine {
 
     const execution = await (db as any).execution.create({
       data: {
-        procedureId,
+        sopId,
         status: 'pending',
         parameters: params,
         variables: {},
@@ -153,11 +153,11 @@ export class ExecutionEngine {
 
     const ctx: ExecutionContext = {
       executionId,
-      entity: entity as ProcedureRecord,
+      entity: entity as SopRecord,
       parameters: params,
       variables: {},
       currentNodeId: entryNodeId,
-      contextWindow: this.contextManager.initialize(entity as ProcedureRecord),
+      contextWindow: this.contextManager.initialize(entity as SopRecord),
       visitedNodes: new Map(),
       organizationId,
     };

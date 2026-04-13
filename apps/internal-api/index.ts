@@ -5,7 +5,7 @@ import { Logger } from '@kloudi/shared/logger';
 import express from 'express';
 import { setupMiddleware, setupErrorHandling } from './lib/middleware.js';
 import { opsAuthMiddleware } from './lib/ops-auth.js';
-import { setupProcedureRoutes } from './routes/procedures.routes.js';
+import { setupSopRoutes } from './routes/sops.routes.js';
 import { setupExecutionRoutes } from './routes/executions.routes.js';
 import { setupToolRoutes } from './routes/tools.routes.js';
 import { setupHealthRoutes } from './routes/health.routes.js';
@@ -40,7 +40,7 @@ async function startServer(): Promise<void> {
 
     // Protected routes
     logger.info('Setting up protected routes...');
-    setupProcedureRoutes(app);
+    setupSopRoutes(app);
     setupExecutionRoutes(app);
     setupToolRoutes(app);
 

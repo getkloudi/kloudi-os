@@ -1,7 +1,7 @@
 /**
- * ProceduralEntity - Core Entity for lore.dev procedures
+ * SopEntity - Core Entity for lore.dev SOPs
  *
- * Represents executable procedures at different levels:
+ * Represents executable SOPs at different levels:
  * - guide: High-level instructional content
  * - project: Project-scoped workflows
  * - task: Individual executable tasks
@@ -11,40 +11,38 @@
 import type { Graph, GraphNode, GraphEdge } from '@kloudi/shared/types';
 
 /**
- * Procedure levels
+ * SOP levels
  */
-export const ProcedureLevel = {
+export const SopLevel = {
   GUIDE: 'guide',
   PROJECT: 'project',
   TASK: 'task',
   SKILL: 'skill',
 } as const;
 
-export type ProcedureLevelType =
-  (typeof ProcedureLevel)[keyof typeof ProcedureLevel];
+export type SopLevelType = (typeof SopLevel)[keyof typeof SopLevel];
 
 /**
- * Procedure maturity stages
+ * SOP maturity stages
  */
-export const ProcedureMaturity = {
+export const SopMaturity = {
   DRAFT: 'draft',
   CURATED: 'curated',
   VALIDATED: 'validated',
 } as const;
 
-export type ProcedureMaturityType =
-  (typeof ProcedureMaturity)[keyof typeof ProcedureMaturity];
+export type SopMaturityType = (typeof SopMaturity)[keyof typeof SopMaturity];
 
 /**
- * Interface for procedure entity constructor data
+ * Interface for SOP entity constructor data
  */
-export interface ProcedureEntityData {
+export interface SopEntityData {
   id?: string;
   slug: string;
   name: string;
   description?: string;
-  level?: ProcedureLevelType;
-  maturity?: ProcedureMaturityType;
+  level?: SopLevelType;
+  maturity?: SopMaturityType;
   graph?: Graph;
   parameters?: Record<string, unknown>;
   constraints?: Record<string, unknown>;
@@ -62,16 +60,16 @@ interface ValidationResult {
 }
 
 /**
- * ProceduralEntity
+ * SopEntity
  * Pure business entity with no infrastructure dependencies
  */
-export class ProceduralEntity {
+export class SopEntity {
   id: string | undefined;
   slug: string;
   name: string;
   description: string | undefined;
-  level: ProcedureLevelType;
-  maturity: ProcedureMaturityType;
+  level: SopLevelType;
+  maturity: SopMaturityType;
   graph: Graph;
   parameters: Record<string, unknown>;
   constraints: Record<string, unknown>;
@@ -84,15 +82,15 @@ export class ProceduralEntity {
     slug,
     name,
     description,
-    level = ProcedureLevel.TASK,
-    maturity = ProcedureMaturity.DRAFT,
+    level = SopLevel.TASK,
+    maturity = SopMaturity.DRAFT,
     graph = { nodes: [], edges: [] },
     parameters = {},
     constraints = {},
     organizationId,
     createdAt,
     updatedAt,
-  }: ProcedureEntityData) {
+  }: SopEntityData) {
     this.id = id;
     this.slug = slug;
     this.name = name;
@@ -108,7 +106,7 @@ export class ProceduralEntity {
   }
 
   /**
-   * Validate the procedure entity
+   * Validate the SOP entity
    */
   validate(): ValidationResult {
     const errors: string[] = [];
@@ -122,17 +120,16 @@ export class ProceduralEntity {
     }
 
     if (
-      !Object.values(ProcedureLevel).includes(
-        this.level as (typeof ProcedureLevel)[keyof typeof ProcedureLevel]
+      !Object.values(SopLevel).includes(
+        this.level as (typeof SopLevel)[keyof typeof SopLevel]
       )
     ) {
       errors.push(`Invalid level: ${this.level}`);
     }
 
     if (
-      !Object.values(ProcedureMaturity).includes(
-        this
-          .maturity as (typeof ProcedureMaturity)[keyof typeof ProcedureMaturity]
+      !Object.values(SopMaturity).includes(
+        this.maturity as (typeof SopMaturity)[keyof typeof SopMaturity]
       )
     ) {
       errors.push(`Invalid maturity: ${this.maturity}`);
@@ -153,11 +150,11 @@ export class ProceduralEntity {
   }
 
   /**
-   * Check if procedure can be executed
+   * Check if SOP can be executed
    */
   canExecute(): boolean {
     // Must be validated or curated to execute
-    if (this.maturity === ProcedureMaturity.DRAFT) {
+    if (this.maturity === SopMaturity.DRAFT) {
       return false;
     }
 
@@ -209,10 +206,10 @@ export class ProceduralEntity {
   }
 
   /**
-   * Check if procedure can be promoted to next maturity level
+   * Check if SOP can be promoted to next maturity level
    */
   canPromote(): boolean {
-    if (this.maturity === ProcedureMaturity.VALIDATED) {
+    if (this.maturity === SopMaturity.VALIDATED) {
       return false; // Already at highest level
     }
 
@@ -221,4 +218,4 @@ export class ProceduralEntity {
   }
 }
 
-export default ProceduralEntity;
+export default SopEntity;

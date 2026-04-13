@@ -10,14 +10,14 @@ import { opsApi } from '@/lib/api';
 interface Execution {
   id: string;
   status: string;
-  procedureId: string;
+  sopId: string;
   workspaceId: string;
   tokensUsed: number;
   durationMs: number | null;
   startedAt: string;
   completedAt: string | null;
   error: string | null;
-  procedure?: { id: string; name: string; slug: string };
+  sop?: { id: string; name: string; slug: string };
   _count?: { executionNodes: number };
 }
 
@@ -124,7 +124,7 @@ export default function ExecutionsPage() {
               <thead>
                 <tr className="border-b bg-muted/50">
                   <th className="px-4 py-3 text-left font-medium">ID</th>
-                  <th className="px-4 py-3 text-left font-medium">Procedure</th>
+                  <th className="px-4 py-3 text-left font-medium">SOP</th>
                   <th className="px-4 py-3 text-left font-medium">Status</th>
                   <th className="px-4 py-3 text-left font-medium">Nodes</th>
                   <th className="px-4 py-3 text-left font-medium">Tokens</th>
@@ -144,15 +144,15 @@ export default function ExecutionsPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-xs">
-                      {ex.procedure ? (
+                      {ex.sop ? (
                         <Link
-                          href={`/procedures/${ex.procedure.id}`}
+                          href={`/sops/${ex.sop.id}`}
                           className="hover:underline"
                         >
-                          {ex.procedure.name}
+                          {ex.sop.name}
                         </Link>
                       ) : (
-                        ex.procedureId.slice(0, 12)
+                        ex.sopId.slice(0, 12)
                       )}
                     </td>
                     <td className="px-4 py-3">

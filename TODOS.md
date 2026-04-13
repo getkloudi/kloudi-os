@@ -7,7 +7,7 @@ Deferred work tracked from plan reviews. Each item has context so a future engin
 ## Sprint 1.5: Extended Node Types
 
 **What:** Add `parallel`, `loop`, `condition`, and `transform` node types to the ExecutionEngine.
-**Why:** The spec defines 8 node types. Sprint 1 ships 4 (llm_generate, tool_call, interpolative, sub_entity). These 4 complete coverage and enable more complex procedures.
+**Why:** The spec defines 8 node types. Sprint 1 ships 4 (llm_generate, tool_call, interpolative, sub_entity). These 4 complete coverage and enable more complex SOPs.
 **Context:** The NodeExecutor interface is extensible — adding new types is new classes implementing `execute(node, ctx, engine?)`. No engine changes needed. The cycle guard (human approval on node revisit) handles the loop case. `parallel` is the most complex — requires concurrent node execution with Promise.all and partial failure handling.
 **Effort:** M | **Priority:** P2 | **Depends on:** Sprint 1 engine working
 
@@ -28,7 +28,7 @@ Deferred work tracked from plan reviews. Each item has context so a future engin
 ## Dry-Run Mode for Execution Validation
 
 **What:** Add a `dryRun: true` flag to `engine.execute()` that traverses the graph validating executor availability, variable resolution, and graph structure without making any LLM/tool calls.
-**Why:** Catches procedure authoring mistakes before burning LLM tokens. `ProceduralEntity.validate()` checks graph structure but not runtime concerns (executor registration, variable availability from prior nodes).
+**Why:** Catches procedure authoring mistakes before burning LLM tokens. `SopEntity.validate()` checks graph structure but not runtime concerns (executor registration, variable availability from prior nodes).
 **Context:** The engine would walk the graph, check each node type has a registered executor, and verify that `resolveInputs()` can resolve all `{{variable}}` references given the expected outputs of prior nodes. Returns a validation report instead of executing.
 **Effort:** S | **Priority:** P3 | **Depends on:** Sprint 1 engine working
 
@@ -41,7 +41,7 @@ Deferred work tracked from plan reviews. Each item has context so a future engin
 
 ## Import Remaining 41 Gstack Skills as SOPs
 
-**What:** Convert remaining 41 gstack skills to procedure graph JSON and import into Postgres.
+**What:** Convert remaining 41 gstack skills to SOP graph JSON and import into Postgres.
 **Why:** Sprint 1 proves execution with 3 skills. The full skill library (44 total) makes kloudi.os useful for real work.
 **Context:** CC hand-designs each graph by reading the SKILL.md and modeling the workflow as nodes/edges. At ~30 min per skill with CC, this is 2-3 sessions of focused work. Not building a parser — doing things that don't scale.
 **Effort:** L | **Priority:** P2 | **Depends on:** Sprint 1 trust gate + execution working
@@ -56,7 +56,7 @@ Deferred work tracked from plan reviews. Each item has context so a future engin
 ## Evaluate Temporal for Execution Durability
 
 **What:** Evaluate Temporal.io as the execution durability layer for Sprint 2.
-**Why:** In-process execution (setImmediate) means server restarts kill running procedures. Sprint 2 web UI needs executions to survive restarts.
+**Why:** In-process execution (setImmediate) means server restarts kill running SOPs. Sprint 2 web UI needs executions to survive restarts.
 **Context:** Current architecture persists currentNodeId + variables + ExecutionNode records to Postgres. A resumeFromNode() method could reload state and continue. Temporal provides this out of the box with automatic retry, saga patterns, and activity heartbeats. Evaluate whether the simple Postgres approach is sufficient or if Temporal's guarantees are needed.
 **Effort:** S (evaluation) | **Priority:** P1 | **Depends on:** Sprint 1 complete
 

@@ -1,28 +1,24 @@
 /**
- * ProcedureService - Business Logic Layer for ProceduralEntity
+ * SopService - Business Logic Layer for SopEntity
  *
  * Handles validation, business rules, and orchestration.
  */
 
 import { Logger } from '@kloudi/shared/logger';
-import {
-  ProceduralEntity,
-  ProcedureLevel,
-  ProcedureMaturity,
-} from './procedure-entity.js';
+import { SopEntity, SopLevel, SopMaturity } from './sop-entity.js';
 import type {
-  ProcedureEntityData,
-  ProcedureLevelType,
-  ProcedureMaturityType,
-} from './procedure-entity.js';
-import { ProcedureRepository } from './procedure-repository.js';
+  SopEntityData,
+  SopLevelType,
+  SopMaturityType,
+} from './sop-entity.js';
+import { SopRepository } from './sop-repository.js';
 
-const logger = Logger.getInstance('procedures');
+const logger = Logger.getInstance('sops');
 
 /**
- * Database procedure record type
+ * Database SOP record type
  */
-interface ProcedureRecord {
+interface SopRecord {
   id: string;
   slug: string;
   name: string;
@@ -41,8 +37,8 @@ interface ProcedureRecord {
  * List options interface
  */
 interface ListOptions {
-  level?: ProcedureLevelType;
-  maturity?: ProcedureMaturityType;
+  level?: SopLevelType;
+  maturity?: SopMaturityType;
   limit?: number;
   offset?: number;
 }
@@ -56,26 +52,26 @@ interface SearchOptions {
 }
 
 /**
- * ProcedureService - Business Logic Layer
+ * SopService - Business Logic Layer
  */
-export class ProcedureService {
-  private repository: ProcedureRepository;
+export class SopService {
+  private repository: SopRepository;
 
-  constructor(repository: ProcedureRepository | null = null) {
-    this.repository = repository || new ProcedureRepository();
+  constructor(repository: SopRepository | null = null) {
+    this.repository = repository || new SopRepository();
   }
 
-  async createProcedure(
+  async createSop(
     organizationId: string,
-    data: ProcedureEntityData
-  ): Promise<ProcedureRecord> {
+    data: SopEntityData
+  ): Promise<SopRecord> {
     // Business validation
     if (!data.slug || data.slug.trim().length === 0) {
-      throw new Error('Procedure slug is required');
+      throw new Error('SOP slug is required');
     }
 
     if (!data.name || data.name.trim().length === 0) {
-      throw new Error('Procedure name is required');
+      throw new Error('SOP name is required');
     }
 
     if (!organizationId) {
@@ -85,8 +81,8 @@ export class ProcedureService {
     // Validate level
     if (
       data.level &&
-      !Object.values(ProcedureLevel).includes(
-        data.level as (typeof ProcedureLevel)[keyof typeof ProcedureLevel]
+      !Object.values(SopLevel).includes(
+        data.level as (typeof SopLevel)[keyof typeof SopLevel]
       )
     ) {
       throw new Error(`Invalid level: ${data.level}`);
@@ -98,14 +94,14 @@ export class ProcedureService {
       data.slug
     );
     if (existing) {
-      throw new Error(`Procedure with slug "${data.slug}" already exists`);
+      throw new Error(`SOP with slug "${data.slug}" already exists`);
     }
 
     // Create entity for validation
-    const entity = new ProceduralEntity({
+    const entity = new SopEntity({
       ...data,
       organizationId,
-      maturity: ProcedureMaturity.DRAFT, // Always start as draft
+      maturity: SopMaturity.DRAFT, // Always start as draft
     });
 
     const validation = entity.validate();
@@ -116,30 +112,27 @@ export class ProcedureService {
     return await this.repository.create({
       ...data,
       organizationId,
-      maturity: ProcedureMaturity.DRAFT,
+      maturity: SopMaturity.DRAFT,
     });
   }
 
-  async getProcedure(
-    organizationId: string,
-    slug: string
-  ): Promise<ProcedureRecord> {
+  async getSop(organizationId: string, slug: string): Promise<SopRecord> {
     if (!organizationId || !slug) {
       throw new Error('Workspace ID and slug are required');
     }
 
-    const procedure = await this.repository.findBySlug(organizationId, slug);
-    if (!procedure) {
-      throw new Error(`Procedure not found: ${slug}`);
+    const sop = await this.repository.findBySlug(organizationId, slug);
+    if (!sop) {
+      throw new Error(`SOP not found: ${slug}`);
     }
 
-    return procedure;
+    return sop;
   }
 
-  async listProcedures(
+  async listSops(
     organizationId: string,
     options: ListOptions = {}
-  ): Promise<ProcedureRecord[]> {
+  ): Promise<SopRecord[]> {
     if (!organizationId) {
       throw new Error('Workspace ID is required');
     }
@@ -157,17 +150,17 @@ export class ProcedureService {
     return await this.repository.search(organizationId, '', { limit, offset });
   }
 
-  async updateProcedure(
+  async updateSop(
     id: string,
-    data: Partial<ProcedureEntityData>
-  ): Promise<ProcedureRecord> {
+    data: Partial<SopEntityData>
+  ): Promise<SopRecord> {
     if (!id) {
-      throw new Error('Procedure ID is required');
+      throw new Error('SOP ID is required');
     }
 
     const existing = await this.repository.findById(id);
     if (!existing) {
-      throw new Error('Procedure not found');
+      throw new Error('SOP not found');
     }
 
     // Don't allow changing organizationId
@@ -175,8 +168,8 @@ export class ProcedureService {
     delete updateData.organizationId;
 
     // Create entity with merged data for validation
-    const entity = new ProceduralEntity({
-      ...(existing as unknown as ProcedureEntityData),
+    const entity = new SopEntity({
+      ...(existing as unknown as SopEntityData),
       ...updateData,
     });
 
@@ -188,61 +181,59 @@ export class ProcedureService {
     return await this.repository.update(id, updateData);
   }
 
-  async promoteProcedure(id: string): Promise<ProcedureRecord> {
+  async promoteSop(id: string): Promise<SopRecord> {
     if (!id) {
-      throw new Error('Procedure ID is required');
+      throw new Error('SOP ID is required');
     }
 
     const existing = await this.repository.findById(id);
     if (!existing) {
-      throw new Error('Procedure not found');
+      throw new Error('SOP not found');
     }
 
-    const entity = new ProceduralEntity(
-      existing as unknown as ProcedureEntityData
-    );
+    const entity = new SopEntity(existing as unknown as SopEntityData);
 
     if (!entity.canPromote()) {
-      throw new Error('Procedure cannot be promoted');
+      throw new Error('SOP cannot be promoted');
     }
 
     // Determine next maturity level
-    let newMaturity: ProcedureMaturityType;
+    let newMaturity: SopMaturityType;
     switch (existing.maturity) {
-      case ProcedureMaturity.DRAFT:
-        newMaturity = ProcedureMaturity.CURATED;
+      case SopMaturity.DRAFT:
+        newMaturity = SopMaturity.CURATED;
         break;
-      case ProcedureMaturity.CURATED:
-        newMaturity = ProcedureMaturity.VALIDATED;
+      case SopMaturity.CURATED:
+        newMaturity = SopMaturity.VALIDATED;
         break;
       default:
-        throw new Error('Procedure is already at highest maturity level');
+        throw new Error('SOP is already at highest maturity level');
     }
 
     const updated = await this.repository.update(id, { maturity: newMaturity });
 
-    logger.info(`Procedure ${id} promoted to ${newMaturity}`);
+    logger.info(`SOP ${id} promoted to ${newMaturity}`);
     return updated;
   }
 
-  async deleteProcedure(id: string): Promise<boolean> {
+  async deleteSop(id: string): Promise<boolean> {
     if (!id) {
-      throw new Error('Procedure ID is required');
+      throw new Error('SOP ID is required');
     }
 
     const existing = await this.repository.findById(id);
     if (!existing) {
-      throw new Error('Procedure not found');
+      throw new Error('SOP not found');
     }
 
     return await this.repository.delete(id);
   }
 
-  async searchProcedures(
+  async searchSops(
     organizationId: string,
     query: string,
     options: SearchOptions = {}
-  ): Promise<ProcedureRecord[]> {
+  ): Promise<SopRecord[]> {
     if (!organizationId) {
       throw new Error('Workspace ID is required');
     }
@@ -251,4 +242,4 @@ export class ProcedureService {
   }
 }
 
-export default ProcedureService;
+export default SopService;

@@ -68,7 +68,7 @@ apps/
   mcp-server/       Claude Desktop MCP integration
 
 packages/
-  core/             Procedures domain (entities, repository, service)
+  core/             SOPs domain (entities, repository, service)
   agent/            SOP execution runtime (graph traversal, context mgmt)
   tools/            Tool registry + built-ins (filesystem, shell, github)
   auth/             JWT + bcrypt
@@ -80,12 +80,12 @@ packages/
 
 ```
 GET  /health                    Health check
-GET  /api/procedures            List procedures
-GET  /api/procedures/:slug      Get procedure
-POST /api/procedures            Create procedure
-PUT  /api/procedures/:slug      Update procedure
-DEL  /api/procedures/:slug      Delete procedure
-POST /api/procedures/:slug/run  Execute procedure
+GET  /api/sops            List procedures
+GET  /api/sops/:slug      Get procedure
+POST /api/sops            Create procedure
+PUT  /api/sops/:slug      Update procedure
+DEL  /api/sops/:slug      Delete procedure
+POST /api/sops/:slug/run  Execute procedure
 GET  /api/executions            List executions
 GET  /api/executions/:id        Execution status
 GET  /api/fs                    Filesystem root

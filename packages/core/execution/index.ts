@@ -25,5 +25,5 @@ export type {
   ContextWindow,
   ContextBudget,
   ContextItem,
-  ProcedureRecord,
+  SopRecord,
 } from './types.js';

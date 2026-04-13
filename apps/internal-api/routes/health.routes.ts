@@ -15,14 +15,14 @@ export function setupHealthRoutes(app: Application): void {
       const dbHealth = await db.healthCheck();
       const client = await db.getClient();
 
-      const procedure = client['procedure'] as PrismaModelMethods;
+      const sop = client['sop'] as PrismaModelMethods;
       const execution = client['execution'] as PrismaModelMethods;
       const user = client['user'] as PrismaModelMethods;
 
       // Gather stats
-      const [procedureCount, executionCount, runningCount, userCount] =
+      const [sopCount, executionCount, runningCount, userCount] =
         await Promise.all([
-          procedure.count(),
+          sop.count(),
           execution.count(),
           execution.count({ where: { status: 'running' } }),
           user.count(),
@@ -32,7 +32,7 @@ export function setupHealthRoutes(app: Application): void {
         status: dbHealth.status,
         database: dbHealth,
         stats: {
-          procedures: procedureCount,
+          sops: sopCount,
           executions: executionCount,
           running: runningCount,
           users: userCount,

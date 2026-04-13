@@ -116,7 +116,7 @@ export function Omnibox({ items, onSelect, onClose, isOpen }: OmniboxProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search procedures..."
+            placeholder="Search SOPs..."
             className="flex-1 bg-transparent py-4 text-sm text-foreground placeholder-muted-foreground outline-none"
           />
           <kbd className="rounded border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground">

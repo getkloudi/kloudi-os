@@ -1,7 +1,7 @@
 /**
  * kloudi ls
  *
- * List all procedures in the workspace.
+ * List all SOPs in the workspace.
  */
 
 import { Command } from 'commander';
@@ -11,26 +11,24 @@ import chalk from 'chalk';
 export function registerLsCommand(program: Command): void {
   program
     .command('ls')
-    .description('List procedures in the workspace')
+    .description('List SOPs in the workspace')
     .option('--api-url <url>', 'API base URL', 'http://localhost:3001')
     .option('--level <level>', 'Filter by level (guide, project, task, skill)')
     .action(async (opts: { apiUrl: string; level?: string }) => {
       const client = new KloudiClient({ baseUrl: opts.apiUrl });
 
       try {
-        const procedures = await client.listProcedures(
+        const sops = await client.listSops(
           opts.level ? { level: opts.level } : undefined
         );
 
-        if (procedures.length === 0) {
-          console.log(
-            chalk.gray('No procedures found. Run kloudi init first.')
-          );
+        if (sops.length === 0) {
+          console.log(chalk.gray('No SOPs found. Run kloudi init first.'));
           return;
         }
 
         console.log('');
-        console.log(chalk.cyan.bold(`  ${procedures.length} procedures`));
+        console.log(chalk.cyan.bold(`  ${sops.length} SOPs`));
         console.log('');
 
         // Column headers
@@ -42,7 +40,7 @@ export function registerLsCommand(program: Command): void {
         );
         console.log(chalk.gray('  ' + '─'.repeat(70)));
 
-        for (const proc of procedures) {
+        for (const proc of sops) {
           const levelColor =
             proc.level === 'guide'
               ? chalk.magenta
@@ -68,7 +66,7 @@ export function registerLsCommand(program: Command): void {
         console.log('');
       } catch (error) {
         const err = error as Error;
-        console.error(chalk.red(`Failed to list procedures: ${err.message}`));
+        console.error(chalk.red(`Failed to list SOPs: ${err.message}`));
         process.exit(1);
       }
     });

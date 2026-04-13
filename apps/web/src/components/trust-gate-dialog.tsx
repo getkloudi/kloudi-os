@@ -40,7 +40,7 @@ export function TrustGateDialog({
         {/* Body */}
         <div className="px-6 py-4">
           <div className="mb-3 font-mono text-xs text-[var(--text-3)]">
-            {event.procedureName} / {event.nodeLabel}
+            {event.sopName} / {event.nodeLabel}
           </div>
           <div className="rounded-lg bg-[var(--amber-s)] p-4">
             <p className="italic text-[var(--amber)]">

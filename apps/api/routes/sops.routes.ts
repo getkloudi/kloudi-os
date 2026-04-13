@@ -1,30 +1,30 @@
 /**
- * Procedures API Routes
+ * SOPs API Routes
  *
- * CRUD operations for lore.dev procedures.
- * Backed by ProcedureService (Prisma-backed).
+ * CRUD operations for lore.dev SOPs.
+ * Backed by SopService (Prisma-backed).
  */
 
 import type { Application, Request, Response } from 'express';
-import { ProcedureService } from '@kloudi/core';
+import { SopService } from '@kloudi/core';
 import type {
-  ProcedureLevelType,
-  ProcedureEntityData,
-  ProcedureMaturityType,
+  SopLevelType,
+  SopEntityData,
+  SopMaturityType,
 } from '@kloudi/core';
 import type { Graph } from '@kloudi/shared/types';
 import { Logger } from '@kloudi/shared/logger';
 
-const logger = Logger.getInstance('procedures-routes');
+const logger = Logger.getInstance('sops-routes');
 
-const procedureService = new ProcedureService();
+const sopService = new SopService();
 
-type ProcedureLevel = 'guide' | 'skill' | 'project' | 'task';
+type SopLevel = 'guide' | 'skill' | 'project' | 'task';
 
-interface Procedure {
+interface Sop {
   id: string;
   name: string;
-  level: ProcedureLevel;
+  level: SopLevel;
   description?: string;
   graph?: { content?: string; nodes?: unknown[]; edges?: unknown[] };
   maturity: string;
@@ -62,7 +62,7 @@ interface CommandItem {
   slug: string;
 }
 
-interface ProcedureCreateInput {
+interface SopCreateInput {
   slug?: string;
   name?: string;
   description?: string;
@@ -72,7 +72,7 @@ interface ProcedureCreateInput {
   constraints?: Record<string, unknown>;
 }
 
-interface ProcedureUpdateInput {
+interface SopUpdateInput {
   name?: string;
   description?: string;
   level?: string;
@@ -83,37 +83,37 @@ interface ProcedureUpdateInput {
 }
 
 /**
- * Convert a Procedure DB record to EntityData shape for the frontend.
+ * Convert a Sop DB record to EntityData shape for the frontend.
  * Maps `level` -> `type` and derives `content` from `graph.content`.
  */
-function toEntityData(procedure: Procedure): EntityData {
+function toEntityData(sop: Sop): EntityData {
   return {
-    id: procedure.id,
-    name: procedure.name,
-    type: procedure.level,
-    description: procedure.description ?? '',
-    content: procedure.graph?.content ?? procedure.description ?? '',
-    status: procedure.maturity === 'validated' ? 'completed' : 'pending',
-    slug: procedure.slug,
-    maturity: procedure.maturity,
-    createdAt: procedure.createdAt,
-    updatedAt: procedure.updatedAt,
+    id: sop.id,
+    name: sop.name,
+    type: sop.level,
+    description: sop.description ?? '',
+    content: sop.graph?.content ?? sop.description ?? '',
+    status: sop.maturity === 'validated' ? 'completed' : 'pending',
+    slug: sop.slug,
+    maturity: sop.maturity,
+    createdAt: sop.createdAt,
+    updatedAt: sop.updatedAt,
   };
 }
 
 /**
- * Convert a flat list of procedures into a TreeNode[] structure
+ * Convert a flat list of SOPs into a TreeNode[] structure
  * grouped by level into folders.
  */
-function toTreeNodes(procedures: Procedure[]): TreeNode[] {
-  const groups: Record<ProcedureLevel, TreeNode[]> = {
+function toTreeNodes(sops: Sop[]): TreeNode[] {
+  const groups: Record<SopLevel, TreeNode[]> = {
     guide: [],
     skill: [],
     project: [],
     task: [],
   };
 
-  for (const p of procedures) {
+  for (const p of sops) {
     const node: TreeNode = {
       id: p.id,
       name: p.name,
@@ -174,35 +174,35 @@ function toTreeNodes(procedures: Procedure[]): TreeNode[] {
 }
 
 /**
- * Convert a procedure to a CommandItem shape for omnibox search.
+ * Convert an SOP to a CommandItem shape for omnibox search.
  */
-function toCommandItem(procedure: Procedure): CommandItem {
+function toCommandItem(sop: Sop): CommandItem {
   return {
-    id: procedure.id,
-    name: procedure.name,
-    type: procedure.level,
-    description: procedure.description ?? '',
-    slug: procedure.slug,
+    id: sop.id,
+    name: sop.name,
+    type: sop.level,
+    description: sop.description ?? '',
+    slug: sop.slug,
   };
 }
 
 /**
- * Validate and cast level string to ProcedureLevelType
+ * Validate and cast level string to SopLevelType
  */
-function isValidLevel(level: string): level is ProcedureLevelType {
+function isValidLevel(level: string): level is SopLevelType {
   return ['guide', 'skill', 'project', 'task'].includes(level);
 }
 
 /**
- * Validate and cast maturity string to ProcedureMaturityType
+ * Validate and cast maturity string to SopMaturityType
  */
-function isValidMaturity(maturity: string): maturity is ProcedureMaturityType {
+function isValidMaturity(maturity: string): maturity is SopMaturityType {
   return ['draft', 'curated', 'validated'].includes(maturity);
 }
 
 export function setupRoutes(app: Application): void {
-  // GET /api/procedures - List procedures as tree structure
-  app.get('/api/procedures', async (req: Request, res: Response) => {
+  // GET /api/sops - List SOPs as tree structure
+  app.get('/api/sops', async (req: Request, res: Response) => {
     try {
       const { level, maturity, format } = req.query as {
         level?: string;
@@ -213,16 +213,16 @@ export function setupRoutes(app: Application): void {
       const options: {
         limit: number;
         offset: number;
-        level?: ProcedureLevelType;
+        level?: SopLevelType;
       } = { limit: 100, offset: 0 };
       if (level && isValidLevel(level)) {
         options.level = level;
       }
 
-      const results = (await procedureService.listProcedures(
+      const results = (await sopService.listSops(
         req.user!.organizationId,
         options
-      )) as Procedure[];
+      )) as Sop[];
 
       // If maturity filter requested, apply it (service doesn't support it natively)
       let filtered = results;
@@ -234,8 +234,8 @@ export function setupRoutes(app: Application): void {
       if (format === 'flat') {
         // Flat list of EntityData
         const data = filtered.map(toEntityData);
-        logger.info('Listed procedures (flat)', {
-          context: 'procedures-list',
+        logger.info('Listed SOPs (flat)', {
+          context: 'sops-list',
           count: data.length,
         });
         res.json({ data, total: data.length });
@@ -245,8 +245,8 @@ export function setupRoutes(app: Application): void {
       // Tree format for sidebar
       const tree = toTreeNodes(filtered);
 
-      logger.info('Listed procedures (tree)', {
-        context: 'procedures-list',
+      logger.info('Listed SOPs (tree)', {
+        context: 'sops-list',
         count: filtered.length,
         filters: { level, maturity },
       });
@@ -257,34 +257,34 @@ export function setupRoutes(app: Application): void {
       });
     } catch (error) {
       logger.error(
-        'Failed to list procedures',
+        'Failed to list SOPs',
         error instanceof Error ? error : null,
         {
-          context: 'procedures-list-error',
+          context: 'sops-list-error',
         }
       );
-      res.status(500).json({ error: 'Failed to list procedures' });
+      res.status(500).json({ error: 'Failed to list SOPs' });
     }
   });
 
-  // GET /api/procedures/search - Search procedures for omnibox
-  app.get('/api/procedures/search', async (req: Request, res: Response) => {
+  // GET /api/sops/search - Search SOPs for omnibox
+  app.get('/api/sops/search', async (req: Request, res: Response) => {
     try {
       const { q = '', limit = '20' } = req.query as {
         q?: string;
         limit?: string;
       };
 
-      const results = (await procedureService.searchProcedures(
+      const results = (await sopService.searchSops(
         req.user!.organizationId,
         q,
         { limit: parseInt(limit, 10) }
-      )) as Procedure[];
+      )) as Sop[];
 
       const data = results.map(toCommandItem);
 
-      logger.info('Searched procedures', {
-        context: 'procedures-search',
+      logger.info('Searched SOPs', {
+        context: 'sops-search',
         query: q,
         count: data.length,
       });
@@ -292,96 +292,92 @@ export function setupRoutes(app: Application): void {
       res.json({ data, total: data.length });
     } catch (error) {
       logger.error(
-        'Failed to search procedures',
+        'Failed to search SOPs',
         error instanceof Error ? error : null,
         {
-          context: 'procedures-search-error',
+          context: 'sops-search-error',
         }
       );
-      res.status(500).json({ error: 'Failed to search procedures' });
+      res.status(500).json({ error: 'Failed to search SOPs' });
     }
   });
 
-  // GET /api/procedures/:id - Get procedure by ID (returns EntityData)
-  app.get('/api/procedures/:id', async (req: Request, res: Response) => {
+  // GET /api/sops/:id - Get SOP by ID (returns EntityData)
+  app.get('/api/sops/:id', async (req: Request, res: Response) => {
     try {
       const id = req.params['id'] as string;
 
       // Try to find by ID or slug via the service
-      let procedure: Procedure | null = null;
+      let sop: Sop | null = null;
       try {
-        procedure = (await procedureService.getProcedure(
+        sop = (await sopService.getSop(
           req.user!.organizationId,
           id
-        )) as Procedure | null;
+        )) as Sop | null;
       } catch {
         // Not found
       }
 
-      if (!procedure) {
-        res.status(404).json({ error: 'Procedure not found' });
+      if (!sop) {
+        res.status(404).json({ error: 'SOP not found' });
         return;
       }
 
-      const data = toEntityData(procedure);
+      const data = toEntityData(sop);
 
-      logger.info('Retrieved procedure', {
-        context: 'procedure-get',
+      logger.info('Retrieved SOP', {
+        context: 'sop-get',
         id,
       });
 
       res.json({ data });
     } catch (error) {
-      logger.error(
-        'Failed to get procedure',
-        error instanceof Error ? error : null,
-        {
-          context: 'procedure-get-error',
-          id: req.params['id'],
-        }
-      );
-      res.status(500).json({ error: 'Failed to get procedure' });
+      logger.error('Failed to get SOP', error instanceof Error ? error : null, {
+        context: 'sop-get-error',
+        id: req.params['id'],
+      });
+      res.status(500).json({ error: 'Failed to get SOP' });
     }
   });
 
-  // POST /api/procedures - Create procedure
-  app.post('/api/procedures', async (req: Request, res: Response) => {
+  // POST /api/sops - Create SOP
+  app.post('/api/sops', async (req: Request, res: Response) => {
     try {
       const { slug, name, description, level, graph, parameters, constraints } =
-        req.body as ProcedureCreateInput;
+        req.body as SopCreateInput;
 
       if (!slug || !name) {
         res.status(400).json({ error: 'slug and name are required' });
         return;
       }
 
-      const procedureLevel: ProcedureLevelType =
+      const sopLevel: SopLevelType =
         level && isValidLevel(level) ? level : 'task';
-      const procedureGraph: Graph = graph
+      const sopGraph: Graph = graph
         ? ({ nodes: [], edges: [], ...graph } as Graph)
         : { nodes: [], edges: [] };
 
-      const createData: ProcedureEntityData = {
+      const createData: SopEntityData = {
         slug,
         name,
         description: description ?? '',
-        level: procedureLevel,
-        graph: procedureGraph,
+        level: sopLevel,
+        graph: sopGraph,
         parameters: parameters ?? {},
         constraints: constraints ?? {},
       };
 
-      const procedure = (await procedureService.createProcedure(
+      const sop = (await sopService.createSop(
         req.user!.organizationId,
         createData
-      )) as Procedure;
+      )) as Sop;
 
-      logger.info('Created procedure', {
-        context: 'procedure-create',
+      logger.info('Created SOP', {
+        context: 'sop-create',
         slug,
       });
 
-      res.status(201).json({ data: toEntityData(procedure) });
+      res.status(201).json({ data: toEntityData(sop) });
     } catch (error) {
       const err = error as Error;
       if (err.message.includes('already exists')) {
@@ -389,18 +385,18 @@ export function setupRoutes(app: Application): void {
         return;
       }
       logger.error(
-        'Failed to create procedure',
+        'Failed to create SOP',
         error instanceof Error ? error : null,
         {
-          context: 'procedure-create-error',
+          context: 'sop-create-error',
         }
       );
-      res.status(500).json({ error: 'Failed to create procedure' });
+      res.status(500).json({ error: 'Failed to create SOP' });
     }
   });
 
-  // PUT /api/procedures/:id - Update procedure
-  app.put('/api/procedures/:id', async (req: Request, res: Response) => {
+  // PUT /api/sops/:id - Update SOP
+  app.put('/api/sops/:id', async (req: Request, res: Response) => {
     try {
       const id = req.params['id'] as string;
       const {
@@ -411,25 +407,25 @@ export function setupRoutes(app: Application): void {
         graph,
         parameters,
         constraints,
-      } = req.body as ProcedureUpdateInput;
+      } = req.body as SopUpdateInput;
 
-      // Find the procedure first via the service
-      let procedure: Procedure | null = null;
+      // Find the SOP first via the service
+      let sop: Sop | null = null;
       try {
-        procedure = (await procedureService.getProcedure(
+        sop = (await sopService.getSop(
           req.user!.organizationId,
           id
-        )) as Procedure | null;
+        )) as Sop | null;
       } catch {
         // ignore
       }
 
-      if (!procedure) {
-        res.status(404).json({ error: 'Procedure not found' });
+      if (!sop) {
+        res.status(404).json({ error: 'SOP not found' });
         return;
       }
 
-      const updateData: Partial<ProcedureEntityData> = {};
+      const updateData: Partial<SopEntityData> = {};
       if (name !== undefined) updateData.name = name;
       if (description !== undefined) updateData.description = description;
       if (level !== undefined && isValidLevel(level)) updateData.level = level;
@@ -439,69 +435,66 @@ export function setupRoutes(app: Application): void {
       if (parameters !== undefined) updateData.parameters = parameters;
       if (constraints !== undefined) updateData.constraints = constraints;
 
-      const updated = (await procedureService.updateProcedure(
-        procedure.id,
-        updateData
-      )) as Procedure;
+      const updated = (await sopService.updateSop(sop.id, updateData)) as Sop;
 
-      logger.info('Updated procedure', {
-        context: 'procedure-update',
-        id: procedure.id,
+      logger.info('Updated SOP', {
+        context: 'sop-update',
+        id: sop.id,
       });
 
       res.json({ data: toEntityData(updated) });
     } catch (error) {
       logger.error(
-        'Failed to update procedure',
+        'Failed to update SOP',
         error instanceof Error ? error : null,
         {
-          context: 'procedure-update-error',
+          context: 'sop-update-error',
           id: req.params['id'],
         }
       );
-      res.status(500).json({ error: 'Failed to update procedure' });
+      res.status(500).json({ error: 'Failed to update SOP' });
     }
   });
 
-  // DELETE /api/procedures/:id - Delete procedure
-  app.delete('/api/procedures/:id', async (req: Request, res: Response) => {
+  // DELETE /api/sops/:id - Delete SOP
+  app.delete('/api/sops/:id', async (req: Request, res: Response) => {
     try {
       const id = req.params['id'] as string;
 
-      // Find the procedure first via the service
-      let procedure: Procedure | null = null;
+      // Find the SOP first via the service
+      let sop: Sop | null = null;
       try {
-        procedure = (await procedureService.getProcedure(
+        sop = (await sopService.getSop(
           req.user!.organizationId,
           id
-        )) as Procedure | null;
+        )) as Sop | null;
       } catch {
         // ignore
       }
 
-      if (!procedure) {
-        res.status(404).json({ error: 'Procedure not found' });
+      if (!sop) {
+        res.status(404).json({ error: 'SOP not found' });
         return;
       }
 
-      await procedureService.deleteProcedure(procedure.id);
+      await sopService.deleteSop(sop.id);
 
-      logger.info('Deleted procedure', {
-        context: 'procedure-delete',
-        id: procedure.id,
+      logger.info('Deleted SOP', {
+        context: 'sop-delete',
+        id: sop.id,
       });
 
       res.status(204).send();
     } catch (error) {
       logger.error(
-        'Failed to delete procedure',
+        'Failed to delete SOP',
         error instanceof Error ? error : null,
         {
-          context: 'procedure-delete-error',
+          context: 'sop-delete-error',
           id: req.params['id'],
         }
       );
-      res.status(500).json({ error: 'Failed to delete procedure' });
+      res.status(500).json({ error: 'Failed to delete SOP' });
     }
   });
 }

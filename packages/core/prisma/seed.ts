@@ -1,7 +1,7 @@
 /**
  * Database Seed Script
  *
- * Populates the database with initial procedure data that was previously
+ * Populates the database with initial SOP data that was previously
  * hardcoded in the frontend mock data.
  *
  * Run with: pnpm db:seed
@@ -12,9 +12,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 /**
- * Seed procedure data interface
+ * Seed SOP data interface
  */
-interface SeedProcedure {
+interface SeedSop {
   slug: string;
   name: string;
   description: string;
@@ -31,9 +31,9 @@ interface SeedProcedure {
 }
 
 /**
- * Prisma procedure record
+ * Prisma SOP record
  */
-interface ProcedureRecord {
+interface SopRecord {
   id: string;
   slug: string;
   name: string;
@@ -54,10 +54,10 @@ interface ProcedureRecord {
 interface SeedPrismaClient {
   $connect: () => Promise<void>;
   $disconnect: () => Promise<void>;
-  procedure: {
+  sop: {
     findFirst: (args: {
       where: { organizationId: string; slug: string };
-    }) => Promise<ProcedureRecord | null>;
+    }) => Promise<SopRecord | null>;
     create: (args: {
       data: {
         slug: string;
@@ -70,7 +70,7 @@ interface SeedPrismaClient {
         constraints: unknown;
         organizationId: string;
       };
-    }) => Promise<ProcedureRecord>;
+    }) => Promise<SopRecord>;
     update: (args: {
       where: { id: string };
       data: {
@@ -82,7 +82,7 @@ interface SeedPrismaClient {
         parameters: unknown;
         constraints: unknown;
       };
-    }) => Promise<ProcedureRecord>;
+    }) => Promise<SopRecord>;
     count: (args: { where: { organizationId: string } }) => Promise<number>;
   };
 }
@@ -127,7 +127,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 
 const ORGANIZATION_ID = 'default-org';
 
-const seedProcedures: SeedProcedure[] = [
+const seedSops: SeedSop[] = [
   // Guides
   {
     slug: 'code-review-patterns',
@@ -514,8 +514,8 @@ async function seed(): Promise<void> {
     console.log('Connected to database');
 
     // Upsert each procedure (idempotent - safe to run multiple times)
-    for (const proc of seedProcedures) {
-      const existing = await prisma.procedure.findFirst({
+    for (const proc of seedSops) {
+      const existing = await prisma.sop.findFirst({
         where: {
           organizationId: proc.organizationId,
           slug: proc.slug,
@@ -523,7 +523,7 @@ async function seed(): Promise<void> {
       });
 
       if (existing) {
-        await prisma.procedure.update({
+        await prisma.sop.update({
           where: { id: existing.id },
           data: {
             name: proc.name,
@@ -537,7 +537,7 @@ async function seed(): Promise<void> {
         });
         console.log(`  Updated: ${proc.name} (${proc.level})`);
       } else {
-        await prisma.procedure.create({
+        await prisma.sop.create({
           data: {
             slug: proc.slug,
             name: proc.name,
@@ -555,10 +555,10 @@ async function seed(): Promise<void> {
     }
 
     // Verify
-    const count = await prisma.procedure.count({
+    const count = await prisma.sop.count({
       where: { organizationId: ORGANIZATION_ID },
     });
-    console.log(`\nSeed complete. Total procedures in workspace: ${count}`);
+    console.log(`\nSeed complete. Total SOPs in workspace: ${count}`);
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error));
     console.error('Seed failed:', err);

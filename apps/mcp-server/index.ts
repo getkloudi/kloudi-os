@@ -2,7 +2,7 @@
 /**
  * lore.dev MCP Server
  *
- * Exposes lore.dev procedures as tools for Claude Desktop via the
+ * Exposes lore.dev SOPs as tools for Claude Desktop via the
  * Model Context Protocol (MCP).
  *
  * Usage:

@@ -1,9 +1,4 @@
-import type {
-  ActivityPost,
-  ProcedureFile,
-  ExecutionDetail,
-  StoreApp,
-} from '@/types';
+import type { ActivityPost, SopFile, ExecutionDetail, StoreApp } from '@/types';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -45,7 +40,7 @@ export interface ExecutionLog {
 
 export interface ExecutionResult {
   id: string;
-  procedureId: string;
+  sopId: string;
   status: 'pending' | 'running' | 'completed' | 'failed';
   message?: string;
   startedAt?: string;
@@ -105,29 +100,28 @@ class ApiClient {
     return response.json();
   }
 
-  async getProcedureTree(): Promise<TreeNode[]> {
-    const response =
-      await this.fetch<ApiResponse<TreeNode[]>>('/api/procedures');
+  async getSopTree(): Promise<TreeNode[]> {
+    const response = await this.fetch<ApiResponse<TreeNode[]>>('/api/sops');
     return response.data;
   }
 
-  async getProcedureDetail(id: string): Promise<EntityData> {
+  async getSopDetail(id: string): Promise<EntityData> {
     const response = await this.fetch<ApiResponse<EntityData>>(
-      `/api/procedures/${encodeURIComponent(id)}`
+      `/api/sops/${encodeURIComponent(id)}`
     );
     return response.data;
   }
 
-  async searchProcedures(query: string): Promise<CommandItem[]> {
+  async searchSops(query: string): Promise<CommandItem[]> {
     const response = await this.fetch<ApiResponse<CommandItem[]>>(
-      `/api/procedures/search?q=${encodeURIComponent(query)}`
+      `/api/sops/search?q=${encodeURIComponent(query)}`
     );
     return response.data;
   }
 
-  async executeProcedure(id: string): Promise<ExecutionResult> {
+  async executeSop(id: string): Promise<ExecutionResult> {
     const response = await this.fetch<ApiResponse<ExecutionResult>>(
-      `/api/procedures/${encodeURIComponent(id)}/run`,
+      `/api/sops/${encodeURIComponent(id)}/run`,
       { method: 'POST' }
     );
     return response.data;
@@ -140,28 +134,22 @@ class ApiClient {
     return response.data;
   }
 
-  async createProcedure(data: {
+  async createSop(data: {
     slug: string;
     name: string;
     description?: string;
     level?: string;
   }): Promise<EntityData> {
-    const response = await this.fetch<ApiResponse<EntityData>>(
-      '/api/procedures',
-      {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await this.fetch<ApiResponse<EntityData>>('/api/sops', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
     return response.data;
   }
 
-  async updateProcedure(
-    id: string,
-    data: Partial<EntityData>
-  ): Promise<EntityData> {
+  async updateSop(id: string, data: Partial<EntityData>): Promise<EntityData> {
     const response = await this.fetch<ApiResponse<EntityData>>(
-      `/api/procedures/${encodeURIComponent(id)}`,
+      `/api/sops/${encodeURIComponent(id)}`,
       {
         method: 'PUT',
         body: JSON.stringify(data),
@@ -170,8 +158,8 @@ class ApiClient {
     return response.data;
   }
 
-  async deleteProcedure(id: string): Promise<void> {
-    await this.fetch(`/api/procedures/${encodeURIComponent(id)}`, {
+  async deleteSop(id: string): Promise<void> {
+    await this.fetch(`/api/sops/${encodeURIComponent(id)}`, {
       method: 'DELETE',
     });
   }
@@ -188,16 +176,16 @@ class ApiClient {
     }
   }
 
-  async getProcedureFiles(path?: string): Promise<ProcedureFile[]> {
+  async getSopFiles(path?: string): Promise<SopFile[]> {
     try {
       const q = path ? `?path=${encodeURIComponent(path)}` : '';
-      const response = await this.fetch<ApiResponse<ProcedureFile[]>>(
-        `/api/procedures/files${q}`
+      const response = await this.fetch<ApiResponse<SopFile[]>>(
+        `/api/sops/files${q}`
       );
       return response.data;
     } catch {
       // Fallback: derive from tree
-      const tree = await this.getProcedureTree();
+      const tree = await this.getSopTree();
       return flattenTreeToFiles(tree);
     }
   }
@@ -219,8 +207,8 @@ class ApiClient {
   }
 }
 
-function flattenTreeToFiles(nodes: TreeNode[]): ProcedureFile[] {
-  const result: ProcedureFile[] = [];
+function flattenTreeToFiles(nodes: TreeNode[]): SopFile[] {
+  const result: SopFile[] = [];
   for (const node of nodes) {
     result.push({
       id: node.id,
@@ -242,7 +230,7 @@ const MOCK_STORE_APPS: StoreApp[] = [
     name: 'Analytics Dashboard',
     author: 'lore.dev',
     description:
-      'Execution metrics, token trends, success rates. Real-time procedure health monitoring.',
+      'Execution metrics, token trends, success rates. Real-time SOP health monitoring.',
     category: 'workspace',
     icon: '📊',
     iconBg: 'var(--blue-s)',
@@ -290,7 +278,7 @@ const MOCK_STORE_APPS: StoreApp[] = [
     name: 'GitHub Actions Bridge',
     author: 'lore.dev',
     description:
-      'Trigger procedures from GitHub events. Map CI/CD workflows to SOP executions.',
+      'Trigger SOPs from GitHub events. Map CI/CD workflows to SOP executions.',
     category: 'integrations',
     icon: '🤖',
     iconBg: 'var(--accent-s)',

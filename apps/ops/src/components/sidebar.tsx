@@ -15,7 +15,7 @@ import { clearAuth, getUser } from '@/lib/auth';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/procedures', label: 'Procedures', icon: FileText },
+  { href: '/sops', label: 'SOPs', icon: FileText },
   { href: '/executions', label: 'Executions', icon: Activity },
   { href: '/tools', label: 'Tools', icon: Wrench },
   { href: '/health', label: 'DB Health', icon: HeartPulse },

@@ -6,11 +6,11 @@ export type { ParsedSkill, ParsedSection } from './skill-parser.js';
 export { convertToGraph } from './skill-to-graph.js';
 
 /**
- * Import a SKILL.md file content into a procedure graph.
- * Returns the procedure data and any warnings.
+ * Import a SKILL.md file content into an SOP graph.
+ * Returns the SOP data and any warnings.
  */
 export function importSkillMd(content: string): {
-  procedure: ReturnType<typeof convertToGraph>;
+  sop: ReturnType<typeof convertToGraph>;
   warnings: string[];
 } {
   const warnings: string[] = [];
@@ -23,15 +23,15 @@ export function importSkillMd(content: string): {
     warnings.push('No sections found — graph will be empty');
   }
 
-  const procedure = convertToGraph(parsed);
+  const sop = convertToGraph(parsed);
 
-  const nodeIds = new Set(procedure.graph.nodes.map((n) => n.id));
-  for (const edge of procedure.graph.edges) {
+  const nodeIds = new Set(sop.graph.nodes.map((n) => n.id));
+  for (const edge of sop.graph.edges) {
     if (!nodeIds.has(edge.from))
       warnings.push(`Edge references unknown node: ${edge.from}`);
     if (!nodeIds.has(edge.to))
       warnings.push(`Edge references unknown node: ${edge.to}`);
   }
 
-  return { procedure, warnings };
+  return { sop, warnings };
 }

@@ -27,9 +27,9 @@ export interface ActivityPost {
     | 'execution_completed'
     | 'execution_failed'
     | 'awaiting_approval'
-    | 'procedure_edited';
+    | 'sop_edited';
   user: { username: string; initials: string };
-  procedure: { id: string; name: string; slug: string };
+  sop: { id: string; name: string; slug: string };
   execution?: {
     id: string;
     status: ExecutionStatus;
@@ -61,7 +61,7 @@ export interface ExecutionNodeSummary {
   tokens?: number;
 }
 
-export interface ProcedureFile {
+export interface SopFile {
   id: string;
   name: string;
   slug: string;
@@ -71,10 +71,10 @@ export interface ProcedureFile {
 
 export interface ExecutionDetail {
   id: string;
-  procedureId: string;
-  procedureName: string;
-  procedureSlug: string;
-  procedureDescription?: string;
+  sopId: string;
+  sopName: string;
+  sopSlug: string;
+  sopDescription?: string;
   status: ExecutionStatus;
   nodes: ExecutionNodeDetail[];
   stats: {
@@ -111,7 +111,7 @@ export interface TrustGateEvent {
   nodeLabel: string;
   question: string;
   visitCount: number;
-  procedureName: string;
+  sopName: string;
 }
 
 export interface StoreApp {

@@ -22,8 +22,8 @@ export function registerTraceCommand(program: Command): void {
 
         console.log('');
         console.log(
-          chalk.cyan.bold(`  Trace: ${execution.procedure.name}`),
-          chalk.gray(`(${execution.procedure.slug})`)
+          chalk.cyan.bold(`  Trace: ${execution.sop.name}`),
+          chalk.gray(`(${execution.sop.slug})`)
         );
         console.log(chalk.gray(`  Execution: ${execution.id}`));
         console.log(chalk.gray(`  Status: `), statusBadge(execution.status));

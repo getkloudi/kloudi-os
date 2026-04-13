@@ -17,7 +17,7 @@ const dotColor: Record<string, string> = {
 
 interface FeedPostProps {
   post: ActivityPost;
-  onProcedureClick?: (id: string) => void;
+  onSopClick?: (id: string) => void;
   onApprove?: (executionId: string, nodeId: string) => void;
   onAbort?: (executionId: string, nodeId: string) => void;
   onRetry?: (executionId: string) => void;
@@ -26,21 +26,21 @@ interface FeedPostProps {
 function actionLabel(type: ActivityPost['type']): string {
   switch (type) {
     case 'execution_run':
-      return 'ran a procedure';
+      return 'ran an SOP';
     case 'execution_completed':
       return 'completed a run';
     case 'execution_failed':
       return 'execution failed';
     case 'awaiting_approval':
       return 'needs your approval';
-    case 'procedure_edited':
-      return 'updated a procedure';
+    case 'sop_edited':
+      return 'updated an SOP';
   }
 }
 
 export function FeedPost({
   post,
-  onProcedureClick,
+  onSopClick,
   onApprove,
   onAbort,
   onRetry,
@@ -71,7 +71,7 @@ export function FeedPost({
 
       {/* Card */}
       <div
-        onClick={() => onProcedureClick?.(post.procedure.id)}
+        onClick={() => onSopClick?.(post.sop.id)}
         className={cn(
           'ml-10 cursor-pointer rounded-[10px] border border-[var(--border)] bg-[var(--bg-1)] p-3.5 transition-all duration-[120ms]',
           'hover:border-[var(--bg-5)] hover:bg-[var(--bg-2)]',
@@ -80,7 +80,7 @@ export function FeedPost({
         )}
       >
         <div className="mb-1 text-[13px] font-semibold text-[var(--text-1)]">
-          {post.procedure.name}
+          {post.sop.name}
         </div>
 
         {post.execution && (

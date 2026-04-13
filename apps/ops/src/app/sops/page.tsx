@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { opsApi } from '@/lib/api';
 
-interface Procedure {
+interface SopItem {
   id: string;
   name: string;
   slug: string;
@@ -19,20 +19,20 @@ interface Procedure {
   _count?: { executions: number };
 }
 
-export default function ProceduresPage() {
-  const [procedures, setProcedures] = useState<Procedure[]>([]);
+export default function SOPsPage() {
+  const [sops, setSops] = useState<SopItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    opsApi<{ data: Procedure[] }>('/ops/procedures')
-      .then((res) => setProcedures(res.data))
+    opsApi<{ data: SopItem[] }>('/ops/sops')
+      .then((res) => setSops(res.data))
       .finally(() => setLoading(false));
   }, []);
 
   async function handleDelete(id: string) {
-    if (!confirm('Delete this procedure and all its executions?')) return;
-    await opsApi(`/ops/procedures/${id}`, { method: 'DELETE' });
-    setProcedures((prev) => prev.filter((p) => p.id !== id));
+    if (!confirm('Delete this SOP and all its executions?')) return;
+    await opsApi(`/ops/sops/${id}`, { method: 'DELETE' });
+    setSops((prev) => prev.filter((p) => p.id !== id));
   }
 
   return (
@@ -40,9 +40,7 @@ export default function ProceduresPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Procedures
-            </h1>
+            <h1 className="text-2xl font-semibold tracking-tight">SOPs</h1>
             <p className="text-sm text-muted-foreground">
               All SOPs across all workspaces
             </p>
@@ -51,9 +49,9 @@ export default function ProceduresPage() {
 
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading...</p>
-        ) : procedures.length === 0 ? (
+        ) : sops.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            No procedures found. Seed some via the API.
+            No SOPs found. Seed some via the API.
           </p>
         ) : (
           <div className="rounded-md border">
@@ -72,11 +70,11 @@ export default function ProceduresPage() {
                 </tr>
               </thead>
               <tbody>
-                {procedures.map((p) => (
+                {sops.map((p) => (
                   <tr key={p.id} className="border-b">
                     <td className="px-4 py-3">
                       <Link
-                        href={`/procedures/${p.id}`}
+                        href={`/sops/${p.id}`}
                         className="font-medium hover:underline"
                       >
                         {p.name}

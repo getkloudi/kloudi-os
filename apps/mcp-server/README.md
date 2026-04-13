@@ -1,6 +1,6 @@
 # lore.dev MCP Server
 
-MCP server that exposes lore.dev procedures as tools for Claude Desktop.
+MCP server that exposes lore.dev SOPs as tools for Claude Desktop.
 
 ## Claude Desktop Configuration
 
@@ -21,7 +21,7 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 
 ## Available Tools
 
-- **lore_list** - List available procedures (filter by level, maturity)
+- **lore_list** - List available SOPs (filter by level, maturity)
 - **lore_get** - Get procedure details by slug
 - **lore_run** - Execute a procedure with parameters
 - **lore_status** - Check execution status

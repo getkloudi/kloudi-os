@@ -16,7 +16,7 @@ interface HomeSpaceProps {
   currentUser?: string;
   onSearch?: (query: string) => void;
   onQuickAccessClick?: (id: string) => void;
-  onProcedureClick?: (id: string) => void;
+  onSopClick?: (id: string) => void;
   onApprove?: (executionId: string, nodeId: string) => void;
   onAbort?: (executionId: string, nodeId: string) => void;
   onRetry?: (executionId: string) => void;
@@ -39,7 +39,7 @@ export function HomeSpace({
   currentUser,
   onSearch,
   onQuickAccessClick,
-  onProcedureClick,
+  onSopClick,
   onApprove,
   onAbort,
   onRetry,
@@ -89,7 +89,7 @@ export function HomeSpace({
         >
           <span className="text-[var(--text-4)]">&#x2315;</span>
           <input
-            placeholder="Search procedures, runs, people..."
+            placeholder="Search SOPs, runs, people..."
             onChange={(e) => onSearch?.(e.target.value)}
             className="flex-1 border-none bg-transparent text-[15px] text-[var(--text-1)] outline-none placeholder:text-[var(--text-4)]"
           />
@@ -163,7 +163,7 @@ export function HomeSpace({
             <FeedPost
               key={post.id}
               post={post}
-              onProcedureClick={onProcedureClick}
+              onSopClick={onSopClick}
               onApprove={onApprove}
               onAbort={onAbort}
               onRetry={onRetry}

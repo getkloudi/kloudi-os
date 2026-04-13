@@ -18,9 +18,9 @@
       "types": "./dist/patterns/index.d.ts",
       "import": "./dist/patterns/index.js"
     },
-    "./procedures": {
-      "types": "./dist/procedures/index.d.ts",
-      "import": "./dist/procedures/index.js"
+    "./sops": {
+      "types": "./dist/sops/index.d.ts",
+      "import": "./dist/sops/index.js"
     },
     "./workspace": {
       "types": "./dist/workspace/index.d.ts",

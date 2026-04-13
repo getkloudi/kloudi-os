@@ -17,7 +17,7 @@ beforeAll(async () => {
 function loadSeedGraph(name) {
   // Resolve from this test file up to the repo root (4 levels: __tests__ → projection → core → packages → root)
   const repoRoot = resolve(__dirname, '..', '..', '..', '..');
-  const filePath = resolve(repoRoot, `data/seed/procedures/${name}.json`);
+  const filePath = resolve(repoRoot, `data/seed/sops/${name}.json`);
   return JSON.parse(readFileSync(filePath, 'utf-8'));
 }
 

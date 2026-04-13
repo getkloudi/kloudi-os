@@ -1,7 +1,7 @@
 /**
- * SKILL.md → Procedure Graph Converter
+ * SKILL.md → SOP Graph Converter
  *
- * Converts parsed SKILL.md sections into a procedure graph.
+ * Converts parsed SKILL.md sections into an SOP graph.
  */
 
 import type { ParsedSkill, ParsedSection } from './skill-parser.js';

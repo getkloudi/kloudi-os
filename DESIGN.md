@@ -285,7 +285,7 @@ The Home space's primary surface. Social-media-style posts showing team activity
 2. **Execution completed** — same structure, green status, full progress bar.
 3. **Execution failed** — red border on card, error context in metadata.
 4. **Awaiting approval** — amber border, approval question block with Continue/Abort buttons inline.
-5. **Procedure edited** — "edited" badge, description of change.
+5. **SOP edited** — "edited" badge, description of change.
 
 ### Post Interactions
 

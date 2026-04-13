@@ -11,15 +11,12 @@ import { Logger } from '@kloudi/shared/logger';
 
 const logger = Logger.getInstance('sub-entity-executor');
 
-interface ProcedureServiceLike {
-  getProcedure(
-    organizationId: string,
-    slug: string
-  ): Promise<{ id: string } | null>;
+interface SopServiceLike {
+  getSop(organizationId: string, slug: string): Promise<{ id: string } | null>;
 }
 
 export class SubEntityExecutor implements NodeExecutor {
-  constructor(private procedureService: ProcedureServiceLike) {}
+  constructor(private sopService: SopServiceLike) {}
 
   async execute(
     node: GraphNode,
@@ -49,16 +46,16 @@ export class SubEntityExecutor implements NodeExecutor {
     }
 
     // Look up child procedure
-    let childProcedure: { id: string } | null;
+    let childSop: { id: string } | null;
     try {
-      childProcedure = await this.procedureService.getProcedure(
+      childSop = await this.sopService.getSop(
         ctx.organizationId,
         config.entity_ref
       );
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       logger.error(
-        'Failed to look up child procedure',
+        'Failed to look up child SOP',
         err instanceof Error ? err : new Error(errorMsg),
         {
           nodeId: node.id,
@@ -68,11 +65,11 @@ export class SubEntityExecutor implements NodeExecutor {
       return { status: 'failed', output: null, error: errorMsg };
     }
 
-    if (!childProcedure) {
+    if (!childSop) {
       return {
         status: 'failed',
         output: null,
-        error: `Child procedure not found: ${config.entity_ref}`,
+        error: `Child SOP not found: ${config.entity_ref}`,
       };
     }
 
@@ -87,7 +84,7 @@ export class SubEntityExecutor implements NodeExecutor {
     // Execute child synchronously using executeAndWait
     try {
       const { result, status } = await engine.executeAndWait(
-        childProcedure.id,
+        childSop.id,
         childParams,
         ctx.organizationId
       );
@@ -108,7 +105,7 @@ export class SubEntityExecutor implements NodeExecutor {
         err instanceof Error ? err : new Error(errorMsg),
         {
           nodeId: node.id,
-          childProcedure: config.entity_ref,
+          childSop: config.entity_ref,
         }
       );
       return { status: 'failed', output: null, error: errorMsg };
