@@ -29,8 +29,6 @@ import {
 
 const logger = Logger.getInstance('executions-routes');
 
-const DEFAULT_WORKSPACE_ID = 'default-workspace';
-
 // Initialize engine components at module level
 const contextManager = new ContextManager();
 const aiClient = new AIClient({ context: 'execution-engine' });
@@ -57,7 +55,7 @@ export function setupRoutes(app: Application): void {
       let procedure: { id: string; name: string; slug: string } | null = null;
       try {
         procedure = (await procedureService.getProcedure(
-          DEFAULT_WORKSPACE_ID,
+          req.user!.organizationId,
           id
         )) as { id: string; name: string; slug: string } | null;
       } catch {
@@ -77,7 +75,7 @@ export function setupRoutes(app: Application): void {
       const { executionId } = await engine.execute(
         procedure.id,
         params,
-        DEFAULT_WORKSPACE_ID,
+        req.user!.organizationId,
         {
           onNodeStart: (execId, nodeId, name) =>
             emitExecutionProgress(execId, {
@@ -150,7 +148,7 @@ export function setupRoutes(app: Application): void {
         const db = await Database.getInstance().getClient();
 
         const execution = await (db as any).execution.findUnique({
-          where: { id, workspaceId: DEFAULT_WORKSPACE_ID },
+          where: { id, organizationId: req.user!.organizationId },
         });
 
         if (!execution) {
@@ -208,7 +206,7 @@ export function setupRoutes(app: Application): void {
       const db = await Database.getInstance().getClient();
 
       const where: Record<string, unknown> = {
-        workspaceId: DEFAULT_WORKSPACE_ID,
+        organizationId: req.user!.organizationId,
       };
       if (status) {
         where['status'] = status;
@@ -240,7 +238,7 @@ export function setupRoutes(app: Application): void {
       const db = await Database.getInstance().getClient();
 
       const execution = await (db as any).execution.findUnique({
-        where: { id, workspaceId: DEFAULT_WORKSPACE_ID },
+        where: { id, organizationId: req.user!.organizationId },
         include: {
           executionNodes: { orderBy: { startedAt: 'asc' } },
           procedure: { select: { name: true, slug: true } },
@@ -300,7 +298,7 @@ export function setupRoutes(app: Application): void {
       const db = await Database.getInstance().getClient();
 
       const activity = await (db as any).execution.findMany({
-        where: { workspaceId: DEFAULT_WORKSPACE_ID },
+        where: { organizationId: req.user!.organizationId },
         include: {
           procedure: { select: { name: true, slug: true } },
           executionNodes: { orderBy: { startedAt: 'asc' } },

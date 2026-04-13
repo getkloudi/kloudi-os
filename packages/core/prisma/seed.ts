@@ -27,7 +27,7 @@ interface SeedProcedure {
   };
   parameters: Record<string, unknown>;
   constraints: Record<string, unknown>;
-  workspaceId: string;
+  organizationId: string;
 }
 
 /**
@@ -43,7 +43,7 @@ interface ProcedureRecord {
   graph: unknown;
   parameters: unknown;
   constraints: unknown;
-  workspaceId: string;
+  organizationId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -56,7 +56,7 @@ interface SeedPrismaClient {
   $disconnect: () => Promise<void>;
   procedure: {
     findFirst: (args: {
-      where: { workspaceId: string; slug: string };
+      where: { organizationId: string; slug: string };
     }) => Promise<ProcedureRecord | null>;
     create: (args: {
       data: {
@@ -68,7 +68,7 @@ interface SeedPrismaClient {
         graph: unknown;
         parameters: unknown;
         constraints: unknown;
-        workspaceId: string;
+        organizationId: string;
       };
     }) => Promise<ProcedureRecord>;
     update: (args: {
@@ -83,7 +83,7 @@ interface SeedPrismaClient {
         constraints: unknown;
       };
     }) => Promise<ProcedureRecord>;
-    count: (args: { where: { workspaceId: string } }) => Promise<number>;
+    count: (args: { where: { organizationId: string } }) => Promise<number>;
   };
 }
 
@@ -125,7 +125,7 @@ loadEnvFile();
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-const WORKSPACE_ID = 'default-workspace';
+const ORGANIZATION_ID = 'default-org';
 
 const seedProcedures: SeedProcedure[] = [
   // Guides
@@ -157,7 +157,7 @@ This guide covers patterns for effective code reviews.
     },
     parameters: {},
     constraints: {},
-    workspaceId: WORKSPACE_ID,
+    organizationId: ORGANIZATION_ID,
   },
   {
     slug: 'typescript-best-practices',
@@ -187,7 +187,7 @@ A comprehensive guide to writing maintainable TypeScript code.
     },
     parameters: {},
     constraints: {},
-    workspaceId: WORKSPACE_ID,
+    organizationId: ORGANIZATION_ID,
   },
   {
     slug: 'api-design-guidelines',
@@ -217,7 +217,7 @@ Standards and conventions for building consistent, developer-friendly APIs.
     },
     parameters: {},
     constraints: {},
-    workspaceId: WORKSPACE_ID,
+    organizationId: ORGANIZATION_ID,
   },
 
   // Skills
@@ -277,7 +277,7 @@ export function {{name}}({ ...props }: {{name}}Props) {
       },
     },
     constraints: {},
-    workspaceId: WORKSPACE_ID,
+    organizationId: ORGANIZATION_ID,
   },
   {
     slug: 'write-unit-tests',
@@ -321,7 +321,7 @@ Process:
       },
     },
     constraints: {},
-    workspaceId: WORKSPACE_ID,
+    organizationId: ORGANIZATION_ID,
   },
   {
     slug: 'generate-api-endpoint',
@@ -365,7 +365,7 @@ Generated Files:
       },
     },
     constraints: {},
-    workspaceId: WORKSPACE_ID,
+    organizationId: ORGANIZATION_ID,
   },
 
   // Project
@@ -399,7 +399,7 @@ Build a Craft-like document editor as a desktop application using Electron.
     },
     parameters: {},
     constraints: {},
-    workspaceId: WORKSPACE_ID,
+    organizationId: ORGANIZATION_ID,
   },
 
   // Tasks (children of the project)
@@ -433,7 +433,7 @@ Create the initial Electron application structure with:
     },
     parameters: {},
     constraints: {},
-    workspaceId: WORKSPACE_ID,
+    organizationId: ORGANIZATION_ID,
   },
   {
     slug: 'build-session-inbox-ui',
@@ -461,7 +461,7 @@ Design and implement the session inbox where users can:
     },
     parameters: {},
     constraints: {},
-    workspaceId: WORKSPACE_ID,
+    organizationId: ORGANIZATION_ID,
   },
   {
     slug: 'implement-local-storage',
@@ -490,7 +490,7 @@ Set up a local-first data layer using SQLite for:
     },
     parameters: {},
     constraints: {},
-    workspaceId: WORKSPACE_ID,
+    organizationId: ORGANIZATION_ID,
   },
 ];
 
@@ -517,7 +517,7 @@ async function seed(): Promise<void> {
     for (const proc of seedProcedures) {
       const existing = await prisma.procedure.findFirst({
         where: {
-          workspaceId: proc.workspaceId,
+          organizationId: proc.organizationId,
           slug: proc.slug,
         },
       });
@@ -547,7 +547,7 @@ async function seed(): Promise<void> {
             graph: proc.graph,
             parameters: proc.parameters,
             constraints: proc.constraints,
-            workspaceId: proc.workspaceId,
+            organizationId: proc.organizationId,
           },
         });
         console.log(`  Created: ${proc.name} (${proc.level})`);
@@ -556,7 +556,7 @@ async function seed(): Promise<void> {
 
     // Verify
     const count = await prisma.procedure.count({
-      where: { workspaceId: WORKSPACE_ID },
+      where: { organizationId: ORGANIZATION_ID },
     });
     console.log(`\nSeed complete. Total procedures in workspace: ${count}`);
   } catch (error) {

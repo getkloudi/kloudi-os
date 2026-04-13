@@ -17,8 +17,6 @@ import { Logger } from '@kloudi/shared/logger';
 
 const logger = Logger.getInstance('procedures-routes');
 
-const DEFAULT_WORKSPACE_ID = 'default-workspace';
-
 const procedureService = new ProcedureService();
 
 type ProcedureLevel = 'guide' | 'skill' | 'project' | 'task';
@@ -222,7 +220,7 @@ export function setupRoutes(app: Application): void {
       }
 
       const results = (await procedureService.listProcedures(
-        DEFAULT_WORKSPACE_ID,
+        req.user!.organizationId,
         options
       )) as Procedure[];
 
@@ -278,7 +276,7 @@ export function setupRoutes(app: Application): void {
       };
 
       const results = (await procedureService.searchProcedures(
-        DEFAULT_WORKSPACE_ID,
+        req.user!.organizationId,
         q,
         { limit: parseInt(limit, 10) }
       )) as Procedure[];
@@ -313,7 +311,7 @@ export function setupRoutes(app: Application): void {
       let procedure: Procedure | null = null;
       try {
         procedure = (await procedureService.getProcedure(
-          DEFAULT_WORKSPACE_ID,
+          req.user!.organizationId,
           id
         )) as Procedure | null;
       } catch {
@@ -374,7 +372,7 @@ export function setupRoutes(app: Application): void {
       };
 
       const procedure = (await procedureService.createProcedure(
-        DEFAULT_WORKSPACE_ID,
+        req.user!.organizationId,
         createData
       )) as Procedure;
 
@@ -419,7 +417,7 @@ export function setupRoutes(app: Application): void {
       let procedure: Procedure | null = null;
       try {
         procedure = (await procedureService.getProcedure(
-          DEFAULT_WORKSPACE_ID,
+          req.user!.organizationId,
           id
         )) as Procedure | null;
       } catch {
@@ -474,7 +472,7 @@ export function setupRoutes(app: Application): void {
       let procedure: Procedure | null = null;
       try {
         procedure = (await procedureService.getProcedure(
-          DEFAULT_WORKSPACE_ID,
+          req.user!.organizationId,
           id
         )) as Procedure | null;
       } catch {

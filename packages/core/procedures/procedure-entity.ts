@@ -48,7 +48,7 @@ export interface ProcedureEntityData {
   graph?: Graph;
   parameters?: Record<string, unknown>;
   constraints?: Record<string, unknown>;
-  workspaceId?: string;
+  organizationId?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -75,7 +75,7 @@ export class ProceduralEntity {
   graph: Graph;
   parameters: Record<string, unknown>;
   constraints: Record<string, unknown>;
-  workspaceId: string | undefined;
+  organizationId: string | undefined;
   createdAt: Date | undefined;
   updatedAt: Date | undefined;
 
@@ -89,7 +89,7 @@ export class ProceduralEntity {
     graph = { nodes: [], edges: [] },
     parameters = {},
     constraints = {},
-    workspaceId,
+    organizationId,
     createdAt,
     updatedAt,
   }: ProcedureEntityData) {
@@ -102,7 +102,7 @@ export class ProceduralEntity {
     this.graph = graph;
     this.parameters = parameters;
     this.constraints = constraints;
-    this.workspaceId = workspaceId;
+    this.organizationId = organizationId;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }

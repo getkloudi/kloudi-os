@@ -42,7 +42,10 @@ export class ToolCallExecutor implements NodeExecutor {
       const result = await registry.execute(
         config.tool_name,
         config.parameters as Record<string, unknown>,
-        { workspaceId: ctx.workspaceId }
+        {
+          organizationId: ctx.organizationId,
+          ...ctx.credentials?.[config.tool_name],
+        }
       );
 
       return { status: 'completed', output: result };

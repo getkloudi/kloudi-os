@@ -13,7 +13,7 @@ const logger = Logger.getInstance('sub-entity-executor');
 
 interface ProcedureServiceLike {
   getProcedure(
-    workspaceId: string,
+    organizationId: string,
     slug: string
   ): Promise<{ id: string } | null>;
 }
@@ -52,7 +52,7 @@ export class SubEntityExecutor implements NodeExecutor {
     let childProcedure: { id: string } | null;
     try {
       childProcedure = await this.procedureService.getProcedure(
-        ctx.workspaceId,
+        ctx.organizationId,
         config.entity_ref
       );
     } catch (err) {
@@ -89,7 +89,7 @@ export class SubEntityExecutor implements NodeExecutor {
       const { result, status } = await engine.executeAndWait(
         childProcedure.id,
         childParams,
-        ctx.workspaceId
+        ctx.organizationId
       );
 
       if (status === 'completed') {

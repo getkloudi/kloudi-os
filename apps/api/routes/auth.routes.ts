@@ -185,15 +185,24 @@ export function setupRoutes(app: Application): void {
         },
       });
 
-      // Generate a default workspace ID
-      const workspaceId = `ws_${user.id}`;
+      // Create a personal organization for the new user
+      const orgSlug = validUsername.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+      const org = await (db as any).organization.create({
+        data: {
+          name: `${validUsername}'s Org`,
+          slug: `${orgSlug}-${user.id.slice(0, 8)}`,
+        },
+      });
+      await (db as any).membership.create({
+        data: { userId: user.id, organizationId: org.id, role: 'owner' },
+      });
 
       // Create a session (access + refresh tokens)
       const sessionData = await Auth.createSession(user.id, {
         metadata: {
           email: user.email,
           username: user.username,
-          workspaceId,
+          organizationId: org.id,
         },
       });
 
@@ -281,15 +290,20 @@ export function setupRoutes(app: Application): void {
         return;
       }
 
-      // Generate a workspace ID
-      const workspaceId = `ws_${user.id}`;
+      // Look up user's organization
+      const membership = await (db as any).membership.findFirst({
+        where: { userId: user.id },
+        include: { organization: true },
+        orderBy: { createdAt: 'asc' },
+      });
+      const organizationId = membership?.organizationId ?? `ws_${user.id}`;
 
       // Create a session (access + refresh tokens)
       const sessionData = await Auth.createSession(user.id, {
         metadata: {
           email: user.email,
           username: user.username,
-          workspaceId,
+          organizationId,
         },
       });
 

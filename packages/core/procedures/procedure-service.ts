@@ -32,7 +32,7 @@ interface ProcedureRecord {
   graph: unknown;
   parameters: unknown;
   constraints: unknown;
-  workspaceId: string;
+  organizationId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,7 +66,7 @@ export class ProcedureService {
   }
 
   async createProcedure(
-    workspaceId: string,
+    organizationId: string,
     data: ProcedureEntityData
   ): Promise<ProcedureRecord> {
     // Business validation
@@ -78,7 +78,7 @@ export class ProcedureService {
       throw new Error('Procedure name is required');
     }
 
-    if (!workspaceId) {
+    if (!organizationId) {
       throw new Error('Workspace ID is required');
     }
 
@@ -93,7 +93,10 @@ export class ProcedureService {
     }
 
     // Check for duplicate slug
-    const existing = await this.repository.findBySlug(workspaceId, data.slug);
+    const existing = await this.repository.findBySlug(
+      organizationId,
+      data.slug
+    );
     if (existing) {
       throw new Error(`Procedure with slug "${data.slug}" already exists`);
     }
@@ -101,7 +104,7 @@ export class ProcedureService {
     // Create entity for validation
     const entity = new ProceduralEntity({
       ...data,
-      workspaceId,
+      organizationId,
       maturity: ProcedureMaturity.DRAFT, // Always start as draft
     });
 
@@ -112,20 +115,20 @@ export class ProcedureService {
 
     return await this.repository.create({
       ...data,
-      workspaceId,
+      organizationId,
       maturity: ProcedureMaturity.DRAFT,
     });
   }
 
   async getProcedure(
-    workspaceId: string,
+    organizationId: string,
     slug: string
   ): Promise<ProcedureRecord> {
-    if (!workspaceId || !slug) {
+    if (!organizationId || !slug) {
       throw new Error('Workspace ID and slug are required');
     }
 
-    const procedure = await this.repository.findBySlug(workspaceId, slug);
+    const procedure = await this.repository.findBySlug(organizationId, slug);
     if (!procedure) {
       throw new Error(`Procedure not found: ${slug}`);
     }
@@ -134,24 +137,24 @@ export class ProcedureService {
   }
 
   async listProcedures(
-    workspaceId: string,
+    organizationId: string,
     options: ListOptions = {}
   ): Promise<ProcedureRecord[]> {
-    if (!workspaceId) {
+    if (!organizationId) {
       throw new Error('Workspace ID is required');
     }
 
     const { level, limit = 20, offset = 0 } = options;
 
     if (level) {
-      return await this.repository.findByLevel(workspaceId, level, {
+      return await this.repository.findByLevel(organizationId, level, {
         limit,
         offset,
       });
     }
 
     // If no level filter, search all
-    return await this.repository.search(workspaceId, '', { limit, offset });
+    return await this.repository.search(organizationId, '', { limit, offset });
   }
 
   async updateProcedure(
@@ -167,9 +170,9 @@ export class ProcedureService {
       throw new Error('Procedure not found');
     }
 
-    // Don't allow changing workspaceId
+    // Don't allow changing organizationId
     const updateData = { ...data };
-    delete updateData.workspaceId;
+    delete updateData.organizationId;
 
     // Create entity with merged data for validation
     const entity = new ProceduralEntity({
@@ -236,15 +239,15 @@ export class ProcedureService {
   }
 
   async searchProcedures(
-    workspaceId: string,
+    organizationId: string,
     query: string,
     options: SearchOptions = {}
   ): Promise<ProcedureRecord[]> {
-    if (!workspaceId) {
+    if (!organizationId) {
       throw new Error('Workspace ID is required');
     }
 
-    return await this.repository.search(workspaceId, query, options);
+    return await this.repository.search(organizationId, query, options);
   }
 }
 

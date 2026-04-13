@@ -7,12 +7,17 @@ import { join } from 'path';
 import { PrismaManager } from '@kloudi/infrastructure/database/prisma-manager.js';
 
 const SEED_DIR = join(import.meta.dirname, '../data/seed/procedures');
-const WORKSPACE_ID = 'default-workspace';
 
 async function seed() {
+  const orgId = process.argv[2];
+  if (!orgId) {
+    console.error('Usage: npx tsx scripts/seed-procedures.ts <organizationId>');
+    process.exit(1);
+  }
+
   const db = PrismaManager.getInstance();
   await db.initialize();
-  const client = db.getClient();
+  const client = await db.getClient();
   const files = readdirSync(SEED_DIR).filter((f) => f.endsWith('.json'));
 
   for (const file of files) {
@@ -22,7 +27,7 @@ async function seed() {
       data;
 
     const existing = await (client as any).procedure.findFirst({
-      where: { slug, workspaceId: WORKSPACE_ID },
+      where: { slug, organizationId: orgId },
     });
 
     if (existing) {
@@ -49,7 +54,7 @@ async function seed() {
           graph,
           parameters: parameters || {},
           constraints: constraints || {},
-          workspaceId: WORKSPACE_ID,
+          organizationId: orgId,
           maturity: 'draft',
           metadata: data.metadata || {},
         },

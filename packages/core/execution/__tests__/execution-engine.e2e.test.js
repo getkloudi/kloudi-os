@@ -78,7 +78,7 @@ async function createProcedure(data) {
       graph: data.graph,
       parameters: data.parameters ?? {},
       constraints: {},
-      workspaceId: WORKSPACE_ID,
+      organizationId: WORKSPACE_ID,
     },
   });
 }
@@ -133,10 +133,10 @@ afterAll(async () => {
   if (!db) return;
   try {
     await db.executionNode.deleteMany({
-      where: { execution: { workspaceId: WORKSPACE_ID } },
+      where: { execution: { organizationId: WORKSPACE_ID } },
     });
-    await db.execution.deleteMany({ where: { workspaceId: WORKSPACE_ID } });
-    await db.procedure.deleteMany({ where: { workspaceId: WORKSPACE_ID } });
+    await db.execution.deleteMany({ where: { organizationId: WORKSPACE_ID } });
+    await db.procedure.deleteMany({ where: { organizationId: WORKSPACE_ID } });
   } catch (_e) {
     // ignore cleanup errors
   }
@@ -628,8 +628,8 @@ describeIfKey('WebSocket callbacks', () => {
       {},
       WORKSPACE_ID,
       {
-        onNodeStart: (_execId, nodeId) => events.push(`start:${nodeId}`),
-        onNodeComplete: (_execId, nodeId) => events.push(`complete:${nodeId}`),
+        onNodeStart: (execId, nodeId) => events.push(`start:${nodeId}`),
+        onNodeComplete: (execId, nodeId) => events.push(`complete:${nodeId}`),
         onExecutionComplete: (_execId) => events.push('exec_complete'),
       }
     );
@@ -774,7 +774,7 @@ describeIfKey('ContextManager', () => {
     graph: { nodes: [], edges: [] },
     parameters: {},
     constraints: {},
-    workspaceId: 'test',
+    organizationId: 'test',
     createdAt: new Date(),
     updatedAt: new Date(),
   });

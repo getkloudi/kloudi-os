@@ -21,7 +21,7 @@ interface UserContext {
   userId: string;
   email: string | undefined;
   username: string | undefined;
-  workspaceId: string;
+  organizationId: string;
   permissions: string[] | undefined;
   roles: string[] | undefined;
 }
@@ -62,7 +62,7 @@ function isPublicRoute(method: string, path: string): boolean {
 interface SessionMetadata {
   email?: string;
   username?: string;
-  workspaceId?: string;
+  organizationId?: string;
 }
 
 interface ValidatedSession {
@@ -119,7 +119,8 @@ export function authMiddleware(
         userId: session.userId,
         email: session.metadata?.email,
         username: session.metadata?.username,
-        workspaceId: session.metadata?.workspaceId ?? `ws_${session.userId}`,
+        organizationId:
+          session.metadata?.organizationId ?? `ws_${session.userId}`,
         permissions: session.permissions,
         roles: session.roles,
       };

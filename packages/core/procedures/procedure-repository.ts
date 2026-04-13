@@ -26,7 +26,7 @@ export interface ProcedureRecord {
   graph: unknown;
   parameters: unknown;
   constraints: unknown;
-  workspaceId: string;
+  organizationId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,18 +46,18 @@ interface PrismaClient {
         graph?: unknown;
         parameters?: unknown;
         constraints?: unknown;
-        workspaceId?: string;
+        organizationId?: string;
       };
     }) => Promise<ProcedureRecord>;
     findUnique: (args: {
       where: { id: string };
     }) => Promise<ProcedureRecord | null>;
     findFirst: (args: {
-      where: { workspaceId?: string; slug?: string };
+      where: { organizationId?: string; slug?: string };
     }) => Promise<ProcedureRecord | null>;
     findMany: (args: {
       where?: {
-        workspaceId?: string;
+        organizationId?: string;
         level?: string;
         OR?: Array<{
           name?: { contains: string; mode: string };
@@ -113,7 +113,7 @@ export class ProcedureRepository {
         graph?: unknown;
         parameters?: unknown;
         constraints?: unknown;
-        workspaceId?: string;
+        organizationId?: string;
       } = {
         slug: data.slug,
         name: data.name,
@@ -131,8 +131,8 @@ export class ProcedureRepository {
       if (data.maturity !== undefined) {
         createData.maturity = data.maturity;
       }
-      if (data.workspaceId !== undefined) {
-        createData.workspaceId = data.workspaceId;
+      if (data.organizationId !== undefined) {
+        createData.organizationId = data.organizationId;
       }
 
       const procedure = await db.procedure.create({
@@ -163,7 +163,7 @@ export class ProcedureRepository {
   }
 
   async findBySlug(
-    workspaceId: string,
+    organizationId: string,
     slug: string
   ): Promise<ProcedureRecord | null> {
     const db = await this.getClient();
@@ -171,7 +171,7 @@ export class ProcedureRepository {
     try {
       return await db.procedure.findFirst({
         where: {
-          workspaceId,
+          organizationId,
           slug,
         },
       });
@@ -183,7 +183,7 @@ export class ProcedureRepository {
   }
 
   async findByLevel(
-    workspaceId: string,
+    organizationId: string,
     level: ProcedureLevelType,
     options: SearchOptions = {}
   ): Promise<ProcedureRecord[]> {
@@ -193,7 +193,7 @@ export class ProcedureRepository {
     try {
       return await db.procedure.findMany({
         where: {
-          workspaceId,
+          organizationId,
           level,
         },
         orderBy: [{ createdAt: 'desc' }],
@@ -249,7 +249,7 @@ export class ProcedureRepository {
   }
 
   async search(
-    workspaceId: string,
+    organizationId: string,
     query: string,
     options: SearchOptions = {}
   ): Promise<ProcedureRecord[]> {
@@ -259,7 +259,7 @@ export class ProcedureRepository {
     try {
       return await db.procedure.findMany({
         where: {
-          workspaceId,
+          organizationId,
           OR: [
             { name: { contains: query, mode: 'insensitive' } },
             { description: { contains: query, mode: 'insensitive' } },
