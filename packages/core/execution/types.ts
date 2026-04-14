@@ -1,4 +1,4 @@
-// --- Graph types (match Procedure.graph JSONB structure) ---
+// --- Graph types (match Sop.graph JSONB structure) ---
 // These re-export from @kloudi/shared/types for consistency,
 // but also define execution-specific types.
 
@@ -40,11 +40,11 @@ export interface InterpolativeConfig {
 
 // --- Execution types ---
 
-export type { ProcedureRecord } from '../procedures/procedure-repository.js';
+export type { SopRecord } from '../sops/sop-repository.js';
 
 export interface ExecutionContext {
   executionId: string;
-  entity: import('../procedures/procedure-repository.js').ProcedureRecord;
+  entity: import('../sops/sop-repository.js').SopRecord;
   parameters: Record<string, unknown>;
   variables: Record<string, unknown>;
   currentNodeId: string | null;

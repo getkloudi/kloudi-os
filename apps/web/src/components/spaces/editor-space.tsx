@@ -13,7 +13,7 @@ type Mode = 'edit' | 'view';
 interface EditorSpaceProps {
   execution: ExecutionDetail | null;
   agentMessages: AgentMessage[];
-  onRun?: (procedureId: string) => void;
+  onRun?: (sopId: string) => void;
   onBrowseNavigate?: () => void;
   onAgentCommand?: (command: string) => void;
 }
@@ -31,12 +31,12 @@ export function EditorSpace({
   if (!execution) {
     return (
       <div className="flex flex-1 items-center justify-center text-sm text-[var(--text-3)]">
-        Select a procedure or execution to view
+        Select an SOP or execution to view
       </div>
     );
   }
 
-  const pathParts = execution.procedureSlug.split('/');
+  const pathParts = execution.sopSlug.split('/');
 
   return (
     <div className="flex flex-1 flex-row overflow-hidden">
@@ -96,7 +96,7 @@ export function EditorSpace({
             <Button
               variant="primary"
               className="py-1.5 text-[11px]"
-              onClick={() => onRun?.(execution.procedureId)}
+              onClick={() => onRun?.(execution.sopId)}
             >
               ▶ Run
             </Button>
@@ -112,18 +112,18 @@ export function EditorSpace({
         {/* Canvas */}
         <div className="flex-1 overflow-y-auto bg-[var(--bg-0)] px-12 py-8">
           <h1 className="mb-1.5 text-[26px] font-bold tracking-[-0.03em] text-[var(--text-1)]">
-            {execution.procedureName}
+            {execution.sopName}
           </h1>
           <div className="mb-6 flex items-center gap-2.5 font-mono text-xs text-[var(--text-3)]">
             <Badge status={execution.status as ExecutionStatus} />
-            <span>{execution.procedureSlug}</span>
+            <span>{execution.sopSlug}</span>
             <span>·</span>
             <span>{execution.id}</span>
           </div>
 
-          {execution.procedureDescription && (
+          {execution.sopDescription && (
             <p className="mb-5 max-w-[600px] text-[15px] leading-[1.7] text-[var(--text-2)]">
-              {execution.procedureDescription}
+              {execution.sopDescription}
             </p>
           )}
 
@@ -197,7 +197,7 @@ export function EditorSpace({
           <Button
             variant="primary"
             className="py-1.5 text-[11px]"
-            onClick={() => onRun?.(execution.procedureId)}
+            onClick={() => onRun?.(execution.sopId)}
           >
             ▶ Run
           </Button>

@@ -65,7 +65,7 @@ async function waitForExecution(executionId, timeoutMs = 60000) {
   );
 }
 
-async function createProcedure(data) {
+async function createSop(data) {
   return db.procedure.create({
     data: {
       slug: data.slug,
@@ -94,8 +94,7 @@ beforeAll(async () => {
     await import('../../dist/execution/executors/interpolative-executor.js');
   const { SubEntityExecutor } =
     await import('../../dist/execution/executors/sub-entity-executor.js');
-  const { ProcedureService } =
-    await import('../../dist/procedures/procedure-service.js');
+  const { SopService } = await import('../../dist/sops/sop-service.js');
   const { Database } = await import('@kloudi/infrastructure/database');
   const { AIClient } = await import('@kloudi/infrastructure/ai');
   const { ToolRegistry } = await import('@kloudi/tools');
@@ -120,13 +119,13 @@ beforeAll(async () => {
   });
 
   const contextManager = new ContextManager();
-  const procedureService = new ProcedureService();
+  const sopService = new SopService();
 
   const executors = new Map([
     ['llm_generate', new LLMExecutor(aiClient, contextManager)],
     ['tool_call', new ToolCallExecutor(() => registry)],
     ['interpolative', new InterpolativeExecutor(aiClient, contextManager)],
-    ['sub_entity', new SubEntityExecutor(procedureService)],
+    ['sub_entity', new SubEntityExecutor(sopService)],
   ]);
 
   engine = new ExecutionEngine(executors, contextManager);
@@ -182,26 +181,21 @@ function gatedToolGraph(slug, opts = {}) {
 // 1. TRUST GATE — APPROVE FLOW
 // ============================================================
 describeIfKey('Trust gate — approve flow', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure(gatedToolGraph('tg-approve'));
+    sop = await createSop(gatedToolGraph('tg-approve'));
   });
 
   it('completes when trust gate is approved', async () => {
     let gateCalled = false;
 
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID,
-      {
-        onTrustGateTriggered: async (_ctx) => {
-          gateCalled = true;
-          return 'approve';
-        },
-      }
-    );
+    const { executionId } = await engine.execute(sop.id, {}, WORKSPACE_ID, {
+      onTrustGateTriggered: async (_ctx) => {
+        gateCalled = true;
+        return 'approve';
+      },
+    });
 
     const execution = await waitForExecution(executionId);
 
@@ -221,21 +215,16 @@ describeIfKey('Trust gate — approve flow', () => {
 // 2. TRUST GATE — REJECT FLOW
 // ============================================================
 describeIfKey('Trust gate — reject flow', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure(gatedToolGraph('tg-reject'));
+    sop = await createSop(gatedToolGraph('tg-reject'));
   });
 
   it('fails when trust gate is rejected', async () => {
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID,
-      {
-        onTrustGateTriggered: async () => 'reject',
-      }
-    );
+    const { executionId } = await engine.execute(sop.id, {}, WORKSPACE_ID, {
+      onTrustGateTriggered: async () => 'reject',
+    });
 
     const execution = await waitForExecution(executionId);
 
@@ -253,15 +242,15 @@ describeIfKey('Trust gate — reject flow', () => {
 // 3. TRUST GATE — NO CALLBACK (AUTO-APPROVE)
 // ============================================================
 describeIfKey('Trust gate — no callback registered', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure(gatedToolGraph('tg-no-callback'));
+    sop = await createSop(gatedToolGraph('tg-no-callback'));
   });
 
   it('auto-approves when no onTrustGateTriggered callback', async () => {
     const { executionId } = await engine.execute(
-      procedure.id,
+      sop.id,
       {},
       WORKSPACE_ID
       // No onTrustGateTriggered callback
@@ -278,10 +267,10 @@ describeIfKey('Trust gate — no callback registered', () => {
 // 4. NON-GATED TOOL_CALL — CALLBACK NOT INVOKED
 // ============================================================
 describeIfKey('Trust gate — non-gated tool_call', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure(
+    sop = await createSop(
       gatedToolGraph('tg-non-gated', { requiresApproval: false })
     );
   });
@@ -289,17 +278,12 @@ describeIfKey('Trust gate — non-gated tool_call', () => {
   it('does not invoke callback when requiresApproval is false', async () => {
     let gateCalled = false;
 
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID,
-      {
-        onTrustGateTriggered: async () => {
-          gateCalled = true;
-          return 'approve';
-        },
-      }
-    );
+    const { executionId } = await engine.execute(sop.id, {}, WORKSPACE_ID, {
+      onTrustGateTriggered: async () => {
+        gateCalled = true;
+        return 'approve';
+      },
+    });
 
     const execution = await waitForExecution(executionId);
 
@@ -312,10 +296,10 @@ describeIfKey('Trust gate — non-gated tool_call', () => {
 // 5. TRUST GATE CONTEXT SHAPE
 // ============================================================
 describeIfKey('Trust gate — TrustGateContext shape', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure(
+    sop = await createSop(
       gatedToolGraph('tg-context-shape', { toolName: 'Echo Tool Check' })
     );
   });
@@ -323,17 +307,12 @@ describeIfKey('Trust gate — TrustGateContext shape', () => {
   it('passes correct TrustGateContext to callback', async () => {
     let capturedContext = null;
 
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID,
-      {
-        onTrustGateTriggered: async (ctx) => {
-          capturedContext = ctx;
-          return 'approve';
-        },
-      }
-    );
+    const { executionId } = await engine.execute(sop.id, {}, WORKSPACE_ID, {
+      onTrustGateTriggered: async (ctx) => {
+        capturedContext = ctx;
+        return 'approve';
+      },
+    });
 
     await waitForExecution(executionId);
 
@@ -352,17 +331,17 @@ describeIfKey('Trust gate — TrustGateContext shape', () => {
 // 6. WAITING_INPUT NOT COUNTED FOR CONCURRENCY
 // ============================================================
 describeIfKey('Trust gate — waiting_input concurrency', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure(gatedToolGraph('tg-concurrency'));
+    sop = await createSop(gatedToolGraph('tg-concurrency'));
   });
 
   it('allows new execution while another is waiting at trust gate', async () => {
     let secondStarted = false;
 
     const { executionId: firstId } = await engine.execute(
-      procedure.id,
+      sop.id,
       {},
       WORKSPACE_ID,
       {
@@ -370,7 +349,7 @@ describeIfKey('Trust gate — waiting_input concurrency', () => {
           // While first execution is paused at gate, start second
           try {
             const { executionId: secondId } = await engine.execute(
-              procedure.id,
+              sop.id,
               {},
               WORKSPACE_ID,
               {

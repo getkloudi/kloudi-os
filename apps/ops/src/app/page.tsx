@@ -9,7 +9,7 @@ import { opsApi } from '@/lib/api';
 interface HealthData {
   status: string;
   stats: {
-    procedures: number;
+    sops: number;
     executions: number;
     running: number;
     users: number;
@@ -47,14 +47,10 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Procedures
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">SOPs</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {health.stats.procedures}
-                </div>
+                <div className="text-2xl font-bold">{health.stats.sops}</div>
               </CardContent>
             </Card>
 

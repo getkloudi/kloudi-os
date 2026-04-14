@@ -31,7 +31,7 @@ export function setupExecutionRoutes(app: Application): void {
           take: limit,
           skip: offset,
           include: {
-            procedure: { select: { id: true, name: true, slug: true } },
+            sop: { select: { id: true, name: true, slug: true } },
             _count: { select: { executionNodes: true } },
           },
         }),
@@ -57,7 +57,7 @@ export function setupExecutionRoutes(app: Application): void {
       const result = await execution.findUnique({
         where: { id: req.params['id'] },
         include: {
-          procedure: true,
+          sop: true,
           executionNodes: { orderBy: { startedAt: 'asc' } },
         },
       });

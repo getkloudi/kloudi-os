@@ -16,7 +16,7 @@ interface HealthData {
     uptime?: number;
   };
   stats: {
-    procedures: number;
+    sops: number;
     executions: number;
     running: number;
     users: number;
@@ -132,10 +132,8 @@ export default function HealthPage() {
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
-                    <p className="text-xs text-muted-foreground">Procedures</p>
-                    <p className="text-lg font-bold">
-                      {health.stats.procedures}
-                    </p>
+                    <p className="text-xs text-muted-foreground">SOPs</p>
+                    <p className="text-lg font-bold">{health.stats.sops}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground">Executions</p>

@@ -18,7 +18,7 @@ import { TrustGateDialog } from '@/components/trust-gate-dialog';
 import type {
   Space,
   ActivityPost,
-  ProcedureFile,
+  SopFile,
   ExecutionDetail,
   StoreApp,
   AgentMessage,
@@ -55,7 +55,7 @@ function getMockPosts(): ActivityPost[] {
       id: '1',
       type: 'execution_run',
       user: { username: 'sarah', initials: 'S' },
-      procedure: {
+      sop: {
         id: 'p1',
         name: 'deploy-auth-flow',
         slug: 'engineering/deploy-auth-flow',
@@ -102,7 +102,7 @@ function getMockPosts(): ActivityPost[] {
       id: '2',
       type: 'execution_completed',
       user: { username: 'nitish', initials: 'N' },
-      procedure: {
+      sop: {
         id: 'p2',
         name: 'analyze-codebase',
         slug: 'engineering/analyze-codebase',
@@ -123,7 +123,7 @@ function getMockPosts(): ActivityPost[] {
       id: '3',
       type: 'execution_failed',
       user: { username: 'alex', initials: 'A' },
-      procedure: {
+      sop: {
         id: 'p3',
         name: 'migrate-database',
         slug: 'engineering/migrate-database',
@@ -142,7 +142,7 @@ function getMockPosts(): ActivityPost[] {
       id: '4',
       type: 'awaiting_approval',
       user: { username: 'sarah', initials: 'S' },
-      procedure: {
+      sop: {
         id: 'p4',
         name: 'security-review',
         slug: 'engineering/security-review',
@@ -163,9 +163,9 @@ function getMockPosts(): ActivityPost[] {
     },
     {
       id: '5',
-      type: 'procedure_edited',
+      type: 'sop_edited',
       user: { username: 'nitish', initials: 'N' },
-      procedure: {
+      sop: {
         id: 'p2',
         name: 'analyze-codebase',
         slug: 'engineering/analyze-codebase',
@@ -217,10 +217,10 @@ function getMockQuickAccess(): QuickAccessItem[] {
 function getMockExecution(): ExecutionDetail {
   return {
     id: 'exec_clx8k2m',
-    procedureId: 'p2',
-    procedureName: 'analyze-codebase',
-    procedureSlug: 'procedures/engineering/analyze-codebase',
-    procedureDescription:
+    sopId: 'p2',
+    sopName: 'analyze-codebase',
+    sopSlug: 'sops/engineering/analyze-codebase',
+    sopDescription:
       'Analyzes repository structure, determines authentication strategy, and runs security scanning. Outputs a structured report with actionable recommendations.',
     status: 'completed',
     nodes: [
@@ -306,8 +306,8 @@ export default function Home() {
   // Data state
   const [posts, setPosts] = useState<ActivityPost[]>([]);
   const [quickAccess, setQuickAccess] = useState<QuickAccessItem[]>([]);
-  const [procedures, setProcedures] = useState<TreeNode[]>([]);
-  const [files, setFiles] = useState<ProcedureFile[]>([]);
+  const [sops, setSops] = useState<TreeNode[]>([]);
+  const [files, setFiles] = useState<SopFile[]>([]);
   const [execution, setExecution] = useState<ExecutionDetail | null>(null);
   const [storeApps, setStoreApps] = useState<StoreApp[]>([]);
   const [agentMessages, setAgentMessages] = useState<AgentMessage[]>([]);
@@ -339,13 +339,13 @@ export default function Home() {
       // Try to load from API, fall back to mock data
       const [activityPosts, tree, apps] = await Promise.all([
         api.getActivity(),
-        api.getProcedureTree().catch(() => [] as TreeNode[]),
+        api.getSopTree().catch(() => [] as TreeNode[]),
         api.getStoreApps(),
       ]);
 
       // Use API data if available, otherwise mock
       setPosts(activityPosts.length > 0 ? activityPosts : getMockPosts());
-      setProcedures(tree);
+      setSops(tree);
       setFiles(tree.length > 0 ? flattenTreeToFiles(tree) : getMockFiles());
       setQuickAccess(getMockQuickAccess());
       setStoreApps(apps);
@@ -360,10 +360,10 @@ export default function Home() {
     setActiveSpace(space);
   }, []);
 
-  const handleProcedureClick = useCallback((id: string) => {
-    // Navigate to editor with this procedure
+  const handleSopClick = useCallback((id: string) => {
+    // Navigate to editor with this SOP
     setActiveSpace('editor');
-    // Load execution detail for this procedure
+    // Load execution detail for this SOP
     api.getExecutionDetail(id).then((detail) => {
       if (detail) setExecution(detail);
     });
@@ -387,12 +387,12 @@ export default function Home() {
 
   const handleOmniboxSelect = useCallback(
     (id: string) => {
-      handleProcedureClick(id);
+      handleSopClick(id);
     },
-    [handleProcedureClick]
+    [handleSopClick]
   );
 
-  const commandItems = flattenTree(procedures);
+  const commandItems = flattenTree(sops);
   const userName = user?.username || user?.email || '';
   const userInitials = userName.charAt(0).toUpperCase();
 
@@ -407,7 +407,7 @@ export default function Home() {
   if (!isAuthenticated) return null;
 
   const greeting = `${getGreeting()}, ${userName.split('@')[0]}`;
-  const summary = `${posts.filter((p) => p.type === 'execution_run' || p.type === 'execution_completed').length} procedures ran today · ${posts.filter((p) => p.type === 'awaiting_approval').length} awaiting approval`;
+  const summary = `${posts.filter((p) => p.type === 'execution_run' || p.type === 'execution_completed').length} SOPs ran today · ${posts.filter((p) => p.type === 'awaiting_approval').length} awaiting approval`;
 
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--bg-0)]">
@@ -429,8 +429,8 @@ export default function Home() {
             posts={posts}
             currentUser={userName}
             onSearch={omnibox.open}
-            onQuickAccessClick={handleProcedureClick}
-            onProcedureClick={handleProcedureClick}
+            onQuickAccessClick={handleSopClick}
+            onSopClick={handleSopClick}
             onApprove={handleTrustGateApprove}
             onAbort={handleTrustGateAbort}
           />
@@ -440,8 +440,8 @@ export default function Home() {
         {activeSpace === 'browse' && (
           <BrowseSpace
             files={files}
-            currentPath="procedures / engineering"
-            onFileOpen={handleProcedureClick}
+            currentPath="sops / engineering"
+            onFileOpen={handleSopClick}
           />
         )}
 
@@ -451,7 +451,7 @@ export default function Home() {
             execution={execution}
             agentMessages={agentMessages}
             onRun={(id) => {
-              api.executeProcedure(id).catch(() => {});
+              api.executeSop(id).catch(() => {});
             }}
             onBrowseNavigate={() => setActiveSpace('browse')}
           />
@@ -479,8 +479,8 @@ export default function Home() {
   );
 }
 
-function flattenTreeToFiles(nodes: TreeNode[]): ProcedureFile[] {
-  const result: ProcedureFile[] = [];
+function flattenTreeToFiles(nodes: TreeNode[]): SopFile[] {
+  const result: SopFile[] = [];
   for (const node of nodes) {
     result.push({
       id: node.id,
@@ -496,7 +496,7 @@ function flattenTreeToFiles(nodes: TreeNode[]): ProcedureFile[] {
   return result;
 }
 
-function getMockFiles(): ProcedureFile[] {
+function getMockFiles(): SopFile[] {
   return [
     {
       id: 'p2',

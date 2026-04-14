@@ -67,8 +67,8 @@ async function waitForExecution(executionId, timeoutMs = 60000) {
   );
 }
 
-async function createProcedure(data) {
-  return db.procedure.create({
+async function createSop(data) {
+  return db.sop.create({
     data: {
       slug: data.slug,
       name: data.name,
@@ -100,8 +100,7 @@ beforeAll(async () => {
   const { getNestedValue: gnv } =
     await import('../../dist/execution/resolve-path.js');
   getNestedValue = gnv;
-  const { ProcedureService } =
-    await import('../../dist/procedures/procedure-service.js');
+  const { SopService } = await import('../../dist/sops/sop-service.js');
   const { Database } = await import('@kloudi/infrastructure/database');
   const { AIClient } = await import('@kloudi/infrastructure/ai');
   const { ToolRegistry } = await import('@kloudi/tools');
@@ -117,13 +116,13 @@ beforeAll(async () => {
 
   const registry = ToolRegistry.getInstance();
   const contextManager = new ContextManager();
-  const procedureService = new ProcedureService();
+  const sopService = new SopService();
 
   const executors = new Map([
     ['llm_generate', new LLMExecutor(aiClient, contextManager)],
     ['tool_call', new ToolCallExecutor(() => registry)],
     ['interpolative', new InterpolativeExecutor(aiClient, contextManager)],
-    ['sub_entity', new SubEntityExecutor(procedureService)],
+    ['sub_entity', new SubEntityExecutor(sopService)],
   ]);
 
   engine = new ExecutionEngine(executors, contextManager);
@@ -136,7 +135,7 @@ afterAll(async () => {
       where: { execution: { organizationId: WORKSPACE_ID } },
     });
     await db.execution.deleteMany({ where: { organizationId: WORKSPACE_ID } });
-    await db.procedure.deleteMany({ where: { organizationId: WORKSPACE_ID } });
+    await db.sop.deleteMany({ where: { organizationId: WORKSPACE_ID } });
   } catch (_e) {
     // ignore cleanup errors
   }
@@ -148,10 +147,10 @@ afterAll(async () => {
 // 1. SINGLE LLM NODE
 // ============================================================
 describeIfKey('Single LLM node execution', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure({
+    sop = await createSop({
       slug: 'e2e-single-llm',
       name: 'Single LLM Test',
       description: 'A single LLM node that answers a question',
@@ -172,11 +171,7 @@ describeIfKey('Single LLM node execution', () => {
   });
 
   it('executes a single LLM node and completes', async () => {
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID
-    );
+    const { executionId } = await engine.execute(sop.id, {}, WORKSPACE_ID);
     expect(executionId).toBeDefined();
 
     const execution = await waitForExecution(executionId);
@@ -198,10 +193,10 @@ describeIfKey('Single LLM node execution', () => {
 // 2. LINEAR GRAPH — A → B → C with variable passing
 // ============================================================
 describeIfKey('Linear 3-node graph with variable interpolation', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure({
+    sop = await createSop({
       slug: 'e2e-linear-graph',
       name: 'Linear Graph Test',
       graph: {
@@ -243,11 +238,7 @@ describeIfKey('Linear 3-node graph with variable interpolation', () => {
   });
 
   it('traverses A→B→C, passes variables between nodes', async () => {
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID
-    );
+    const { executionId } = await engine.execute(sop.id, {}, WORKSPACE_ID);
     const execution = await waitForExecution(executionId);
 
     expect(execution.status).toBe('completed');
@@ -274,10 +265,10 @@ describeIfKey('Linear 3-node graph with variable interpolation', () => {
 // 3. INTERPOLATIVE DECISION NODE
 // ============================================================
 describeIfKey('Interpolative decision node', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure({
+    sop = await createSop({
       slug: 'e2e-interpolative',
       name: 'Decision Test',
       graph: {
@@ -321,11 +312,7 @@ describeIfKey('Interpolative decision node', () => {
   });
 
   it('makes a decision and follows the chosen path', async () => {
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID
-    );
+    const { executionId } = await engine.execute(sop.id, {}, WORKSPACE_ID);
     const execution = await waitForExecution(executionId);
 
     expect(execution.status).toBe('completed');
@@ -346,10 +333,10 @@ describeIfKey('Interpolative decision node', () => {
 // 4. PARAMETER INTERPOLATION
 // ============================================================
 describeIfKey('Parameter interpolation from run params', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure({
+    sop = await createSop({
       slug: 'e2e-params',
       name: 'Param Test',
       graph: {
@@ -370,7 +357,7 @@ describeIfKey('Parameter interpolation from run params', () => {
 
   it('interpolates runtime parameters into prompts', async () => {
     const { executionId } = await engine.execute(
-      procedure.id,
+      sop.id,
       { user_name: 'Nitish' },
       WORKSPACE_ID
     );
@@ -386,10 +373,10 @@ describeIfKey('Parameter interpolation from run params', () => {
 // 5. MISSING VARIABLE — fails gracefully
 // ============================================================
 describeIfKey('Missing variable interpolation', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure({
+    sop = await createSop({
       slug: 'e2e-missing-var',
       name: 'Missing Var Test',
       graph: {
@@ -407,11 +394,7 @@ describeIfKey('Missing variable interpolation', () => {
   });
 
   it('fails with descriptive error when variable not found', async () => {
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID
-    );
+    const { executionId } = await engine.execute(sop.id, {}, WORKSPACE_ID);
     const execution = await waitForExecution(executionId);
 
     expect(execution.status).toBe('failed');
@@ -424,10 +407,10 @@ describeIfKey('Missing variable interpolation', () => {
 // 6. CONCURRENCY LIMIT
 // ============================================================
 describeIfKey('Concurrency limit enforcement', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure({
+    sop = await createSop({
       slug: 'e2e-concurrency',
       name: 'Concurrency Test',
       graph: {
@@ -449,15 +432,9 @@ describeIfKey('Concurrency limit enforcement', () => {
 
   it('rejects execution when concurrency limit is reached', async () => {
     // Start first execution (don't await — let it run)
-    const firstPromise = engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID,
-      undefined,
-      {
-        concurrencyLimit: 1,
-      }
-    );
+    const firstPromise = engine.execute(sop.id, {}, WORKSPACE_ID, undefined, {
+      concurrencyLimit: 1,
+    });
     const { executionId } = await firstPromise;
 
     // Wait for it to transition to 'running'
@@ -473,7 +450,7 @@ describeIfKey('Concurrency limit enforcement', () => {
 
     // Second execution should be rejected
     await expect(
-      engine.execute(procedure.id, {}, WORKSPACE_ID, undefined, {
+      engine.execute(sop.id, {}, WORKSPACE_ID, undefined, {
         concurrencyLimit: 1,
       })
     ).rejects.toThrow('Concurrent execution limit');
@@ -484,10 +461,10 @@ describeIfKey('Concurrency limit enforcement', () => {
 // 7. EXECUTION CANCEL
 // ============================================================
 describeIfKey('Execution cancellation', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure({
+    sop = await createSop({
       slug: 'e2e-cancel',
       name: 'Cancel Test',
       graph: {
@@ -520,11 +497,7 @@ describeIfKey('Execution cancellation', () => {
   });
 
   it('stops execution when status is set to cancelled', async () => {
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID
-    );
+    const { executionId } = await engine.execute(sop.id, {}, WORKSPACE_ID);
 
     // Wait for execution to start running, then cancel
     await new Promise((r) => setTimeout(r, 2000));
@@ -552,10 +525,10 @@ describeIfKey('Execution cancellation', () => {
 // 8. EXECUTION TIMEOUT
 // ============================================================
 describeIfKey('Execution timeout', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure({
+    sop = await createSop({
       slug: 'e2e-timeout',
       name: 'Timeout Test',
       graph: {
@@ -582,7 +555,7 @@ describeIfKey('Execution timeout', () => {
 
   it('fails when execution exceeds timeout', async () => {
     const { executionId } = await engine.execute(
-      procedure.id,
+      sop.id,
       {},
       WORKSPACE_ID,
       undefined,
@@ -600,10 +573,10 @@ describeIfKey('Execution timeout', () => {
 // 9. CALLBACKS FIRE CORRECTLY
 // ============================================================
 describeIfKey('WebSocket callbacks', () => {
-  let procedure;
+  let sop;
 
   beforeAll(async () => {
-    procedure = await createProcedure({
+    sop = await createSop({
       slug: 'e2e-callbacks',
       name: 'Callbacks Test',
       graph: {
@@ -623,16 +596,11 @@ describeIfKey('WebSocket callbacks', () => {
   it('fires onNodeStart, onNodeComplete, onExecutionComplete in order', async () => {
     const events = [];
 
-    const { executionId } = await engine.execute(
-      procedure.id,
-      {},
-      WORKSPACE_ID,
-      {
-        onNodeStart: (execId, nodeId) => events.push(`start:${nodeId}`),
-        onNodeComplete: (execId, nodeId) => events.push(`complete:${nodeId}`),
-        onExecutionComplete: (_execId) => events.push('exec_complete'),
-      }
-    );
+    const { executionId } = await engine.execute(sop.id, {}, WORKSPACE_ID, {
+      onNodeStart: (execId, nodeId) => events.push(`start:${nodeId}`),
+      onNodeComplete: (execId, nodeId) => events.push(`complete:${nodeId}`),
+      onExecutionComplete: (_execId) => events.push('exec_complete'),
+    });
 
     await waitForExecution(executionId);
 
@@ -659,7 +627,7 @@ describeIfKey('Error handling', () => {
   });
 
   it('throws when graph has no entry node', async () => {
-    const proc = await createProcedure({
+    const proc = await createSop({
       slug: 'e2e-no-entry',
       name: 'No Entry Node',
       graph: {
@@ -690,7 +658,7 @@ describeIfKey('Error handling', () => {
   });
 
   it('throws when graph has multiple entry nodes', async () => {
-    const proc = await createProcedure({
+    const proc = await createSop({
       slug: 'e2e-multi-entry',
       name: 'Multiple Entry Nodes',
       graph: {

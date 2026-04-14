@@ -2,9 +2,9 @@
  * Tool definitions for lore.dev MCP server
  *
  * Defines the tools exposed via MCP protocol:
- * - lore_list: List available procedures
- * - lore_get: Get procedure by slug
- * - lore_run: Execute a procedure
+ * - lore_list: List available SOPs
+ * - lore_get: Get SOP by slug
+ * - lore_run: Execute an SOP
  * - lore_status: Get execution status
  */
 
@@ -19,7 +19,7 @@ const loreListSchema = {
     .enum(['L1', 'L2', 'L3', 'L4'])
     .optional()
     .describe(
-      'Filter by procedure level: L1 (simple), L2 (moderate), L3 (complex), L4 (expert)'
+      'Filter by SOP level: L1 (simple), L2 (moderate), L3 (complex), L4 (expert)'
     ),
   maturity: z
     .enum(['draft', 'active', 'deprecated'])
@@ -32,20 +32,20 @@ const loreListSchema = {
 };
 
 const loreGetSchema = {
-  slug: z.string().describe('The unique identifier (slug) of the procedure'),
+  slug: z.string().describe('The unique identifier (slug) of the SOP'),
 };
 
 const loreRunSchema = {
-  slug: z.string().describe('The slug of the procedure to execute'),
+  slug: z.string().describe('The slug of the SOP to execute'),
   parameters: z
     .record(z.unknown())
     .optional()
-    .describe('Parameters to pass to the procedure'),
+    .describe('Parameters to pass to the SOP'),
   dryRun: z
     .boolean()
     .optional()
     .describe(
-      'If true, validate the procedure without executing it (default: false)'
+      'If true, validate the SOP without executing it (default: false)'
     ),
 };
 
@@ -82,13 +82,13 @@ type LoreStatusParams = {
  */
 const toolDescriptions = {
   lore_list:
-    'List available procedures (standard operating procedures, runbooks, guides). Filter by level (L1-L4) or maturity (draft, active, deprecated).',
+    'List available SOPs (standard operating procedures, runbooks, guides). Filter by level (L1-L4) or maturity (draft, active, deprecated).',
   lore_get:
-    'Get detailed information about a specific procedure by its slug. Returns the full procedure content including steps, parameters, and metadata.',
+    'Get detailed information about a specific SOP by its slug. Returns the full SOP content including steps, parameters, and metadata.',
   lore_run:
-    'Execute a procedure with the given parameters. Returns an execution ID that can be used to track status.',
+    'Execute an SOP with the given parameters. Returns an execution ID that can be used to track status.',
   lore_status:
-    'Get the status of a procedure execution. Returns current state, progress, and any outputs.',
+    'Get the status of a SOP execution. Returns current state, progress, and any outputs.',
 };
 
 /**
@@ -98,7 +98,7 @@ const executionStore = new Map<
   string,
   {
     id: string;
-    procedure: string;
+    sop: string;
     parameters: Record<string, unknown>;
     status: string;
     currentStep: number;
@@ -110,14 +110,14 @@ const executionStore = new Map<
 >();
 
 /**
- * Mock procedures for demo (replace with database queries)
+ * Mock SOPs for demo (replace with database queries)
  */
-const mockProcedures = [
+const mockSops = [
   {
     slug: 'deploy-frontend',
     name: 'Deploy Frontend Application',
     description:
-      'Standard procedure for deploying frontend applications to production',
+      'Standard SOP for deploying frontend applications to production',
     level: 'L2',
     maturity: 'active',
     parameters: [
@@ -155,7 +155,7 @@ const mockProcedures = [
   {
     slug: 'database-migration',
     name: 'Database Migration Guide',
-    description: 'Safe procedure for running database migrations',
+    description: 'Safe SOP for running database migrations',
     level: 'L4',
     maturity: 'active',
     parameters: [
@@ -196,7 +196,7 @@ const mockProcedures = [
  * Tool handler implementations
  */
 async function handleLoreList({ level, maturity, limit = 20 }: LoreListParams) {
-  let results = [...mockProcedures];
+  let results = [...mockSops];
 
   if (level) {
     results = results.filter((p) => p.level === level);
@@ -214,7 +214,7 @@ async function handleLoreList({ level, maturity, limit = 20 }: LoreListParams) {
         type: 'text' as const,
         text: JSON.stringify(
           {
-            procedures: results.map((p) => ({
+            sops: results.map((p) => ({
               slug: p.slug,
               name: p.name,
               description: p.description,
@@ -232,14 +232,14 @@ async function handleLoreList({ level, maturity, limit = 20 }: LoreListParams) {
 }
 
 async function handleLoreGet({ slug }: LoreGetParams) {
-  const procedure = mockProcedures.find((p) => p.slug === slug);
+  const sop = mockSops.find((p) => p.slug === slug);
 
-  if (!procedure) {
+  if (!sop) {
     return {
       content: [
         {
           type: 'text' as const,
-          text: JSON.stringify({ error: `Procedure not found: ${slug}` }),
+          text: JSON.stringify({ error: `SOP not found: ${slug}` }),
         },
       ],
       isError: true,
@@ -250,7 +250,7 @@ async function handleLoreGet({ slug }: LoreGetParams) {
     content: [
       {
         type: 'text' as const,
-        text: JSON.stringify(procedure, null, 2),
+        text: JSON.stringify(sop, null, 2),
       },
     ],
   };
@@ -261,14 +261,14 @@ async function handleLoreRun({
   parameters = {},
   dryRun = false,
 }: LoreRunParams) {
-  const procedure = mockProcedures.find((p) => p.slug === slug);
+  const sop = mockSops.find((p) => p.slug === slug);
 
-  if (!procedure) {
+  if (!sop) {
     return {
       content: [
         {
           type: 'text' as const,
-          text: JSON.stringify({ error: `Procedure not found: ${slug}` }),
+          text: JSON.stringify({ error: `SOP not found: ${slug}` }),
         },
       ],
       isError: true,
@@ -276,7 +276,7 @@ async function handleLoreRun({
   }
 
   // Validate required parameters
-  const missingParams = procedure.parameters
+  const missingParams = sop.parameters
     .filter((p) => p.required && !(p.name in parameters))
     .map((p) => p.name);
 
@@ -302,9 +302,9 @@ async function handleLoreRun({
           text: JSON.stringify({
             dryRun: true,
             valid: true,
-            procedure: slug,
+            sop: slug,
             parameters,
-            steps: procedure.steps,
+            steps: sop.steps,
           }),
         },
       ],
@@ -316,11 +316,11 @@ async function handleLoreRun({
 
   executionStore.set(executionId, {
     id: executionId,
-    procedure: slug,
+    sop: slug,
     parameters,
     status: 'running',
     currentStep: 0,
-    totalSteps: procedure.steps.length,
+    totalSteps: sop.steps.length,
     startedAt: new Date().toISOString(),
     outputs: [],
   });
@@ -331,7 +331,7 @@ async function handleLoreRun({
     if (execution) {
       execution.status = 'completed';
       execution.completedAt = new Date().toISOString();
-      execution.outputs = procedure.steps.map((step, i) => ({
+      execution.outputs = sop.steps.map((step, i) => ({
         step: i + 1,
         action: step,
         result: 'success',
@@ -346,7 +346,7 @@ async function handleLoreRun({
         text: JSON.stringify({
           executionId,
           status: 'running',
-          procedure: slug,
+          sop: slug,
           message: `Execution started. Use lore_status with executionId "${executionId}" to track progress.`,
         }),
       },

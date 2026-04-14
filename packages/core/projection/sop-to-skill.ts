@@ -1,13 +1,13 @@
 /**
  * SOP → SKILL.md Projection
  *
- * Converts a procedure graph into a gstack-compatible SKILL.md file.
+ * Converts an SOP graph into a gstack-compatible SKILL.md file.
  * Deterministic: same input always produces the same output.
  */
 
 import { walkGraph } from './graph-walker.js';
 
-interface ProcedureInput {
+interface SopInput {
   name: string;
   slug: string;
   description: string;
@@ -25,8 +25,8 @@ interface ProcedureInput {
   metadata: Record<string, unknown>;
 }
 
-export function projectToSkillMd(procedure: ProcedureInput): string {
-  const { name, slug, description, graph, parameters, metadata } = procedure;
+export function projectToSkillMd(sop: SopInput): string {
+  const { name, slug, description, graph, parameters, metadata } = sop;
   const orderedNodes = walkGraph(graph.nodes, graph.edges);
 
   const lines: string[] = [];

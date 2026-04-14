@@ -106,7 +106,7 @@ model Pattern {
   @@map("patterns")
 }
 
-model Procedure {
+model Sop {
   id              String   @id @default(cuid())
   slug            String
   name            String
@@ -130,8 +130,8 @@ model Procedure {
   avgTokensUsed   Int?
 
   // Relations
-  parentEntity    Procedure?  @relation("ProcedureHierarchy", fields: [parentEntityId], references: [id])
-  childEntities   Procedure[] @relation("ProcedureHierarchy")
+  parentEntity    Sop?        @relation("SopHierarchy", fields: [parentEntityId], references: [id])
+  childEntities   Sop[]       @relation("SopHierarchy")
   executions      Execution[]
 
   @@unique([organizationId, slug])
@@ -139,12 +139,12 @@ model Procedure {
   @@index([level])
   @@index([maturity])
   @@index([parentEntityId])
-  @@map("procedures")
+  @@map("sops")
 }
 
 model Execution {
   id            String    @id @default(cuid())
-  procedureId   String
+  sopId         String
   status        String    @default("pending")  // pending, running, waiting_input, completed, failed, cancelled
   parameters    Json      @default("{}")
   variables     Json      @default("{}")        // accumulated node outputs
@@ -158,10 +158,10 @@ model Execution {
   organizationId String
   userId         String?                        // who triggered this execution (for activity feed)
 
-  procedure      Procedure       @relation(fields: [procedureId], references: [id], onDelete: Cascade)
+  sop            Sop             @relation(fields: [sopId], references: [id], onDelete: Cascade)
   executionNodes ExecutionNode[]
 
-  @@index([procedureId])
+  @@index([sopId])
   @@index([organizationId])
   @@index([status])
   @@map("executions")

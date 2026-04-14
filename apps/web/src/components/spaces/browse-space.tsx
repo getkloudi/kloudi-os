@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/cn';
-import type { ProcedureFile, EntityType } from '@/types';
+import type { SopFile, EntityType } from '@/types';
 
 interface BrowseSpaceProps {
-  files: ProcedureFile[];
+  files: SopFile[];
   currentPath: string;
   onFileOpen: (id: string) => void;
   onSearch?: (query: string) => void;
@@ -22,7 +22,7 @@ interface SidebarItem {
 }
 
 const sidebarItems: SidebarItem[] = [
-  { id: 'procedures', label: 'procedures', icon: '📁', section: 'favorites' },
+  { id: 'sops', label: 'sops', icon: '📁', section: 'favorites' },
   { id: 'shared', label: 'shared', icon: '📂', section: 'favorites' },
   { id: 'recent', label: 'recent', icon: '🕐', section: 'favorites' },
   { id: 'default', label: 'default', icon: '🏠', section: 'workspaces' },
@@ -57,7 +57,7 @@ export function BrowseSpace({
   onFileOpen,
   onSearch,
 }: BrowseSpaceProps) {
-  const [activeSidebar, setActiveSidebar] = useState('procedures');
+  const [activeSidebar, setActiveSidebar] = useState('sops');
   const [filter, setFilter] = useState('');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
@@ -157,7 +157,7 @@ export function BrowseSpace({
           </div>
           {filteredFiles.length === 0 && (
             <p className="py-12 text-center text-sm text-[var(--text-3)]">
-              No procedures found
+              No SOPs found
             </p>
           )}
         </div>

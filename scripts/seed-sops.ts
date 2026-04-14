@@ -1,17 +1,17 @@
 /**
- * Seed script — imports procedure graph JSON files into Postgres.
- * Usage: npx tsx scripts/seed-procedures.ts
+ * Seed script — imports SOP graph JSON files into Postgres.
+ * Usage: npx tsx scripts/seed-sops.ts
  */
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { PrismaManager } from '@kloudi/infrastructure/database/prisma-manager.js';
 
-const SEED_DIR = join(import.meta.dirname, '../data/seed/procedures');
+const SEED_DIR = join(import.meta.dirname, '../data/seed/sops');
 
 async function seed() {
   const orgId = process.argv[2];
   if (!orgId) {
-    console.error('Usage: npx tsx scripts/seed-procedures.ts <organizationId>');
+    console.error('Usage: npx tsx scripts/seed-sops.ts <organizationId>');
     process.exit(1);
   }
 
@@ -26,12 +26,12 @@ async function seed() {
     const { name, slug, description, level, graph, parameters, constraints } =
       data;
 
-    const existing = await (client as any).procedure.findFirst({
+    const existing = await (client as any).sop.findFirst({
       where: { slug, organizationId: orgId },
     });
 
     if (existing) {
-      await (client as any).procedure.update({
+      await (client as any).sop.update({
         where: { id: existing.id },
         data: {
           name,
@@ -45,7 +45,7 @@ async function seed() {
       });
       console.log(`Updated: ${slug}`);
     } else {
-      await (client as any).procedure.create({
+      await (client as any).sop.create({
         data: {
           slug,
           name,
@@ -63,7 +63,7 @@ async function seed() {
     }
   }
 
-  console.log(`Seeded ${files.length} procedures.`);
+  console.log(`Seeded ${files.length} SOPs.`);
   process.exit(0);
 }
 

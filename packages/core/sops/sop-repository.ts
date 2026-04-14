@@ -1,22 +1,19 @@
 /**
- * ProcedureRepository - Data Access Layer for ProceduralEntity
+ * SopRepository - Data Access Layer for SopEntity
  *
- * Handles all database operations for procedures.
+ * Handles all database operations for SOPs.
  */
 
 import { Database } from '@kloudi/infrastructure/database';
 import { Logger } from '@kloudi/shared/logger';
-import type {
-  ProcedureEntityData,
-  ProcedureLevelType,
-} from './procedure-entity.js';
+import type { SopEntityData, SopLevelType } from './sop-entity.js';
 
-const logger = Logger.getInstance('procedures');
+const logger = Logger.getInstance('sops');
 
 /**
- * Database procedure record type
+ * Database SOP record type
  */
-export interface ProcedureRecord {
+export interface SopRecord {
   id: string;
   slug: string;
   name: string;
@@ -32,10 +29,10 @@ export interface ProcedureRecord {
 }
 
 /**
- * Prisma client interface for procedures
+ * Prisma client interface for SOPs
  */
 interface PrismaClient {
-  procedure: {
+  sop: {
     create: (args: {
       data: {
         slug: string;
@@ -48,13 +45,11 @@ interface PrismaClient {
         constraints?: unknown;
         organizationId?: string;
       };
-    }) => Promise<ProcedureRecord>;
-    findUnique: (args: {
-      where: { id: string };
-    }) => Promise<ProcedureRecord | null>;
+    }) => Promise<SopRecord>;
+    findUnique: (args: { where: { id: string } }) => Promise<SopRecord | null>;
     findFirst: (args: {
       where: { organizationId?: string; slug?: string };
-    }) => Promise<ProcedureRecord | null>;
+    }) => Promise<SopRecord | null>;
     findMany: (args: {
       where?: {
         organizationId?: string;
@@ -68,12 +63,12 @@ interface PrismaClient {
       orderBy?: Array<{ createdAt?: string }>;
       take?: number;
       skip?: number;
-    }) => Promise<ProcedureRecord[]>;
+    }) => Promise<SopRecord[]>;
     update: (args: {
       where: { id: string };
-      data: Partial<ProcedureEntityData> & { updatedAt?: Date };
-    }) => Promise<ProcedureRecord>;
-    delete: (args: { where: { id: string } }) => Promise<ProcedureRecord>;
+      data: Partial<SopEntityData> & { updatedAt?: Date };
+    }) => Promise<SopRecord>;
+    delete: (args: { where: { id: string } }) => Promise<SopRecord>;
   };
 }
 
@@ -86,9 +81,9 @@ interface SearchOptions {
 }
 
 /**
- * ProcedureRepository - Data Access Layer
+ * SopRepository - Data Access Layer
  */
-export class ProcedureRepository {
+export class SopRepository {
   private prisma: PrismaClient | null;
 
   constructor(prisma: PrismaClient | null = null) {
@@ -100,7 +95,7 @@ export class ProcedureRepository {
     return (await Database.getInstance().getClient()) as unknown as PrismaClient;
   }
 
-  async create(data: ProcedureEntityData): Promise<ProcedureRecord> {
+  async create(data: SopEntityData): Promise<SopRecord> {
     const db = await this.getClient();
 
     try {
@@ -135,41 +130,41 @@ export class ProcedureRepository {
         createData.organizationId = data.organizationId;
       }
 
-      const procedure = await db.procedure.create({
+      const record = await db.sop.create({
         data: createData,
       });
 
-      logger.info(`Procedure created: ${procedure.id}`);
-      return procedure;
+      logger.info(`SOP created: ${record.id}`);
+      return record;
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      logger.error('Failed to create procedure:', err);
-      throw new Error(`Procedure creation failed: ${err.message}`);
+      logger.error('Failed to create SOP:', err);
+      throw new Error(`SOP creation failed: ${err.message}`);
     }
   }
 
-  async findById(id: string): Promise<ProcedureRecord | null> {
+  async findById(id: string): Promise<SopRecord | null> {
     const db = await this.getClient();
 
     try {
-      return await db.procedure.findUnique({
+      return await db.sop.findUnique({
         where: { id },
       });
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      logger.error(`Failed to find procedure ${id}:`, err);
-      throw new Error(`Procedure lookup failed: ${err.message}`);
+      logger.error(`Failed to find SOP ${id}:`, err);
+      throw new Error(`SOP lookup failed: ${err.message}`);
     }
   }
 
   async findBySlug(
     organizationId: string,
     slug: string
-  ): Promise<ProcedureRecord | null> {
+  ): Promise<SopRecord | null> {
     const db = await this.getClient();
 
     try {
-      return await db.procedure.findFirst({
+      return await db.sop.findFirst({
         where: {
           organizationId,
           slug,
@@ -177,21 +172,21 @@ export class ProcedureRepository {
       });
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      logger.error(`Failed to find procedure by slug ${slug}:`, err);
-      throw new Error(`Procedure lookup failed: ${err.message}`);
+      logger.error(`Failed to find SOP by slug ${slug}:`, err);
+      throw new Error(`SOP lookup failed: ${err.message}`);
     }
   }
 
   async findByLevel(
     organizationId: string,
-    level: ProcedureLevelType,
+    level: SopLevelType,
     options: SearchOptions = {}
-  ): Promise<ProcedureRecord[]> {
+  ): Promise<SopRecord[]> {
     const db = await this.getClient();
     const { limit = 20, offset = 0 } = options;
 
     try {
-      return await db.procedure.findMany({
+      return await db.sop.findMany({
         where: {
           organizationId,
           level,
@@ -202,19 +197,16 @@ export class ProcedureRepository {
       });
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      logger.error(`Failed to find procedures by level ${level}:`, err);
-      throw new Error(`Procedure search failed: ${err.message}`);
+      logger.error(`Failed to find SOPs by level ${level}:`, err);
+      throw new Error(`SOP search failed: ${err.message}`);
     }
   }
 
-  async update(
-    id: string,
-    data: Partial<ProcedureEntityData>
-  ): Promise<ProcedureRecord> {
+  async update(id: string, data: Partial<SopEntityData>): Promise<SopRecord> {
     const db = await this.getClient();
 
     try {
-      const procedure = await db.procedure.update({
+      const record = await db.sop.update({
         where: { id },
         data: {
           ...data,
@@ -222,12 +214,12 @@ export class ProcedureRepository {
         },
       });
 
-      logger.info(`Procedure updated: ${id}`);
-      return procedure;
+      logger.info(`SOP updated: ${id}`);
+      return record;
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      logger.error(`Failed to update procedure ${id}:`, err);
-      throw new Error(`Procedure update failed: ${err.message}`);
+      logger.error(`Failed to update SOP ${id}:`, err);
+      throw new Error(`SOP update failed: ${err.message}`);
     }
   }
 
@@ -235,16 +227,16 @@ export class ProcedureRepository {
     const db = await this.getClient();
 
     try {
-      await db.procedure.delete({
+      await db.sop.delete({
         where: { id },
       });
 
-      logger.info(`Procedure deleted: ${id}`);
+      logger.info(`SOP deleted: ${id}`);
       return true;
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      logger.error(`Failed to delete procedure ${id}:`, err);
-      throw new Error(`Procedure deletion failed: ${err.message}`);
+      logger.error(`Failed to delete SOP ${id}:`, err);
+      throw new Error(`SOP deletion failed: ${err.message}`);
     }
   }
 
@@ -252,12 +244,12 @@ export class ProcedureRepository {
     organizationId: string,
     query: string,
     options: SearchOptions = {}
-  ): Promise<ProcedureRecord[]> {
+  ): Promise<SopRecord[]> {
     const db = await this.getClient();
     const { limit = 20, offset = 0 } = options;
 
     try {
-      return await db.procedure.findMany({
+      return await db.sop.findMany({
         where: {
           organizationId,
           OR: [
@@ -272,10 +264,10 @@ export class ProcedureRepository {
       });
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      logger.error(`Failed to search procedures:`, err);
-      throw new Error(`Procedure search failed: ${err.message}`);
+      logger.error(`Failed to search SOPs:`, err);
+      throw new Error(`SOP search failed: ${err.message}`);
     }
   }
 }
 
-export default ProcedureRepository;
+export default SopRepository;

@@ -1,7 +1,7 @@
 /**
  * kloudi run <slug> [--params key=value]
  *
- * Runs a procedure via the API, subscribes to execution progress via WebSocket,
+ * Runs an SOP via the API, subscribes to execution progress via WebSocket,
  * and prompts the user in the terminal when trust gates fire.
  */
 
@@ -39,7 +39,7 @@ interface ProgressMessage {
 export function registerRunCommand(program: Command): void {
   program
     .command('run <slug>')
-    .description('Run a procedure with trust-gated execution')
+    .description('Run an SOP with trust-gated execution')
     .option('--api-url <url>', 'API base URL', 'http://localhost:3001')
     .option(
       '-p, --param <key=value>',
@@ -54,18 +54,18 @@ export function registerRunCommand(program: Command): void {
       ) => {
         const client = new KloudiClient({ baseUrl: opts.apiUrl });
 
-        // 1. Look up procedure by slug
-        let procedure: { id: string; name: string; slug: string };
+        // 1. Look up SOP by slug
+        let sop: { id: string; name: string; slug: string };
         try {
-          procedure = await client.getProcedure(slug);
+          sop = await client.getSop(slug);
         } catch {
-          console.error(chalk.red(`Procedure not found: ${slug}`));
+          console.error(chalk.red(`SOP not found: ${slug}`));
           process.exit(1);
         }
 
         console.log(
-          chalk.cyan(`Running: ${procedure.name}`),
-          chalk.gray(`(${procedure.slug})`)
+          chalk.cyan(`Running: ${sop.name}`),
+          chalk.gray(`(${sop.slug})`)
         );
 
         // 2. Connect WebSocket before starting execution
@@ -109,7 +109,7 @@ export function registerRunCommand(program: Command): void {
         // 3. Start execution via API
         let executionId: string;
         try {
-          const result = await client.runProcedure(procedure.id, {
+          const result = await client.runSop(sop.id, {
             input: opts.param,
           });
           executionId = result.executionId;

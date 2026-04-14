@@ -1,7 +1,7 @@
 /**
  * kloudi import <file.json>
  *
- * Imports a procedure graph JSON file into Postgres via the API.
+ * Imports an SOP graph JSON file into Postgres via the API.
  */
 
 import { Command } from 'commander';
@@ -12,7 +12,7 @@ import chalk from 'chalk';
 export function registerImportCommand(program: Command): void {
   program
     .command('import <file>')
-    .description('Import a procedure graph JSON file')
+    .description('Import an SOP graph JSON file')
     .option('--api-url <url>', 'API base URL', 'http://localhost:3001')
     .action(async (file: string, opts: { apiUrl: string }) => {
       try {
@@ -30,14 +30,14 @@ export function registerImportCommand(program: Command): void {
 
         if (!data.name || !data.slug || !data.graph) {
           console.error(
-            chalk.red('Invalid procedure JSON: requires name, slug, and graph')
+            chalk.red('Invalid SOP JSON: requires name, slug, and graph')
           );
           process.exit(1);
         }
 
         const client = new KloudiClient({ baseUrl: opts.apiUrl });
 
-        const result = await client.createProcedure({
+        const result = await client.createSop({
           name: data.name,
           slug: data.slug,
           description: data.description ?? '',

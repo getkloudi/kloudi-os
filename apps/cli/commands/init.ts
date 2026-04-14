@@ -18,7 +18,7 @@ import chalk from 'chalk';
 
 const SEED_DIR = join(
   dirname(fileURLToPath(import.meta.url)),
-  '../../../data/seed/procedures'
+  '../../../data/seed/sops'
 );
 
 function resolveDbUrl(): string {
@@ -61,7 +61,7 @@ export function registerInitCommand(program: Command): void {
 
       // Step 3: Seed default SOPs
       if (!opts.skipSeed) {
-        await seedProcedures(dbUrl, org.id);
+        await seedSops(dbUrl, org.id);
       } else {
         console.log(chalk.gray('  [skip] SOP seeding'));
       }
@@ -147,10 +147,7 @@ async function createOrganization(
   }
 }
 
-async function seedProcedures(
-  dbUrl: string,
-  organizationId: string
-): Promise<void> {
+async function seedSops(dbUrl: string, organizationId: string): Promise<void> {
   console.log(chalk.blue('  [3/3]'), 'Seeding default SOPs...');
 
   const { PrismaPg } = await import('@prisma/adapter-pg');
@@ -172,12 +169,12 @@ async function seedProcedures(
       const { name, slug, description, level, graph, parameters, constraints } =
         data;
 
-      const existing = await (prisma as any).procedure.findFirst({
+      const existing = await (prisma as any).sop.findFirst({
         where: { slug, organizationId },
       });
 
       if (existing) {
-        await (prisma as any).procedure.update({
+        await (prisma as any).sop.update({
           where: { id: existing.id },
           data: {
             name,
@@ -191,7 +188,7 @@ async function seedProcedures(
         });
         console.log(chalk.green(`        Updated: ${slug}`));
       } else {
-        await (prisma as any).procedure.create({
+        await (prisma as any).sop.create({
           data: {
             slug,
             name,

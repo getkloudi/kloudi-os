@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { opsApi } from '@/lib/api';
 
-interface Procedure {
+interface SopDetail {
   id: string;
   name: string;
   slug: string;
@@ -31,14 +31,14 @@ interface Procedure {
   }>;
 }
 
-export default function ProcedureDetailPage() {
+export default function SopDetailPage() {
   const params = useParams();
-  const [procedure, setProcedure] = useState<Procedure | null>(null);
+  const [sopItem, setSopItem] = useState<SopDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    opsApi<{ data: Procedure }>(`/ops/procedures/${params.id}`)
-      .then((res) => setProcedure(res.data))
+    opsApi<{ data: SopDetail }>(`/ops/sops/${params.id}`)
+      .then((res) => setSopItem(res.data))
       .finally(() => setLoading(false));
   }, [params.id]);
 
@@ -48,10 +48,10 @@ export default function ProcedureDetailPage() {
         <p className="text-sm text-muted-foreground">Loading...</p>
       </AuthGuard>
     );
-  if (!procedure)
+  if (!sopItem)
     return (
       <AuthGuard>
-        <p className="text-sm text-destructive">Procedure not found</p>
+        <p className="text-sm text-destructive">SOP not found</p>
       </AuthGuard>
     );
 
@@ -60,24 +60,24 @@ export default function ProcedureDetailPage() {
       <div className="space-y-6">
         <div>
           <Link
-            href="/procedures"
+            href="/sops"
             className="text-xs text-muted-foreground hover:underline"
           >
-            &larr; Back to procedures
+            &larr; Back to SOPs
           </Link>
           <h1 className="text-2xl font-semibold tracking-tight mt-1">
-            {procedure.name}
+            {sopItem.name}
           </h1>
           <div className="flex gap-2 mt-1">
-            <Badge variant="outline">{procedure.level}</Badge>
-            <Badge variant="secondary">{procedure.maturity}</Badge>
+            <Badge variant="outline">{sopItem.level}</Badge>
+            <Badge variant="secondary">{sopItem.maturity}</Badge>
             <span className="text-xs text-muted-foreground">
-              workspace: {procedure.workspaceId}
+              workspace: {sopItem.workspaceId}
             </span>
           </div>
-          {procedure.description && (
+          {sopItem.description && (
             <p className="text-sm text-muted-foreground mt-2">
-              {procedure.description}
+              {sopItem.description}
             </p>
           )}
         </div>
@@ -88,9 +88,7 @@ export default function ProcedureDetailPage() {
               <CardTitle className="text-sm font-medium">Executions</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {procedure.executionCount}
-              </div>
+              <div className="text-2xl font-bold">{sopItem.executionCount}</div>
             </CardContent>
           </Card>
           <Card>
@@ -101,8 +99,8 @@ export default function ProcedureDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {procedure.executionCount > 0
-                  ? `${Math.round((procedure.successCount / procedure.executionCount) * 100)}%`
+                {sopItem.executionCount > 0
+                  ? `${Math.round((sopItem.successCount / sopItem.executionCount) * 100)}%`
                   : 'N/A'}
               </div>
             </CardContent>
@@ -115,8 +113,8 @@ export default function ProcedureDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {procedure.avgDurationMs
-                  ? `${(procedure.avgDurationMs / 1000).toFixed(1)}s`
+                {sopItem.avgDurationMs
+                  ? `${(sopItem.avgDurationMs / 1000).toFixed(1)}s`
                   : 'N/A'}
               </div>
             </CardContent>
@@ -129,12 +127,12 @@ export default function ProcedureDetailPage() {
           </CardHeader>
           <CardContent>
             <pre className="text-xs bg-muted p-3 rounded-md overflow-auto max-h-[400px]">
-              {JSON.stringify(procedure.graph, null, 2)}
+              {JSON.stringify(sopItem.graph, null, 2)}
             </pre>
           </CardContent>
         </Card>
 
-        {procedure.executions.length > 0 && (
+        {sopItem.executions.length > 0 && (
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium">
@@ -143,7 +141,7 @@ export default function ProcedureDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {procedure.executions.map((ex) => (
+                {sopItem.executions.map((ex) => (
                   <Link
                     key={ex.id}
                     href={`/executions/${ex.id}`}

@@ -60,33 +60,33 @@ export class KloudiClient {
   }
 
   // ---------------------------------------------------------------------------
-  // Procedures
+  // SOPs
   // ---------------------------------------------------------------------------
 
-  async listProcedures(filters?: {
+  async listSops(filters?: {
     level?: string;
     maturity?: string;
-  }): Promise<Procedure[]> {
+  }): Promise<Sop[]> {
     const params = new URLSearchParams();
     if (filters?.level) params.set('level', filters.level);
     if (filters?.maturity) params.set('maturity', filters.maturity);
     const query = params.toString() ? `?${params}` : '';
-    return this.request<Procedure[]>('GET', `/api/procedures${query}`);
+    return this.request<Sop[]>('GET', `/api/sops${query}`);
   }
 
-  async getProcedure(idOrSlug: string): Promise<Procedure> {
-    return this.request<Procedure>('GET', `/api/procedures/${idOrSlug}`);
+  async getSop(idOrSlug: string): Promise<Sop> {
+    return this.request<Sop>('GET', `/api/sops/${idOrSlug}`);
   }
 
-  async createProcedure(data: CreateProcedureInput): Promise<Procedure> {
-    return this.request<Procedure>('POST', '/api/procedures', data);
+  async createSop(data: CreateSopInput): Promise<Sop> {
+    return this.request<Sop>('POST', '/api/sops', data);
   }
 
-  async runProcedure(
+  async runSop(
     id: string,
     options?: { dryRun?: boolean; input?: Record<string, unknown> }
   ): Promise<ExecutionResult> {
-    return this.request<ExecutionResult>('POST', `/api/procedures/${id}/run`, {
+    return this.request<ExecutionResult>('POST', `/api/sops/${id}/run`, {
       dryRun: options?.dryRun ?? false,
       input: options?.input ?? {},
     });
@@ -135,7 +135,7 @@ export class KloudiClient {
 // Types — mirror API response shapes
 // ---------------------------------------------------------------------------
 
-export interface Procedure {
+export interface Sop {
   id: string;
   name: string;
   slug: string;
@@ -153,7 +153,7 @@ export interface ExecutionResult {
 
 export interface Execution {
   id: string;
-  procedureId: string;
+  sopId: string;
   status: string;
   startedAt: string;
   completedAt?: string;
@@ -166,7 +166,7 @@ export interface ExecutionDetail extends Execution {
   durationMs?: number;
   parameters: Record<string, unknown>;
   variables: Record<string, unknown>;
-  procedure: { name: string; slug: string };
+  sop: { name: string; slug: string };
   executionNodes: ExecutionNodeDetail[];
 }
 
@@ -191,10 +191,10 @@ export interface ExecutionListResponse {
 }
 
 export interface ExecutionListItem extends Execution {
-  procedure: { name: string; slug: string };
+  sop: { name: string; slug: string };
 }
 
-export interface CreateProcedureInput {
+export interface CreateSopInput {
   name: string;
   slug: string;
   description: string;

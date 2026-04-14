@@ -209,8 +209,8 @@ export interface Constraint {
   enforcement: 'block' | 'warn' | 'log';
 }
 
-// Procedure/Entity types
-export interface ProcedureEntity {
+// SOP/Entity types
+export interface SopEntity {
   id: string;
   slug: string;
   name: string;

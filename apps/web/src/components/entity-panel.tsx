@@ -78,7 +78,7 @@ export function EntityPanel({
   if (!entity) {
     return (
       <div className="flex h-full items-center justify-center text-muted-foreground">
-        <p>Select a procedure to view details</p>
+        <p>Select an SOP to view details</p>
       </div>
     );
   }

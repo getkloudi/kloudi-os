@@ -26,7 +26,7 @@ interface ExecutionNode {
 interface Execution {
   id: string;
   status: string;
-  procedureId: string;
+  sopId: string;
   parameters: unknown;
   variables: unknown;
   currentNodeId: string | null;
@@ -37,7 +37,7 @@ interface Execution {
   startedAt: string;
   completedAt: string | null;
   workspaceId: string;
-  procedure?: { id: string; name: string; slug: string };
+  sop?: { id: string; name: string; slug: string };
   executionNodes: ExecutionNode[];
 }
 
@@ -114,12 +114,12 @@ export default function ExecutionDetailPage() {
               </Button>
             )}
           </div>
-          {execution.procedure && (
+          {execution.sop && (
             <Link
-              href={`/procedures/${execution.procedure.id}`}
+              href={`/sops/${execution.sop.id}`}
               className="text-sm text-muted-foreground hover:underline"
             >
-              {execution.procedure.name}
+              {execution.sop.name}
             </Link>
           )}
         </div>

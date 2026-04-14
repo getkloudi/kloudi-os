@@ -1,7 +1,7 @@
 /**
  * Executions API Routes
  *
- * Execute, track, and manage procedure runs for lore.dev.
+ * Execute, track, and manage SOP runs for lore.dev.
  * Wires ExecutionEngine into the API with WebSocket streaming.
  */
 
@@ -13,7 +13,7 @@ import {
   ToolCallExecutor,
   InterpolativeExecutor,
   SubEntityExecutor,
-  ProcedureService,
+  SopService,
 } from '@kloudi/core';
 import type { NodeType } from '@kloudi/shared/types';
 import type { NodeExecutor } from '@kloudi/core';
@@ -32,48 +32,49 @@ const logger = Logger.getInstance('executions-routes');
 // Initialize engine components at module level
 const contextManager = new ContextManager();
 const aiClient = new AIClient({ context: 'execution-engine' });
-const procedureService = new ProcedureService();
+const sopService = new SopService();
 
 const executors = new Map<NodeType, NodeExecutor>([
   ['llm_generate', new LLMExecutor(aiClient as any, contextManager)],
   ['tool_call', new ToolCallExecutor(() => ToolRegistry.getInstance() as any)],
   ['interpolative', new InterpolativeExecutor(aiClient as any, contextManager)],
-  ['sub_entity', new SubEntityExecutor(procedureService as any)],
+  ['sub_entity', new SubEntityExecutor(sopService as any)],
 ]);
 
 const engine = new ExecutionEngine(executors, contextManager);
 
 export function setupRoutes(app: Application): void {
-  // POST /api/procedures/:id/run — Execute a procedure
-  app.post('/api/procedures/:id/run', async (req: Request, res: Response) => {
+  // POST /api/sops/:id/run — Execute an SOP
+  app.post('/api/sops/:id/run', async (req: Request, res: Response) => {
     try {
       const id = req.params['id'] as string;
       const body = (req.body ?? {}) as Record<string, unknown>;
       const params = (body['params'] as Record<string, unknown>) ?? {};
 
-      // Look up procedure
-      let procedure: { id: string; name: string; slug: string } | null = null;
+      // Look up SOP
+      let sop: { id: string; name: string; slug: string } | null = null;
       try {
-        procedure = (await procedureService.getProcedure(
-          req.user!.organizationId,
-          id
-        )) as { id: string; name: string; slug: string } | null;
+        sop = (await sopService.getSop(req.user!.organizationId, id)) as {
+          id: string;
+          name: string;
+          slug: string;
+        } | null;
       } catch {
         // Try by ID if slug lookup fails
         try {
-          procedure = await (procedureService as any).repository.findById(id);
+          sop = await (sopService as any).repository.findById(id);
         } catch {
           // ignore
         }
       }
 
-      if (!procedure) {
-        res.status(404).json({ error: 'Procedure not found' });
+      if (!sop) {
+        res.status(404).json({ error: 'SOP not found' });
         return;
       }
 
       const { executionId } = await engine.execute(
-        procedure.id,
+        sop.id,
         params,
         req.user!.organizationId,
         {
@@ -217,7 +218,7 @@ export function setupRoutes(app: Application): void {
         orderBy: { startedAt: 'desc' },
         take: parseInt(limit, 10),
         include: {
-          procedure: { select: { name: true, slug: true } },
+          sop: { select: { name: true, slug: true } },
         },
       });
 
@@ -241,7 +242,7 @@ export function setupRoutes(app: Application): void {
         where: { id, organizationId: req.user!.organizationId },
         include: {
           executionNodes: { orderBy: { startedAt: 'asc' } },
-          procedure: { select: { name: true, slug: true } },
+          sop: { select: { name: true, slug: true } },
         },
       });
 
@@ -300,7 +301,7 @@ export function setupRoutes(app: Application): void {
       const activity = await (db as any).execution.findMany({
         where: { organizationId: req.user!.organizationId },
         include: {
-          procedure: { select: { name: true, slug: true } },
+          sop: { select: { name: true, slug: true } },
           executionNodes: { orderBy: { startedAt: 'asc' } },
         },
         orderBy: { startedAt: 'desc' },

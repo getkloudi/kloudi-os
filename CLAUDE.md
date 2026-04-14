@@ -31,7 +31,7 @@ Available skills:
 - All work happens on `develop` — never commit directly to `main`
 - `main` only receives code through PRs from `develop`
 - Engine-first build order — don't build CRUD for tables the engine doesn't use yet
-- Async execution — POST /procedures/:id/run returns 202, graph runs via setImmediate
+- Async execution — POST /sops/:id/run returns 202, graph runs via setImmediate
 - Node revisit guard — any node visited >1 triggers waiting_input + WebSocket human approval
 - Engine owns AIClient, passes to executors via context
 - SubEntityExecutor receives engine at call time (not construction) to avoid circular dep
