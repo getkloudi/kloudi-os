@@ -17,4 +17,4 @@ RUN npx prisma generate
 RUN pnpm exec turbo run build --filter=@kloudi/internal-api...
 
 EXPOSE 3002
-CMD ["pnpm", "--filter", "@kloudi/internal-api", "start"]
+CMD sh -c "npx prisma db push --skip-generate && pnpm --filter @kloudi/internal-api start"
