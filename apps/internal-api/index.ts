@@ -26,6 +26,10 @@ async function startServer(): Promise<void> {
     logger.info('Setting up middleware...');
     await setupMiddleware(app);
 
+    // Health check is public (Render needs it for deploy verification)
+    logger.info('Setting up health routes...');
+    setupHealthRoutes(app);
+
     // Auth routes are public (login/callback)
     logger.info('Setting up auth routes...');
     setupAuthRoutes(app);
@@ -36,7 +40,6 @@ async function startServer(): Promise<void> {
 
     // Protected routes
     logger.info('Setting up protected routes...');
-    setupHealthRoutes(app);
     setupProcedureRoutes(app);
     setupExecutionRoutes(app);
     setupToolRoutes(app);
