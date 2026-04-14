@@ -21,3 +21,10 @@ ALTER INDEX "procedures_parentEntityId_idx" RENAME TO "sops_parentEntityId_idx";
 
 -- Update the execution index that referenced procedureId
 ALTER INDEX "executions_procedureId_idx" RENAME TO "executions_sopId_idx";
+
+-- Rename foreign key constraints
+ALTER TABLE "executions" RENAME CONSTRAINT "executions_procedureId_fkey" TO "executions_sopId_fkey";
+ALTER TABLE "sops" RENAME CONSTRAINT "procedures_parentEntityId_fkey" TO "sops_parentEntityId_fkey";
+
+-- Rename primary key constraint
+ALTER TABLE "sops" RENAME CONSTRAINT "procedures_pkey" TO "sops_pkey";
