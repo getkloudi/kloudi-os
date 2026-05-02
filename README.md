@@ -1,6 +1,9 @@
-# lore.dev
+# kloudi
 
-Multiplayer OS for EPD teams. Everything is an SOP.
+The Machine — an always-on organizational intelligence for software teams.
+SOPs encode how your org works. The Machine watches, plans, and executes.
+
+**New here?** Read `docs/current/00-start-here.md` first.
 
 ## Setup
 
@@ -50,7 +53,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "lore": {
+    "kloudi": {
       "command": "node",
       "args": ["<path-to-repo>/apps/mcp-server/index.js"]
     }
