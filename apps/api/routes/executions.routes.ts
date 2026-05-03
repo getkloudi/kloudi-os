@@ -1,143 +1,27 @@
 /**
  * Executions API Routes
  *
- * Execute, track, and manage SOP runs for lore.dev.
- * Wires ExecutionEngine into the API with WebSocket streaming.
+ * Execute, track, and manage SOP runs.
+ * ExecutionEngine is being replaced with the AI-native engine.
+ * This file is a placeholder — wire the new engine here when it is built.
+ *
+ * See: docs/current/agent-loop-design.md for the new engine design.
  */
 
 import type { Application, Request, Response } from 'express';
-import {
-  ExecutionEngine,
-  ContextManager,
-  LLMExecutor,
-  ToolCallExecutor,
-  InterpolativeExecutor,
-  SubEntityExecutor,
-  SopService,
-} from '@kloudi/core';
-import type { NodeType } from '@kloudi/shared/types';
-import type { NodeExecutor } from '@kloudi/core';
-import { AIClient } from '@kloudi/infrastructure/ai';
-import { ToolRegistry } from '@kloudi/tools';
 import { Database } from '@kloudi/infrastructure/database';
 import { Logger } from '@kloudi/shared/logger';
-import {
-  emitExecutionProgress,
-  emitExecutionComplete,
-  requestTrustGateApproval,
-} from '../lib/websocket.js';
+import { emitExecutionProgress } from '../lib/websocket.js';
 
 const logger = Logger.getInstance('executions-routes');
 
-// Initialize engine components at module level
-const contextManager = new ContextManager();
-const aiClient = new AIClient({ context: 'execution-engine' });
-const sopService = new SopService();
-
-const executors = new Map<NodeType, NodeExecutor>([
-  ['llm_generate', new LLMExecutor(aiClient as any, contextManager)],
-  ['tool_call', new ToolCallExecutor(() => ToolRegistry.getInstance() as any)],
-  ['interpolative', new InterpolativeExecutor(aiClient as any, contextManager)],
-  ['sub_entity', new SubEntityExecutor(sopService as any)],
-]);
-
-const engine = new ExecutionEngine(executors, contextManager);
-
 export function setupRoutes(app: Application): void {
   // POST /api/sops/:id/run — Execute an SOP
-  app.post('/api/sops/:id/run', async (req: Request, res: Response) => {
-    try {
-      const id = req.params['id'] as string;
-      const body = (req.body ?? {}) as Record<string, unknown>;
-      const params = (body['params'] as Record<string, unknown>) ?? {};
-
-      // Look up SOP
-      let sop: { id: string; name: string; slug: string } | null = null;
-      try {
-        sop = (await sopService.getSop(req.user!.organizationId, id)) as {
-          id: string;
-          name: string;
-          slug: string;
-        } | null;
-      } catch {
-        // Try by ID if slug lookup fails
-        try {
-          sop = await (sopService as any).repository.findById(id);
-        } catch {
-          // ignore
-        }
-      }
-
-      if (!sop) {
-        res.status(404).json({ error: 'SOP not found' });
-        return;
-      }
-
-      const { executionId } = await engine.execute(
-        sop.id,
-        params,
-        req.user!.organizationId,
-        {
-          onNodeStart: (execId, nodeId, name) =>
-            emitExecutionProgress(execId, {
-              type: 'node:start',
-              nodeId,
-              name,
-            } as any),
-          onNodeComplete: (execId, nodeId, output) =>
-            emitExecutionProgress(execId, {
-              type: 'node:complete',
-              nodeId,
-              output,
-            } as any),
-          onNodeFailed: (execId, nodeId, error) =>
-            emitExecutionProgress(execId, {
-              type: 'node:failed',
-              nodeId,
-              error,
-            } as any),
-          onExecutionComplete: (execId, result) =>
-            emitExecutionComplete(execId, result),
-          onExecutionFailed: (execId, error) =>
-            emitExecutionProgress(execId, {
-              type: 'execution:failed',
-              error,
-            } as any),
-          onTrustGateTriggered: async (gateContext) => {
-            try {
-              const response = await requestTrustGateApproval(
-                gateContext.executionId,
-                gateContext as unknown as Record<string, unknown>
-              );
-              return response === 'approve' ? 'approve' : 'reject';
-            } catch {
-              return 'reject';
-            }
-          },
-        }
-      );
-
-      res.status(202).json({
-        data: { executionId, status: 'pending' },
-      });
-    } catch (error) {
-      const err = error as Error;
-
-      // Concurrency limit → 429
-      if (err.message.includes('Concurrent execution limit')) {
-        res.status(429).json({ error: err.message });
-        return;
-      }
-
-      logger.error(
-        'Failed to start execution',
-        error instanceof Error ? error : null,
-        {
-          id: req.params['id'],
-        }
-      );
-      res.status(500).json({ error: 'Failed to start execution' });
-    }
+  // TODO: Wire AI-native ExecutionEngine here (docs/current/agent-loop-design.md)
+  app.post('/api/sops/:id/run', async (_req: Request, res: Response) => {
+    res
+      .status(501)
+      .json({ error: 'ExecutionEngine is being rebuilt. Coming soon.' });
   });
 
   // POST /api/executions/:id/cancel — Cancel a running execution
@@ -157,42 +41,41 @@ export function setupRoutes(app: Application): void {
           return;
         }
 
-        if (
-          execution.status === 'completed' ||
-          execution.status === 'failed' ||
-          execution.status === 'cancelled'
-        ) {
+        if (['completed', 'failed', 'cancelled'].includes(execution.status)) {
           res.json({
-            data: {
-              id,
-              status: execution.status,
-              message: 'Execution already terminal',
-            },
+            data: { id, status: execution.status, message: 'Already terminal' },
           });
           return;
         }
 
-        // Set cancelled — engine checks this between nodes
         await (db as any).execution.update({
           where: { id },
           data: { status: 'cancelled', completedAt: new Date() },
         });
 
-        logger.info('Execution cancelled', { executionId: id });
-
         emitExecutionProgress(id, { type: 'execution:cancelled' } as any);
-
         res.json({ data: { id, status: 'cancelled' } });
       } catch (error) {
         logger.error(
           'Failed to cancel execution',
           error instanceof Error ? error : null,
-          {
-            id: req.params['id'],
-          }
+          { id: req.params['id'] }
         );
         res.status(500).json({ error: 'Failed to cancel execution' });
       }
+    }
+  );
+
+  // POST /api/executions/:id/resume — Resume a paused execution
+  // TODO: Implement resume-from-node once AI-native engine is built
+  app.post(
+    '/api/executions/:id/resume',
+    async (_req: Request, res: Response) => {
+      res
+        .status(501)
+        .json({
+          error: 'Resume not yet implemented. Coming with AI-native engine.',
+        });
     }
   );
 
@@ -203,23 +86,18 @@ export function setupRoutes(app: Application): void {
         status?: string;
         limit?: string;
       };
-
       const db = await Database.getInstance().getClient();
 
       const where: Record<string, unknown> = {
         organizationId: req.user!.organizationId,
       };
-      if (status) {
-        where['status'] = status;
-      }
+      if (status) where['status'] = status;
 
       const results = await (db as any).execution.findMany({
         where,
         orderBy: { startedAt: 'desc' },
         take: parseInt(limit, 10),
-        include: {
-          sop: { select: { name: true, slug: true } },
-        },
+        include: { sop: { select: { name: true, slug: true } } },
       });
 
       res.json({ data: results, total: results.length });
@@ -256,46 +134,19 @@ export function setupRoutes(app: Application): void {
       logger.error(
         'Failed to get execution',
         error instanceof Error ? error : null,
-        {
-          id: req.params['id'],
-        }
+        { id: req.params['id'] }
       );
       res.status(500).json({ error: 'Failed to get execution' });
     }
   });
 
-  // GET /api/executions/:id/nodes — Get execution nodes
-  app.get('/api/executions/:id/nodes', async (req: Request, res: Response) => {
-    try {
-      const id = req.params['id'] as string;
-      const db = await Database.getInstance().getClient();
-
-      const nodes = await (db as any).executionNode.findMany({
-        where: { executionId: id },
-        orderBy: { startedAt: 'asc' },
-      });
-
-      res.json({ data: nodes });
-    } catch (error) {
-      logger.error(
-        'Failed to get execution nodes',
-        error instanceof Error ? error : null,
-        {
-          id: req.params['id'],
-        }
-      );
-      res.status(500).json({ error: 'Failed to get execution nodes' });
-    }
-  });
-
-  // GET /api/activity — Activity feed for Home space
+  // GET /api/activity — Activity feed
   app.get('/api/activity', async (req: Request, res: Response) => {
     try {
       const { limit = '20', offset = '0' } = req.query as {
         limit?: string;
         offset?: string;
       };
-
       const db = await Database.getInstance().getClient();
 
       const activity = await (db as any).execution.findMany({

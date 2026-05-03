@@ -1,13 +1,13 @@
 {
   "name": "Engineering Ship",
   "slug": "engineering-ship",
-  "description": "Ship workflow: detect base branch, sync with upstream, run tests, review the diff, bump version, update changelog, commit, push, and create a PR.",
-  "level": "task",
+  "description": "Sync with base branch, run tests, review the diff, commit, push, and create a PR.",
+  "level": "playbook",
   "parameters": {
     "baseBranch": {
       "type": "string",
       "required": false,
-      "description": "Base branch to merge into (auto-detected if omitted)"
+      "description": "Base branch to merge into (defaults to main/develop)"
     }
   },
   "constraints": {
@@ -15,130 +15,78 @@
     "timeoutMs": 1800000
   },
   "metadata": {
-    "source": "gstack-skill",
-    "originalSkill": "engineering/ship",
-    "importedAt": "2026-04-12"
+    "version": "2.0.0",
+    "department": "engineering"
   },
   "graph": {
     "nodes": [
       {
-        "id": "detect_base",
-        "name": "Detect Base Branch",
-        "type": "tool_call",
-        "config": {
-          "tool_name": "bash",
-          "parameters": {
-            "command": "gh pr view --json baseRefName -q .baseRefName 2>/dev/null || gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null || echo main"
-          },
-          "requiresApproval": false
-        },
+        "id": "check_status",
+        "name": "Check current state",
+        "description": "Check git status, current branch, and what's changed since the base branch. Understand what is about to ship.",
+        "context_sources": [],
+        "available_tools": ["bash"],
+        "trust_required": "auto",
         "position": { "x": 0, "y": 0 }
       },
       {
-        "id": "preflight",
-        "name": "Pre-flight Checks",
-        "type": "tool_call",
-        "config": {
-          "tool_name": "bash",
-          "parameters": {
-            "command": "echo '--- branch ---' && git branch --show-current && echo '--- status ---' && git status --short && echo '--- diff stat ---' && git diff {{detect_base}}...HEAD --stat && echo '--- log ---' && git log {{detect_base}}..HEAD --oneline"
-          },
-          "requiresApproval": false
-        },
+        "id": "sync_base",
+        "name": "Sync with base branch",
+        "description": "Fetch and merge the base branch into the current branch. Resolve any conflicts.",
+        "context_sources": [{ "type": "var", "node_id": "check_status" }],
+        "available_tools": ["bash"],
+        "trust_required": "prompt",
         "position": { "x": 0, "y": 100 }
       },
       {
-        "id": "merge_base",
-        "name": "Merge Base Branch",
-        "type": "tool_call",
-        "config": {
-          "tool_name": "bash",
-          "parameters": {
-            "command": "git fetch origin {{detect_base}} && git merge origin/{{detect_base}} --no-edit"
-          },
-          "requiresApproval": true
-        },
+        "id": "run_tests",
+        "name": "Run tests",
+        "description": "Run the full test suite. Do not continue if tests fail.",
+        "context_sources": [],
+        "available_tools": ["bash"],
+        "trust_required": "auto",
         "position": { "x": 0, "y": 200 }
       },
       {
-        "id": "run_tests",
-        "name": "Run Tests",
-        "type": "tool_call",
-        "config": {
-          "tool_name": "bash",
-          "parameters": {
-            "command": "pnpm test"
-          },
-          "requiresApproval": false
-        },
+        "id": "review_diff",
+        "name": "Review the diff",
+        "description": "Review the diff for dead code, missing error handling, security issues, and stale comments. Flag anything that needs human judgment before shipping.",
+        "context_sources": [
+          { "type": "var", "node_id": "check_status" },
+          { "type": "var", "node_id": "run_tests" }
+        ],
+        "available_tools": ["bash", "read_file"],
+        "trust_required": "auto",
         "position": { "x": 0, "y": 300 }
       },
       {
-        "id": "review_diff",
-        "name": "Review Diff for Issues",
-        "type": "llm_generate",
-        "config": {
-          "prompt_template": "You are a senior engineer performing a pre-landing code review.\n\nDiff summary:\n{{preflight}}\n\nTest results:\n{{run_tests}}\n\nReview the changes for:\n1. Dead code or unused imports\n2. Missing error handling\n3. N+1 queries or performance issues\n4. Security concerns (hardcoded secrets, SQL injection, XSS)\n5. Missing tests for new code paths\n6. Stale comments that no longer match the code\n\nFor each finding, classify as:\n- AUTO_FIX: can be fixed automatically (dead code, stale comments)\n- ASK: needs human judgment (architecture decisions, naming)\n- OK: no issues found\n\nOutput a structured review with file, line, finding, and classification.",
-          "temperature": 0.2,
-          "max_tokens": 2000
-        },
+        "id": "commit_push",
+        "name": "Commit and push",
+        "description": "Stage all changes, create a single-line conventional commit, and push to remote.",
+        "context_sources": [{ "type": "var", "node_id": "review_diff" }],
+        "available_tools": ["bash"],
+        "trust_required": "prompt",
         "position": { "x": 0, "y": 400 }
       },
       {
-        "id": "bump_version",
-        "name": "Bump Version and Update Changelog",
-        "type": "tool_call",
-        "config": {
-          "tool_name": "code_editor",
-          "parameters": {
-            "action": "bump_version",
-            "type": "patch",
-            "update_changelog": true,
-            "diff_summary": "{{preflight}}"
-          },
-          "requiresApproval": true
-        },
-        "position": { "x": 0, "y": 500 }
-      },
-      {
-        "id": "commit_and_push",
-        "name": "Commit and Push",
-        "type": "tool_call",
-        "config": {
-          "tool_name": "bash",
-          "parameters": {
-            "command": "git add -A && git commit -m 'chore: ship $(cat VERSION 2>/dev/null || echo patch)' && git push -u origin HEAD"
-          },
-          "requiresApproval": true
-        },
-        "position": { "x": 0, "y": 600 }
-      },
-      {
         "id": "create_pr",
-        "name": "Create Pull Request",
-        "type": "tool_call",
-        "config": {
-          "tool_name": "github",
-          "parameters": {
-            "action": "create_pull_request",
-            "title": "Ship: {{preflight}}",
-            "body": "## Review\n{{review_diff}}\n\n## Test Results\n{{run_tests}}",
-            "base": "{{detect_base}}",
-            "head": "current"
-          },
-          "requiresApproval": true
-        },
-        "position": { "x": 0, "y": 700 }
+        "name": "Create pull request",
+        "description": "Open a PR to the base branch with a clear title and summary of what changed and why.",
+        "context_sources": [
+          { "type": "var", "node_id": "check_status" },
+          { "type": "var", "node_id": "review_diff" }
+        ],
+        "available_tools": ["github_create_pr"],
+        "trust_required": "prompt",
+        "position": { "x": 0, "y": 500 }
       }
     ],
     "edges": [
-      { "id": "e1", "source": "detect_base", "target": "preflight" },
-      { "id": "e2", "source": "preflight", "target": "merge_base" },
-      { "id": "e3", "source": "merge_base", "target": "run_tests" },
-      { "id": "e4", "source": "run_tests", "target": "review_diff" },
-      { "id": "e5", "source": "review_diff", "target": "bump_version" },
-      { "id": "e6", "source": "bump_version", "target": "commit_and_push" },
-      { "id": "e7", "source": "commit_and_push", "target": "create_pr" }
+      { "from": "check_status", "to": "sync_base" },
+      { "from": "sync_base", "to": "run_tests" },
+      { "from": "run_tests", "to": "review_diff" },
+      { "from": "review_diff", "to": "commit_push" },
+      { "from": "commit_push", "to": "create_pr" }
     ]
   }
 }
