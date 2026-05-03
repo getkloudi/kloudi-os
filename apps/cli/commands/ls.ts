@@ -1,11 +1,6 @@
-/**
- * kloudi ls
- *
- * List all SOPs in the workspace.
- */
-
 import { Command } from 'commander';
 import { KloudiClient } from '@kloudi/sdk';
+import { loadToken } from '../lib/token.js';
 import chalk from 'chalk';
 
 export function registerLsCommand(program: Command): void {
@@ -15,7 +10,11 @@ export function registerLsCommand(program: Command): void {
     .option('--api-url <url>', 'API base URL', 'http://localhost:3001')
     .option('--level <level>', 'Filter by level (guide, project, task, skill)')
     .action(async (opts: { apiUrl: string; level?: string }) => {
-      const client = new KloudiClient({ baseUrl: opts.apiUrl });
+      const token = loadToken();
+      const client = new KloudiClient({
+        baseUrl: opts.apiUrl,
+        ...(token ? { token } : {}),
+      });
 
       try {
         const sops = await client.listSops(
@@ -31,7 +30,6 @@ export function registerLsCommand(program: Command): void {
         console.log(chalk.cyan.bold(`  ${sops.length} SOPs`));
         console.log('');
 
-        // Column headers
         console.log(
           chalk.gray('  SLUG'.padEnd(28)),
           chalk.gray('LEVEL'.padEnd(10)),

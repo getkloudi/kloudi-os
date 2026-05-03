@@ -114,9 +114,6 @@ importers:
 
   apps/api:
     dependencies:
-      '@kloudi/auth':
-        specifier: workspace:*
-        version: link:../../packages/auth
       '@kloudi/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -336,18 +333,6 @@ importers:
         specifier: ^5.7.0
         version: 5.9.3
 
-  packages/auth:
-    dependencies:
-      '@kloudi/shared':
-        specifier: workspace:*
-        version: link:../shared
-      bcrypt:
-        specifier: ^6.0.0
-        version: 6.0.0
-      jsonwebtoken:
-        specifier: ^9.0.3
-        version: 9.0.3
-
   packages/core:
     dependencies:
       '@kloudi/infrastructure':
@@ -409,6 +394,44 @@ importers:
       jest:
         specifier: 30.2.0
         version: 30.2.0(@types/node@25.1.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/mcp-gateway:
+    dependencies:
+      '@kloudi/infrastructure':
+        specifier: workspace:*
+        version: link:../infrastructure
+      '@kloudi/shared':
+        specifier: workspace:*
+        version: link:../shared
+      express:
+        specifier: ^5.1.0
+        version: 5.2.1
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.3
+        version: 5.0.6
+      '@types/node':
+        specifier: ^25.1.0
+        version: 25.1.0
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
+  packages/platform:
+    dependencies:
+      '@kloudi/infrastructure':
+        specifier: workspace:*
+        version: link:../infrastructure
+      stripe:
+        specifier: ^17.0.0
+        version: 17.7.0
+    devDependencies:
+      '@types/node':
+        specifier: ^25.1.0
+        version: 25.1.0
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -4284,6 +4307,10 @@ packages:
   strip-json-comments@3.1.1:
     resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
     engines: {node: '>=8'}
+
+  stripe@17.7.0:
+    resolution: {integrity: sha512-aT2BU9KkizY9SATf14WhhYVv2uOapBWX0OFWF4xvcj1mPaNotlSc2CsxpS4DS46ZueSppmCF5BX1sNYBtwBvfw==}
+    engines: {node: '>=12.*'}
 
   styled-jsx@5.1.6:
     resolution: {integrity: sha512-qSVyDTeMotdvQYoHWLNGwRFJHC+i+ZvdBRYosOFgC+Wg1vx4frN2/RG/NA7SYqqvKNLf39P2LSRA2pu6n0XYZA==}
@@ -8681,6 +8708,11 @@ snapshots:
   strip-final-newline@2.0.0: {}
 
   strip-json-comments@3.1.1: {}
+
+  stripe@17.7.0:
+    dependencies:
+      '@types/node': 25.1.0
+      qs: 6.14.1
 
   styled-jsx@5.1.6(@babel/core@7.28.6)(react@19.2.4):
     dependencies:

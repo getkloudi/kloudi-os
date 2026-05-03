@@ -39,10 +39,11 @@
   ],
   "references": [
     { "path": "./apps/api" },
+    { "path": "./apps/auth-service" },
     { "path": "./apps/internal-api" },
     { "path": "./apps/cli" },
     { "path": "./apps/mcp-server" },
-    { "path": "./packages/auth" },
+    { "path": "./packages/platform" },
     { "path": "./packages/shared" },
     { "path": "./packages/core" },
     { "path": "./packages/infrastructure" },

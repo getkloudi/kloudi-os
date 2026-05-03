@@ -1,5 +1,4 @@
 import type { Request, Response, RequestHandler } from 'express';
-import { JwtManager } from '@kloudi/auth';
 import { Cache } from '@kloudi/infrastructure/cache';
 import { Database } from '@kloudi/infrastructure/database'; // TODO: Uncomment when schema has models
 import { EventBus } from '@kloudi/infrastructure/events';
@@ -112,18 +111,15 @@ export function createHealthEndpoint(
         };
       }
 
-      // Check auth
+      // Check auth service
       try {
-        const auth = JwtManager.getInstance();
-        const sessionData = await auth.createSession('health-check', {
-          permissions: [],
-          roles: [],
-          metadata: { test: true },
+        const authUrl =
+          process.env['AUTH_SERVICE_URL'] ?? 'http://localhost:3004';
+        const res = await fetch(`${authUrl}/health`, {
+          signal: AbortSignal.timeout(3000),
         });
-        const verified = await auth.validateSession(sessionData.accessToken);
-
         results.components['auth'] = {
-          status: verified.userId === 'health-check' ? 'healthy' : 'degraded',
+          status: res.ok ? 'healthy' : 'unhealthy',
           timestamp: new Date().toISOString(),
         };
       } catch (error) {

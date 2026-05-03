@@ -1,12 +1,7 @@
-/**
- * kloudi trace <execution-id>
- *
- * Fetch an execution trace and render it as a timeline in the terminal.
- */
-
 import { Command } from 'commander';
 import { KloudiClient } from '@kloudi/sdk';
 import type { ExecutionNodeDetail } from '@kloudi/sdk';
+import { loadToken } from '../lib/token.js';
 import chalk from 'chalk';
 
 export function registerTraceCommand(program: Command): void {
@@ -15,7 +10,11 @@ export function registerTraceCommand(program: Command): void {
     .description('View execution trace timeline')
     .option('--api-url <url>', 'API base URL', 'http://localhost:3001')
     .action(async (executionId: string, opts: { apiUrl: string }) => {
-      const client = new KloudiClient({ baseUrl: opts.apiUrl });
+      const token = loadToken();
+      const client = new KloudiClient({
+        baseUrl: opts.apiUrl,
+        ...(token ? { token } : {}),
+      });
 
       try {
         const execution = await client.getExecutionWithNodes(executionId);
@@ -43,7 +42,6 @@ export function registerTraceCommand(program: Command): void {
         console.log(chalk.gray('  ' + '─'.repeat(70)));
         console.log('');
 
-        // Render node timeline
         const nodes = execution.executionNodes;
         if (nodes.length === 0) {
           console.log(chalk.gray('  No nodes executed.'));
@@ -53,7 +51,6 @@ export function registerTraceCommand(program: Command): void {
           }
         }
 
-        // Result summary
         if (execution.result) {
           console.log('');
           console.log(chalk.gray('  ' + '─'.repeat(70)));
@@ -98,7 +95,6 @@ function renderNode(node: ExecutionNodeDetail, isLast: boolean): void {
     tokens ? chalk.gray(tokens) : ''
   );
 
-  // Show gate context if present
   if (node.gateContext) {
     const gate = node.gateContext as { action?: string };
     if (gate.action) {
@@ -106,7 +102,6 @@ function renderNode(node: ExecutionNodeDetail, isLast: boolean): void {
     }
   }
 
-  // Show decision trace if present
   if (node.decisionTrace) {
     const trace = node.decisionTrace as { choice?: string; reasoning?: string };
     if (trace.choice) {
@@ -114,7 +109,6 @@ function renderNode(node: ExecutionNodeDetail, isLast: boolean): void {
     }
   }
 
-  // Show output summary (first 120 chars)
   if (node.output) {
     const summary =
       typeof node.output === 'string'

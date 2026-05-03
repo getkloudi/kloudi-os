@@ -91,7 +91,7 @@ model Integration {
   organizationId String
   type           String   // github, jira, slack, confluence
   name           String
-  credentials    Json     @default("{}")  // TODO: encrypt with AES-256-GCM before storing
+  credentials    Json     @default("{}")  // Encrypted with AES-256-GCM via IntegrationService
   config         Json     @default("{}")
   status         String   @default("active") // active, inactive, error
   createdAt      DateTime @default(now())
@@ -100,4 +100,35 @@ model Integration {
   @@unique([organizationId, type])
   @@index([organizationId])
   @@map("integrations")
+}
+
+model UsageEvent {
+  id             String   @id @default(cuid())
+  organizationId String
+  product        String   // 'mcp-gateway' | 'kloudi-machine'
+  eventType      String   // 'tool_call' | 'sop_execution' | 'agent_session'
+  units          Int      @default(1)
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([product])
+  @@index([createdAt])
+  @@map("usage_events")
+}
+
+model BillingSubscription {
+  id                   String    @id @default(cuid())
+  organizationId       String    @unique
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  product              String    // 'mcp-gateway' | 'kloudi-machine'
+  tier                 String    @default("free") // free | pro | enterprise
+  status               String    @default("active") // active | cancelled | past_due
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([organizationId])
+  @@map("billing_subscriptions")
 }

@@ -59,6 +59,13 @@ export function registerInitCommand(program: Command): void {
       // Step 2: Create organization
       const org = await createOrganization(dbUrl, opts.orgName);
 
+      // TODO: Create member record linking logged-in user as 'owner' of this org.
+      // Requires user auth context (userId) from Better Auth login — not available
+      // until CLI auth flow is implemented. See P1: CLI ls/trace auth headers.
+      // await (prisma as any).member.create({
+      //   data: { id: generateId(), organizationId: org.id, userId: user.id, role: 'owner' },
+      // });
+
       // Step 3: Seed default SOPs
       if (!opts.skipSeed) {
         await seedSops(dbUrl, org.id);
@@ -80,13 +87,10 @@ async function pushSchema(dbUrl: string): Promise<void> {
   );
 
   try {
-    execSync(
-      `npx prisma db push --schema="${schemaPath}" --skip-generate --accept-data-loss`,
-      {
-        env: { ...process.env, DATABASE_URL: dbUrl },
-        stdio: 'pipe',
-      }
-    );
+    execSync(`npx prisma migrate deploy --schema="${schemaPath}"`, {
+      env: { ...process.env, DATABASE_URL: dbUrl },
+      stdio: 'pipe',
+    });
     console.log(chalk.green('        Schema pushed successfully'));
   } catch (error) {
     const err = error as { stderr?: Buffer };
