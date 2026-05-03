@@ -39,7 +39,7 @@
   ],
   "references": [
     { "path": "./apps/api" },
-    { "path": "./apps/auth-service" },
+    { "path": "./apps/auth" },
     { "path": "./apps/internal-api" },
     { "path": "./apps/cli" },
     { "path": "./apps/mcp-server" },

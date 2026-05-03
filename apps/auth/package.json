@@ -10,10 +10,12 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@kloudi/platform": "workspace:*",
+    "@better-auth/prisma-adapter": "^1.2.7",
+    "@kloudi/infrastructure": "workspace:*",
     "@kloudi/shared": "workspace:*",
     "better-auth": "^1.2.7",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "resend": "^4.0.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.0",
