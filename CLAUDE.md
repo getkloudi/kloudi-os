@@ -1,6 +1,24 @@
-# AGENTS.md
+# CLAUDE.md
 
-This file contains essential information for agentic coding agents working in this JS monorepo boilerplate repository.
+Essential information for any agent — human or AI — working in this repo.
+
+## READ FIRST — Doc Structure
+
+```
+docs/current/     ← Start here. Active, locked docs.
+  00-start-here.md          ← Single entry point. Read this first.
+  the-machine-design.md     ← Locked architecture
+  agent-loop-design.md      ← AI-native execution engine (the nucleus)
+  product-architecture.md   ← All modules, team topology, Stage 1 cut
+  session-summary.md        ← 12-hour design session context
+  designs/                  ← UI prototypes (open v6 in browser)
+
+docs/future/      ← Upcoming design sessions (don't build yet)
+docs/archive/     ← Old but relevant (explains why we got here)
+docs/trash/       ← Superseded. Do not read.
+```
+
+**Do not reference anything in `docs/trash/`.** Especially `docs/specs/execution-engine-plan.md` — it describes the old deterministic engine, which is superseded by the AI-native design.
 
 ## gstack
 
@@ -21,20 +39,23 @@ Available skills:
 - `/retro` — Engineering retrospective with per-person feedback
 - `/document-release` — Update docs to match what you just shipped
 
-## 🏗️ Current Build: ExecutionEngine (Phase 1)
+## 🏗️ Current Build: The Machine — Stage 1
 
-**READ FIRST:** `docs/specs/execution-engine-plan.md` contains all locked architecture decisions, PR breakdown, file plan, error handling, state machine, and UI design from CEO/eng/design reviews.
+**READ FIRST:** `docs/current/00-start-here.md` — single entry point, reading order, current status.
+
+**What exists:** CLI (`kloudi run`, `kloudi init`, `kloudi ls`, `kloudi trace`), API, execution engine (deterministic — AI-native engine is the next big build), web UI (Home/Feed, Browse, Editor, Analytics).
+
+**What to build:** See `TODOS.md` for the ordered task list. Fix P0/P1 bugs before anything else.
 
 **Key rules for implementation:**
 
 - Always use `git pull --rebase` — never create merge commits on pull
 - All work happens on `develop` — never commit directly to `main`
 - `main` only receives code through PRs from `develop`
-- Engine-first build order — don't build CRUD for tables the engine doesn't use yet
+- SOPs are the universal format — processes (guides/) and artifacts (projects/) are both SOPs
+- LLM IS the control flow — no if/else branches on node types in the execution engine
 - Async execution — POST /sops/:id/run returns 202, graph runs via setImmediate
-- Node revisit guard — any node visited >1 triggers waiting_input + WebSocket human approval
-- Engine owns AIClient, passes to executors via context
-- SubEntityExecutor receives engine at call time (not construction) to avoid circular dep
+- Trust gates pause execution, persist to Postgres (waiting_input), survive restarts
 - All relative imports need .js extensions (nodenext ESM)
 - Single-line conventional commits, no co-author branding
 

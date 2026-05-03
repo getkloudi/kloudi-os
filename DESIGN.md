@@ -1,11 +1,11 @@
-# Design System — lore.dev
+# Design System — kloudi
 
 ## Product Context
 
-- **What this is:** Multiplayer OS for EPD teams. Everything is an SOP. Procedures are living documents that execute — LLM calls, tool executions, decisions, sub-procedures — with full observability and human-in-the-loop control.
-- **Who it's for:** Engineering, Product, and Design teams who define, execute, and track operational procedures.
-- **Space/industry:** Developer tools / team OS. Peers: Linear, Notion, Cursor, Raycast, Claude Code.
-- **Project type:** OS-like web application with mobile parity. Not a SaaS dashboard — a workspace OS.
+- **What this is:** The Machine — an always-on organizational intelligence for software teams. SOPs encode how the org works. The Machine watches tools (GitHub, Jira, Slack), initiates when something needs attention, and executes through trusted operatives. Not a chatbot, not a script runner.
+- **Who it's for:** Engineers (CLI primary, Root trust), PMs and managers (web feed, Finch trust), and any department that has processes and produces work.
+- **Space/industry:** Developer tools / organizational OS. Peers: Linear, Notion, Cursor, Claude Code, n8n.
+- **Project type:** Three-panel OS — nav rail (56px) + center canvas (one app, full bleed) + right terminal panel (320px wterm). Same experience as CLI, different surface.
 - **Positioning:** Tesla, not car. Airbnb, not Expedia. A new kind of tool, not an old one retrofitted.
 
 ## Design Philosophy
@@ -15,47 +15,35 @@
 - **Spaces, not windows:** Users move between spaces (Home, Browse, Editor, Store), not manage windows. Context flows; the user never "opens an app."
 - **Inspiration:** MercuryOS (fluid contextual surfaces), Linear (polish + density), Cursor (editor DNA), Claude Code (terminal maturity), Notion (approachable workspace).
 
-## Architecture — Three Spaces + Agent
+## Architecture — Three-Panel OS
 
 ```
-┌─────┬────────────────────────────────────────────────────┐
-│     │                                                    │
-│  N  │   SPACE: HOME                                     │
-│  A  │   Search + Activity Feed (social stream)          │
-│  V  │   Quick access cards                              │
-│     │   Team activity, approvals, run status             │
-│  R  │                                                    │
-│  A  ├────────────────────────────────────────────────────┤
-│  I  │                                                    │
-│  L  │   SPACE: BROWSE                                   │
-│     │   Finder-like file browser                        │
-│     │   Sidebar (favorites, workspaces, tags)           │
-│     │   Icon grid of procedures and folders             │
-│     │                                                    │
-│     ├──────────────────────────────┬─────────────────────┤
-│     │                              │                     │
-│     │   SPACE: EDITOR              │   AGENT PANEL       │
-│     │   Breadcrumb nav             │   Terminal output    │
-│     │   Edit / View mode toggle    │   Chat / commands    │
-│     │   Rich SOP content           │   Context / history  │
-│     │   Execution graph + stats    │   Slides in/out      │
-│     │   Run strip (bottom)         │                     │
-│     │                              │                     │
-│     ├────────────────────────────────────────────────────┤
-│     │                                                    │
-│     │   SPACE: STORE                                    │
-│     │   Marketplace for apps, integrations, extensions  │
-│     │   Categories: Workspace, Agent, Analytics, etc.   │
-│     │                                                    │
-└─────┴────────────────────────────────────────────────────┘
+┌────────┬──────────────────────────────────┬──────────────────┐
+│        │                                  │                  │
+│  NAV   │     CENTER CANVAS                │  RIGHT PANEL     │
+│  56px  │                                  │  320px           │
+│        │  One app at a time.              │  (resizable)     │
+│  Icon  │  Full bleed. Instant switch.     │                  │
+│  only  │                                  │  wterm           │
+│        │  Apps:                           │  (embedded       │
+│  ●     │    Home / Feed                   │   terminal)      │
+│  ○     │    Browse (SOP filesystem)       │                  │
+│  ○     │    Editor (markdown + map view)  │  Machine speaks  │
+│  ○     │    Analytics                     │  first. Human    │
+│  ○     │    Settings                      │  converses.      │
+│  ○     │    Store (marketplace)           │                  │
+│        │                                  │  ⌘. to toggle    │
+└────────┴──────────────────────────────────┴──────────────────┘
 ```
+
+**Key principle:** The Machine initiates through Feed. Humans reach The Machine through the right-panel terminal (wterm) or CLI. The center canvas is read-only observation for PMs; active workspace for engineers via wterm.
 
 ### Navigation
 
-- **Nav rail** (left, 56px): Minimal icon-only rail. Logo at top, theme toggle + avatar at bottom. No labels — icons only. Collapses to 0px on mobile.
-- **Spaces** transition instantly — no page loads, no route changes visible to user.
-- **Breadcrumbs** in Editor replace traditional navigation — click any segment to go back.
-- **⌘K** opens spotlight/command palette from anywhere.
+- **Nav rail** (left, 56px): Icon-only. Active app: accent background. Reorderable. Theme toggle + avatar at bottom.
+- **Center canvas** transitions instantly — iPad model. No tabs, no windows. One app fills the space.
+- **Right panel** (320px): wterm connected to the agent loop via WebSocket. Same experience as standalone `kloudi` CLI, just embedded. Collapsible (⌘.). Resizable.
+- **⌘K** opens command palette from anywhere.
 
 ### Mobile
 
@@ -281,7 +269,7 @@ The Home space's primary surface. Social-media-style posts showing team activity
 
 ### Post Types
 
-1. **Execution run** — avatar, user, "ran a procedure", timestamp. Card with procedure name, status badge, node-by-node progress dots, progress bar.
+1. **Execution run** — avatar, user, "ran a SOP", timestamp. Card with SOP name, status badge, node-by-node progress dots, progress bar.
 2. **Execution completed** — same structure, green status, full progress bar.
 3. **Execution failed** — red border on card, error context in metadata.
 4. **Awaiting approval** — amber border, approval question block with Continue/Abort buttons inline.
@@ -292,7 +280,7 @@ The Home space's primary surface. Social-media-style posts showing team activity
 - Reactions: emoji + count (👀 2, ✅ 1)
 - Reply: opens thread
 - Retry: on failed posts, triggers re-run
-- Clicking the card navigates to Editor space for that procedure
+- Clicking the card navigates to Editor space for that SOP
 
 ## Accessibility
 

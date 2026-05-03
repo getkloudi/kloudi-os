@@ -1,23 +1,13 @@
 {
   "name": "Daily Standup",
   "slug": "shared-standup",
-  "description": "Generate a daily standup update by reading git activity, Jira board status, and PR state, then composing a concise status report.",
-  "level": "task",
+  "description": "Generate a daily standup update from git activity, Jira board, and open PRs.",
+  "level": "playbook",
   "parameters": {
     "sinceDays": {
       "type": "number",
       "required": false,
-      "description": "Number of days to look back for activity (default: 1)"
-    },
-    "jiraProject": {
-      "type": "string",
-      "required": false,
-      "description": "Jira project key to filter tasks (e.g. KOS)"
-    },
-    "format": {
-      "type": "string",
-      "required": false,
-      "description": "Output format: 'slack', 'markdown', or 'plain' (default: 'markdown')"
+      "description": "Days to look back (default: 1)"
     }
   },
   "constraints": {
@@ -25,119 +15,45 @@
     "timeoutMs": 300000
   },
   "metadata": {
-    "source": "gstack-skill",
-    "originalSkill": "shared/standup",
-    "importedAt": "2026-04-12"
+    "version": "2.0.0",
+    "department": "shared"
   },
   "graph": {
     "nodes": [
       {
-        "id": "read_git_log",
-        "name": "Read Git Activity",
-        "type": "tool_call",
-        "config": {
-          "tool_name": "bash",
-          "parameters": {
-            "command": "git log --since='{{parameters.sinceDays}} days ago' --author=$(git config user.email) --oneline --no-merges && echo '---BRANCHES---' && git branch -a --sort=-committerdate | head -5 && echo '---DIFF-STAT---' && git diff --stat HEAD~5..HEAD 2>/dev/null || true"
-          },
-          "requiresApproval": false
-        },
+        "id": "read_activity",
+        "name": "Read recent activity",
+        "description": "Read git log from the last day and list open PRs. Understand what was done and what is in flight.",
+        "context_sources": [],
+        "available_tools": ["bash"],
+        "trust_required": "auto",
         "position": { "x": 0, "y": 0 }
       },
       {
-        "id": "read_jira_board",
-        "name": "Read Jira Board",
-        "type": "tool_call",
-        "config": {
-          "tool_name": "jira",
-          "parameters": {
-            "action": "search_issues",
-            "jql": "assignee = currentUser() AND project = '{{parameters.jiraProject}}' AND status in ('In Progress', 'In Review', 'Done') AND updated >= -{{parameters.sinceDays}}d ORDER BY updated DESC",
-            "maxResults": 10
-          },
-          "requiresApproval": false
-        },
-        "position": { "x": 200, "y": 0 }
+        "id": "read_jira",
+        "name": "Read Jira board",
+        "description": "Read Jira tickets assigned to the current user that are in progress, in review, or done in the last day.",
+        "context_sources": [],
+        "available_tools": ["jira_get_issue", "jira_search_issues"],
+        "trust_required": "auto",
+        "position": { "x": 0, "y": 100 }
       },
       {
-        "id": "read_open_prs",
-        "name": "Check Open PRs",
-        "type": "tool_call",
-        "config": {
-          "tool_name": "bash",
-          "parameters": {
-            "command": "gh pr list --author @me --state open --json title,url,reviewDecision,isDraft --limit 5 2>/dev/null || echo 'No PRs found'"
-          },
-          "requiresApproval": false
-        },
-        "position": { "x": 400, "y": 0 }
-      },
-      {
-        "id": "synthesize_update",
-        "name": "Compose Standup Update",
-        "type": "llm_generate",
-        "config": {
-          "prompt_template": "You are composing a daily standup update from multiple data sources.\n\nGit Activity:\n{{read_git_log}}\n\nJira Tasks:\n{{read_jira_board}}\n\nOpen Pull Requests:\n{{read_open_prs}}\n\nFormat: {{parameters.format}}\n\nCompose a standup update with three sections:\n\n**Yesterday (Done):**\n- Summarize completed work from git commits and Jira transitions to 'Done'\n- Reference specific story IDs and PR titles\n\n**Today (Planned):**\n- List in-progress Jira items and what the next steps are\n- Mention any PRs awaiting review\n\n**Blockers:**\n- Flag any PRs with requested changes or stalled reviews\n- Note any Jira items that have been 'In Progress' for more than 2 days\n- If no blockers, say 'None'\n\nKeep it concise: 3-5 bullets per section max. Use the requested format.",
-          "temperature": 0.4,
-          "max_tokens": 1000
-        },
-        "position": { "x": 200, "y": 200 }
-      },
-      {
-        "id": "choose_delivery",
-        "name": "Choose Delivery Method",
-        "type": "interpolative",
-        "config": {
-          "decision_prompt": "The standup update is ready. How should it be delivered?\n\nUpdate:\n{{synthesize_update}}\n\nFormat requested: {{parameters.format}}",
-          "options": [
-            {
-              "id": "display_only",
-              "label": "Display in Terminal",
-              "description": "Print the standup update to stdout for the user to copy"
-            },
-            {
-              "id": "copy_clipboard",
-              "label": "Copy to Clipboard",
-              "description": "Copy the update to the system clipboard"
-            },
-            {
-              "id": "post_slack",
-              "label": "Post to Slack",
-              "description": "Send the update to the configured Slack channel"
-            }
-          ],
-          "reasoning_required": false
-        },
-        "position": { "x": 200, "y": 300 }
-      },
-      {
-        "id": "deliver_update",
-        "name": "Deliver Standup Update",
-        "type": "tool_call",
-        "config": {
-          "tool_name": "bash",
-          "parameters": {
-            "command": "echo '{{synthesize_update}}'"
-          },
-          "requiresApproval": false
-        },
-        "position": { "x": 200, "y": 400 }
+        "id": "compose_standup",
+        "name": "Compose standup update",
+        "description": "Write a standup update with three sections: Yesterday (done), Today (planned), Blockers. Keep it to 3-5 bullets per section. Be specific — reference story IDs and PR titles. If no blockers, say None.",
+        "context_sources": [
+          { "type": "var", "node_id": "read_activity" },
+          { "type": "var", "node_id": "read_jira" }
+        ],
+        "available_tools": [],
+        "trust_required": "auto",
+        "position": { "x": 0, "y": 200 }
       }
     ],
     "edges": [
-      { "id": "e1", "source": "read_git_log", "target": "synthesize_update" },
-      {
-        "id": "e2",
-        "source": "read_jira_board",
-        "target": "synthesize_update"
-      },
-      { "id": "e3", "source": "read_open_prs", "target": "synthesize_update" },
-      {
-        "id": "e4",
-        "source": "synthesize_update",
-        "target": "choose_delivery"
-      },
-      { "id": "e5", "source": "choose_delivery", "target": "deliver_update" }
+      { "from": "read_activity", "to": "compose_standup" },
+      { "from": "read_jira", "to": "compose_standup" }
     ]
   }
 }

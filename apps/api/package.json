@@ -25,7 +25,6 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@kloudi/auth": "workspace:*",
     "@kloudi/core": "workspace:*",
     "@kloudi/infrastructure": "workspace:*",
     "@kloudi/shared": "workspace:*",

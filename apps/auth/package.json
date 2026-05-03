@@ -1,0 +1,25 @@
+{
+  "name": "@kloudi/auth",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "node --watch dist/index.js",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@better-auth/prisma-adapter": "^1.2.7",
+    "@kloudi/infrastructure": "workspace:*",
+    "@kloudi/shared": "workspace:*",
+    "better-auth": "^1.2.7",
+    "express": "^5.1.0",
+    "resend": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^25.1.0",
+    "typescript": "^5.9.3"
+  }
+}

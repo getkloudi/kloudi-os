@@ -147,5 +147,6 @@ export interface EvictedItem {
   reason: string;
 }
 
-// Forward reference to avoid circular import
-export type ExecutionEngine = import('./execution-engine.js').ExecutionEngine;
+// ExecutionEngine type — to be implemented as AI-native engine (docs/current/agent-loop-design.md)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ExecutionEngine = any;

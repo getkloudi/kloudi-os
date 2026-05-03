@@ -1,0 +1,60 @@
+{
+  "name": "@kloudi/mcp-gateway",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Federated MCP gateway — the tool registry and execution layer for AI agents. Can run in-process or as a standalone HTTP service.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nitishMehrotra/kloudi-os.git",
+    "directory": "packages/mcp-gateway"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "mcp-gateway": "./dist/server.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "node --watch dist/server.js",
+    "start": "node dist/server.js",
+    "type-check": "tsc --noEmit",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest --passWithNoTests",
+    "test:ci": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage --passWithNoTests"
+  },
+  "dependencies": {
+    "@kloudi/infrastructure": "workspace:*",
+    "@kloudi/shared": "workspace:*",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^25.1.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "mcp",
+    "gateway",
+    "agents",
+    "tools",
+    "federation",
+    "ai"
+  ],
+  "license": "MIT",
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}

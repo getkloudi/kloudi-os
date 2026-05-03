@@ -1,66 +1,143 @@
 # TODOS
 
-Deferred work tracked from plan reviews. Each item has context so a future engineer understands why it exists.
+**Last updated:** 2026-05-03
+**Read first:** `docs/current/00-start-here.md`
 
 ---
 
-## Sprint 1.5: Extended Node Types
+## P0 — Do before anything else
 
-**What:** Add `parallel`, `loop`, `condition`, and `transform` node types to the ExecutionEngine.
-**Why:** The spec defines 8 node types. Sprint 1 ships 4 (llm_generate, tool_call, interpolative, sub_entity). These 4 complete coverage and enable more complex SOPs.
-**Context:** The NodeExecutor interface is extensible — adding new types is new classes implementing `execute(node, ctx, engine?)`. No engine changes needed. The cycle guard (human approval on node revisit) handles the loop case. `parallel` is the most complex — requires concurrent node execution with Promise.all and partial failure handling.
-**Effort:** M | **Priority:** P2 | **Depends on:** Sprint 1 engine working
+### Encrypt credentials in Integration model
 
-## Background Worker Process (queue technology TBD)
+`packages/core/prisma/schema.prisma` — `credentials Json` stores secrets as plain JSON.
+Add AES-256-GCM encryption at application layer before storing, decrypt on read.
+**File:** `packages/core/organization/integration-service.ts` (wherever Integration is read/written)
 
-**What:** Move graph execution from in-process `setImmediate()` to a background worker.
-**Why:** Long-running executions (10+ LLM calls) could block the API event loop. A separate worker isolates execution from API responsiveness.
-**Context:** Queue technology TBD (evaluate Temporal, pg-boss, or Postgres polling based on Sprint 1 execution patterns). The engine is a pure function (`execute(id, params) → Execution`) easy to wrap as a job. Main work: worker entry point, route change to enqueue instead of setImmediate, serialization of execution context. Also enables retry semantics and horizontal scaling.
-**Effort:** M | **Priority:** P2 | **Depends on:** Sprint 1 engine working
+---
 
-## Sprint 2: Execution Resume-From-Node
+## P1 — Do before any real user touches this
 
-**What:** Add `resumeFrom(executionId, nodeId)` to the ExecutionEngine.
-**Why:** When execution fails at node 3 of 5, user should resume from node 3 instead of re-running everything (wastes LLM tokens on completed nodes).
-**Context:** Sprint 1 stores all node inputs/outputs in ExecutionNode records. Resume loads prior outputs into `ctx.variables` from stored ExecutionNode records, then continues traversal from the specified node. Needs a new API endpoint: `POST /api/executions/:id/resume`.
-**Effort:** M | **Priority:** P2 | **Depends on:** Sprint 1 engine + ExecutionNode storage
+### CLI ls/trace have no auth
 
-## Dry-Run Mode for Execution Validation
+`apps/cli/commands/ls.ts` and `apps/cli/commands/trace.ts` call the API with no auth headers. Will 401.
+Add API key or session token to all CLI API calls.
 
-**What:** Add a `dryRun: true` flag to `engine.execute()` that traverses the graph validating executor availability, variable resolution, and graph structure without making any LLM/tool calls.
-**Why:** Catches procedure authoring mistakes before burning LLM tokens. `SopEntity.validate()` checks graph structure but not runtime concerns (executor registration, variable availability from prior nodes).
-**Context:** The engine would walk the graph, check each node type has a registered executor, and verify that `resolveInputs()` can resolve all `{{variable}}` references given the expected outputs of prior nodes. Returns a validation report instead of executing.
-**Effort:** S | **Priority:** P3 | **Depends on:** Sprint 1 engine working
+### kloudi init creates orphaned org
 
-## Orphaned Execution Cleanup
+`apps/cli/commands/init.ts` — creates Organization but no Membership linking the user to it.
+Create Membership in the same transaction as Organization.
 
-**What:** A startup check or periodic job that finds executions stuck in `running` status for >1 hour and marks them as `failed` with error `Server restarted during execution`.
-**Why:** In-process execution means server restarts orphan running executions. Without cleanup, the execution list accumulates zombie `running` records that confuse the UI and waste the concurrent execution limit slots.
-**Context:** The timeout guard (10 min default) prevents new executions from running forever, but doesn't fix executions orphaned before the guard was added or when the server crashes. A simple query on startup: `UPDATE executions SET status='failed', error='Orphaned' WHERE status='running' AND startedAt < NOW() - INTERVAL '1 hour'`.
-**Effort:** S | **Priority:** P2 | **Depends on:** Sprint 1 engine working
+### Remove --accept-data-loss from init
 
-## Import Remaining 41 Gstack Skills as SOPs
+`apps/cli/commands/init.ts` — `prisma db push --accept-data-loss` is dangerous in production.
+Remove flag. Use proper migrations (`prisma migrate deploy`).
 
-**What:** Convert remaining 41 gstack skills to SOP graph JSON and import into Postgres.
-**Why:** Sprint 1 proves execution with 3 skills. The full skill library (44 total) makes kloudi.os useful for real work.
-**Context:** CC hand-designs each graph by reading the SKILL.md and modeling the workflow as nodes/edges. At ~30 min per skill with CC, this is 2-3 sessions of focused work. Not building a parser — doing things that don't scale.
-**Effort:** L | **Priority:** P2 | **Depends on:** Sprint 1 trust gate + execution working
+### Seed script hardcodes 'default-org'
 
-## Per-Integration Credential Storage
+`apps/cli/commands/init.ts` seed logic — uses literal string instead of org from context.
+Use org slug derived from the created org.
 
-**What:** Store tool credentials per-integration per-workspace in an integrations table.
-**Why:** Sprint 1 uses env vars for Jira/GitHub tokens. Multi-user and marketplace require credentials stored with the integration, not in the environment.
-**Context:** When a user installs an integration from the marketplace, they configure the connection (API URL, token). Credentials are stored encrypted in Postgres, loaded by the engine when a tool_call needs them. ToolCallExecutor receives credentials via ExecutionContext, not process.env.
-**Effort:** M | **Priority:** P2 | **Depends on:** Sprint 1 tool adapters working
+### DESIGN.md still says "lore.dev" in Decisions Log
 
-## Evaluate Temporal for Execution Durability
+`DESIGN.md` Decisions Log at the bottom references old product name in some entries.
+Review and update any remaining "lore.dev" or "procedure" strings.
 
-**What:** Evaluate Temporal.io as the execution durability layer for Sprint 2.
-**Why:** In-process execution (setImmediate) means server restarts kill running SOPs. Sprint 2 web UI needs executions to survive restarts.
-**Context:** Current architecture persists currentNodeId + variables + ExecutionNode records to Postgres. A resumeFromNode() method could reload state and continue. Temporal provides this out of the box with automatic retry, saga patterns, and activity heartbeats. Evaluate whether the simple Postgres approach is sufficient or if Temporal's guarantees are needed.
-**Effort:** S (evaluation) | **Priority:** P1 | **Depends on:** Sprint 1 complete
+---
 
-## ~~Internal Dashboard (Sprint 3)~~ DONE
+## P2 — Do after P1 is clean
 
-**Status:** Shipped in PR #8 (2026-04-12). Scaffolded `apps/ops/` (Next.js admin UI) + `apps/internal-api/` (Express sudo APIs). CI fix in PR #10.
-**Remaining:** Deploy to Render + Vercel, configure Google OAuth credentials, set env vars on services.
+### Orphaned execution cleanup
+
+Add startup check (or periodic job) that finds executions stuck in `running` for >1 hour and marks them `failed`.
+Server restarts leave orphans. Affects: `apps/api/index.ts` startup sequence.
+
+### Execution resume-from-node
+
+Add `POST /api/executions/:id/resume` — loads prior `ExecutionNode` outputs and continues from the specified node.
+Stub exists in `apps/api/routes/executions.routes.ts`. Implement once AI-native engine is built.
+
+### Internal dashboard deploy
+
+`apps/ops/` + `apps/internal-api/` shipped in PR #8 but never deployed.
+Configure Google OAuth credentials, set `OPS_ALLOWED_EMAILS`, deploy to Render + Vercel.
+
+---
+
+## P3 — Nice to have
+
+### Dry-run mode
+
+Add `dryRun: true` flag to the AI-native engine — traverses graph validating tool availability and variable resolution without making LLM calls.
+Catches SOP authoring mistakes cheaply before burning tokens.
+
+### Fix (db as any) Prisma casts
+
+Type casts in capability classes bypass Prisma's type safety.
+Fix Prisma client typing so `(db as any)` isn't needed.
+
+---
+
+## V0 Build — parallel workstreams
+
+These are the core V0 build tasks. All can run in parallel once interface contracts are defined.
+See `docs/current/product-architecture.md` for the full module map.
+
+### [AGENT 1] MCP Gateway
+
+**Package:** `packages/mcp-gateway/` (new — create from scratch)
+**What:** Federated MCP gateway. Single interface for all tool calls. Routes to GitHub, Jira, or builtin tools. Injects credentials from Integration table. Runs trust inspector pipeline before every execution. Will be open-sourced as a neutral project.
+**Auth model:** Org-level (shared token for all agents in org) + User-level (personal token, actions attributed to user).
+**Unblocked:** Start now.
+**Delivers:** `gateway.call(toolName, params, orgContext)` interface + GitHub MCP + Jira MCP + builtin tools (read_file, write_file, bash).
+
+### [AGENT 2] Graph Derivation Engine
+
+**Package:** `packages/core/graph-derive/` (new — replaces old `import/skill-to-graph.ts`)
+**What:** Reads SOP markdown, sends to LLM, derives `.graph.json` matching SopNode schema (description, context_sources, available_tools, trust_required). AI-powered, not rule-based.
+**Unblocked:** Start now. SopNode schema already defined in seed SOPs.
+**Delivers:** `deriveGraph(markdown: string) → SopNode[]`
+
+### [AGENT 3] kloudi-fs
+
+**Package:** Separate repo (open source)
+**What:** Agent filesystem. Copy Mesa's approach, build our own. FUSE mount + versioning + TypeScript SDK. Each org = one repo. kloudi.os is the first consumer. Will be donated to ecosystem.
+**Unblocked:** Start now.
+**Delivers:** `read/write SOP files`, bidirectional sync with Postgres jsonb
+**Brief:** `docs/future/session-g-kloudi-fs.md`
+
+### [AGENT 4] AI-Native Execution Engine
+
+**Package:** `packages/core/execution/engine.ts` (new — replaces deleted `execution-engine.ts`)
+**What:** The inner loop from `docs/current/agent-loop-design.md`. LLM is control flow. SOP graph provides context assembly path. Vercel AI SDK for LLM calls. MCP Gateway for tools.
+**Depends on:** Agent 1 (MCP Gateway interface — can mock for first 2 days)
+**Delivers:** `runSop(sopId, params, orgContext) → EventStream`
+
+### [AGENT 5] REPL Loop / CLI
+
+**Package:** `apps/cli/` (extend existing)
+**What:** Outer conversational loop. Machine speaks first. User converses. Drives inner engine. Pi's EventStream pattern + OpenCode's session management.
+**Depends on:** Agent 4 engine interface
+**Delivers:** `kloudi` REPL — Machine greets, user talks, trust gates inline
+
+### [AGENT 6] Web App + wterm
+
+**Package:** `apps/web/` (extend existing)
+**What:** wterm in right panel connected to agent loop via WebSocket. Markdown SOP editor with auto-derive (calls Agent 2 on save). Feed cards with approval buttons.
+**Depends on:** Agent 4 EventStream interface + Agent 2 derive
+**Delivers:** wterm works, markdown editor derives graph on save, feed shows execution cards
+
+---
+
+## Design needed before code
+
+These need a design session before implementation. Briefs in `docs/future/`.
+
+| What                                                      | Where                                       | Stage   |
+| --------------------------------------------------------- | ------------------------------------------- | ------- |
+| DB schema for agent sessions + feed events + trust scores | `docs/future/session-c-db-schema.md`        | Stage 1 |
+| Editor framework: markdown + map + reading views          | `docs/future/session-b-editor-framework.md` | Stage 2 |
+| Background mode: observer + planner                       | No brief yet                                | Stage 2 |
+| Backlink system for SOP knowledge network                 | No brief yet                                | Stage 2 |
+| Trust model: per-user evolving scores                     | No brief yet                                | Stage 2 |
+| Onboarding mode: scan org + generate SOPs                 | `docs/future/session-d-onboarding-mode.md`  | Stage 3 |
+| Learning mode: trace analysis + SOP proposals             | No brief yet                                | Stage 3 |

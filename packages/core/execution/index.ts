@@ -1,12 +1,5 @@
-export { ExecutionEngine } from './execution-engine.js';
 export { ContextManager } from './context-manager.js';
 export { getNestedValue } from './resolve-path.js';
-export {
-  LLMExecutor,
-  ToolCallExecutor,
-  InterpolativeExecutor,
-  SubEntityExecutor,
-} from './executors/index.js';
 export type {
   ExecutionContext,
   NodeExecutor,
