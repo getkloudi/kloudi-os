@@ -1,20 +1,19 @@
 /**
  * MCP Gateway — Public API
  *
- * The single interface between the AI-native execution engine and all tools.
- * See src/types.ts for the full contract.
+ * Two surfaces:
+ *   SDK  — GatewayImpl + ToolRegistry + typed provider modules (no governance)
+ *   API  — Use the standalone server (server.ts) which adds inspectors + credential injection
  *
- * Usage (by execution engine):
- *   import { type MCPGateway, type OrgContext, type ToolDefinition } from '@kloudi/mcp-gateway';
+ * Usage (execution engine, in-process):
+ *   import { GatewayImpl, ToolRegistry } from '@kloudi/mcp-gateway';
  *
- * Implementation TODO (Agent 1 from TODOS.md):
- *   - Create GatewayImpl that implements MCPGateway
- *   - Register builtin tools (read_file, write_file, bash)
- *   - Register GitHub MCP server
- *   - Register Jira MCP server
- *   - Wire trust inspector pipeline
+ * Usage (typed provider, direct):
+ *   import { github } from '@kloudi/mcp-gateway/github';
+ *   await github.createPr({ owner, repo, title, body, base, head }, token);
  */
 
+// Types
 export type {
   MCPGateway,
   MCPServerConfig,
@@ -30,3 +29,13 @@ export type {
   GatewayEvent,
   GatewayEventHandler,
 } from './types.js';
+
+// SDK — runtime classes
+export { GatewayImpl } from './gateway.js';
+export { ToolRegistry } from './registry.js';
+export type { InternalTool, ToolAdapter, PendingGate } from './registry.js';
+
+// Typed provider modules — also accessible via subpath exports
+export { github } from './providers/github/index.js';
+export { jira } from './providers/jira/index.js';
+export { builtin } from './providers/builtin/index.js';

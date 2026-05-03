@@ -21,6 +21,18 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./github": {
+      "types": "./dist/providers/github/index.d.ts",
+      "import": "./dist/providers/github/index.js"
+    },
+    "./jira": {
+      "types": "./dist/providers/jira/index.d.ts",
+      "import": "./dist/providers/jira/index.js"
+    },
+    "./builtin": {
+      "types": "./dist/providers/builtin/index.d.ts",
+      "import": "./dist/providers/builtin/index.js"
+    },
     "./server": {
       "types": "./dist/server.d.ts",
       "import": "./dist/server.js"
