@@ -46,6 +46,13 @@ Review and update any remaining "lore.dev" or "procedure" strings.
 
 ## P2 — Do after P1 is clean
 
+### Schema migration: drop old auth tables
+
+When deploying to a database that previously ran the old JWT auth schema, old tables (`users`, `sessions`, `organizations`, `memberships`) need to be dropped manually. No Prisma migration exists for this rename — `prisma migrate deploy` only creates the new Better Auth tables, it does not drop the old ones.
+Action: write a migration script or run `DROP TABLE` manually before first production deploy.
+
+---
+
 ### Orphaned execution cleanup
 
 Add startup check (or periodic job) that finds executions stuck in `running` for >1 hour and marks them `failed`.
