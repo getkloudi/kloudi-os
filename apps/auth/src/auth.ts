@@ -50,17 +50,27 @@ export async function createAuth() {
       },
     },
 
-    // Better Auth links accounts by email — signing in with GitHub using the same
-    // email as an existing email/password account merges them into one account.
+    // Only register OAuth providers when credentials are present — Better Auth
+    // silently accepts empty strings and produces confusing errors on sign-in.
+    // Better Auth links by email: GitHub sign-in with a matching email merges
+    // into the existing email/password account.
     socialProviders: {
-      github: {
-        clientId: process.env['GITHUB_CLIENT_ID'] ?? '',
-        clientSecret: process.env['GITHUB_CLIENT_SECRET'] ?? '',
-      },
-      google: {
-        clientId: process.env['GOOGLE_CLIENT_ID'] ?? '',
-        clientSecret: process.env['GOOGLE_CLIENT_SECRET'] ?? '',
-      },
+      ...(process.env['GITHUB_CLIENT_ID']
+        ? {
+            github: {
+              clientId: process.env['GITHUB_CLIENT_ID'],
+              clientSecret: process.env['GITHUB_CLIENT_SECRET'] ?? '',
+            },
+          }
+        : {}),
+      ...(process.env['GOOGLE_CLIENT_ID']
+        ? {
+            google: {
+              clientId: process.env['GOOGLE_CLIENT_ID'],
+              clientSecret: process.env['GOOGLE_CLIENT_SECRET'] ?? '',
+            },
+          }
+        : {}),
     },
 
     plugins: [

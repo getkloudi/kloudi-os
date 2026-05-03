@@ -48,6 +48,7 @@ interface BetterAuthSession {
 async function validateBearerToken(token: string): Promise<UserContext> {
   const response = await fetch(`${AUTH_SERVICE_URL}/api/auth/get-session`, {
     headers: { Authorization: `Bearer ${token}` },
+    signal: AbortSignal.timeout(5000),
   });
 
   if (!response.ok) {
