@@ -1,146 +1,137 @@
 # TODOS
 
-**Last updated:** 2026-05-03
+**Last updated:** 2026-05-04
 **Read first:** `docs/current/00-start-here.md`
 
 ---
 
-## P0 — Do before anything else
+## ✅ Done (this session)
 
-### Encrypt credentials in Integration model
-
-`packages/core/prisma/schema.prisma` — `credentials Json` stores secrets as plain JSON.
-Add AES-256-GCM encryption at application layer before storing, decrypt on read.
-**File:** `packages/core/organization/integration-service.ts` (wherever Integration is read/written)
+| Item                                                               | PR    |
+| ------------------------------------------------------------------ | ----- |
+| Encrypt credentials in Integration model (AES-256-GCM)             | #12   |
+| CLI ls/trace auth headers                                          | #12   |
+| Remove `--accept-data-loss` from init                              | #12   |
+| Better Auth replacing custom JWT                                   | #12   |
+| Resend email integration                                           | #12   |
+| Stripe billing foundation + UsageEvent model                       | #12   |
+| MCP Gateway — GatewayImpl, registry, providers, inspectors, tools  | #13   |
+| Old executor classes deleted (LLMExecutor, ToolCallExecutor, etc.) | local |
+| Decision + Pattern models deleted                                  | local |
+| Seed SOPs rewritten to new AI-native node schema                   | local |
+| All docs organised into current/future/archive/trash               | local |
+| All docs Obsidian-ready (Mermaid, callouts, TOC)                   | local |
 
 ---
 
-## P1 — Do before any real user touches this
+## P0 — Before any external user
 
-### MCP Gateway HTTP API has no authentication
+### MCP Gateway: credential decryption not wired
 
-`packages/mcp-gateway/src/server.ts` — `POST /tools/call` accepts any request with no auth check. The `OrgContext` in the request body is caller-supplied — nothing verifies the caller is allowed to act for that `organizationId`. A malicious caller could inject any org ID and execute tools using that org's credentials.
-**Fix:** validate Bearer token against the auth service and verify `organizationId` membership — same pattern as `apps/api/lib/auth-middleware.ts`. Acceptable for V0 internal use only.
+`packages/mcp-gateway/src/server.ts` — reads encrypted credentials from Postgres and passes raw blobs to tool adapters. GitHub/Jira calls fail. PR #12 encrypted credentials; the gateway needs to call `decryptCredentials()` from `packages/core/organization/integration-service.ts`.
 
-### MCP Gateway builtin tools have no path sanitization
+### MCP Gateway: no authentication on HTTP API
 
-`packages/mcp-gateway/src/providers/builtin/client.ts` — `read_file` and `write_file` accept arbitrary paths with no bounds checking. Nothing prevents reads from `~/.ssh/id_rsa` or writes to `/etc/passwd` if the LLM produces such a path. The security inspector only blocks `rm -rf` patterns, not path traversal.
-**Fix:** validate paths against a configurable `allowedPaths` list before executing. Acceptable for V0 since `write_file` always fires a trust gate.
+`packages/mcp-gateway/src/server.ts` — `POST /tools/call` has no auth. `organizationId` is caller-supplied and unverified. Any caller can execute tools using any org's credentials.
+**Fix:** API key middleware. Key → org mapping server-side. Run the MCP Gateway production /plan-eng-review session (`docs/current/session-plan-eng-review-mcp-gateway.md`) before implementing.
 
-### CLI ls/trace have no auth
+### MCP Gateway: no usage recording
 
-`apps/cli/commands/ls.ts` and `apps/cli/commands/trace.ts` call the API with no auth headers. Will 401.
-Add API key or session token to all CLI API calls.
+`recordUsage()` in `packages/platform/src/billing.ts` is never called. Every successful tool call must emit a `UsageEvent` for billing.
+
+---
+
+## P1 — Before charging money
 
 ### kloudi init creates orphaned org
 
-`apps/cli/commands/init.ts` — creates Organization but no Membership linking the user to it.
-Create Membership in the same transaction as Organization.
+`apps/cli/commands/init.ts` — creates Organization but no Membership. Requires logged-in userId from Better Auth CLI flow (not yet implemented). Tracked as a `// TODO` comment in the file.
 
-### Remove --accept-data-loss from init
+### Seed script hardcodes slug
 
-`apps/cli/commands/init.ts` — `prisma db push --accept-data-loss` is dangerous in production.
-Remove flag. Use proper migrations (`prisma migrate deploy`).
+`apps/cli/commands/init.ts` — uses literal string instead of org slug from context. Minor.
 
-### Seed script hardcodes 'default-org'
+### MCP Gateway: rate limiting
 
-`apps/cli/commands/init.ts` seed logic — uses literal string instead of org from context.
-Use org slug derived from the created org.
+No per-org rate limiting. Needed before any paying customer.
 
-### DESIGN.md still says "lore.dev" in Decisions Log
+### MCP Gateway: input validation
 
-`DESIGN.md` Decisions Log at the bottom references old product name in some entries.
-Review and update any remaining "lore.dev" or "procedure" strings.
+`POST /tools/call` has no Zod validation. Malformed requests cause unhandled crashes.
+
+### MCP Gateway: error response scrubbing
+
+`err.message` exposed to callers in 500 responses — can leak internal details.
+
+### Schema migration: drop old auth tables
+
+`users`, `sessions`, `organizations`, `memberships` tables still exist in any DB that ran the old JWT schema. `prisma migrate deploy` won't drop them. Write a migration script before first production deploy.
 
 ---
 
-## P2 — Do after P1 is clean
+## P2 — After P1 is clean
 
 ### Orphaned execution cleanup
 
-Add startup check (or periodic job) that finds executions stuck in `running` for >1 hour and marks them `failed`.
-Server restarts leave orphans. Affects: `apps/api/index.ts` startup sequence.
+Executions stuck in `running` for >1 hour never get marked `failed`. Affects `apps/api/index.ts` startup.
 
 ### Execution resume-from-node
 
-Add `POST /api/executions/:id/resume` — loads prior `ExecutionNode` outputs and continues from the specified node.
-Stub exists in `apps/api/routes/executions.routes.ts`. Implement once AI-native engine is built.
+`POST /api/executions/:id/resume` — stub exists, implement once AI-native engine is built.
 
 ### Internal dashboard deploy
 
-`apps/ops/` + `apps/internal-api/` shipped in PR #8 but never deployed.
-Configure Google OAuth credentials, set `OPS_ALLOWED_EMAILS`, deploy to Render + Vercel.
+`apps/ops/` + `apps/internal-api/` shipped in PR #8 but never deployed. Configure Google OAuth, deploy to Render + Vercel.
+
+### MCP Gateway: path sanitization for builtin tools
+
+`read_file` and `write_file` accept arbitrary paths. No bounds checking against an allowed-paths list.
 
 ---
 
 ## P3 — Nice to have
 
-### Dry-run mode
+### Dry-run mode for execution engine
 
-Add `dryRun: true` flag to the AI-native engine — traverses graph validating tool availability and variable resolution without making LLM calls.
-Catches SOP authoring mistakes cheaply before burning tokens.
+Validates graph without making LLM calls. Catches authoring mistakes cheaply.
 
 ### Fix (db as any) Prisma casts
 
-Type casts in capability classes bypass Prisma's type safety.
-Fix Prisma client typing so `(db as any)` isn't needed.
+Type casts bypass Prisma's type safety throughout capability classes.
 
 ---
 
 ## V0 Build — parallel workstreams
 
-These are the core V0 build tasks. All can run in parallel once interface contracts are defined.
-See `docs/current/product-architecture.md` for the full module map.
+Agent 1 (MCP Gateway) is DONE. Three agents can start in parallel now.
 
-### [AGENT 1] MCP Gateway
+| Agent                         | Status            | Package                             | Depends on        |
+| ----------------------------- | ----------------- | ----------------------------------- | ----------------- |
+| **Agent 1: MCP Gateway**      | ✅ DONE (PR #13)  | `packages/mcp-gateway/`             | —                 |
+| **Agent 2: Graph Derivation** | 🔲 Ready to start | `packages/core/graph-derive/`       | Nothing           |
+| **Agent 3: kloudi-fs**        | 🔲 Ready to start | Separate repo                       | Nothing           |
+| **Agent 4: Execution Engine** | 🔲 Ready to start | `packages/core/execution/engine.ts` | Agent 1 ✅        |
+| **Agent 5: REPL Loop / CLI**  | ⏳ Blocked        | `apps/cli/`                         | Agent 4           |
+| **Agent 6: Web App + wterm**  | ⏳ Blocked        | `apps/web/`                         | Agent 4 + Agent 2 |
 
-**Package:** `packages/mcp-gateway/` (new — create from scratch)
-**What:** Federated MCP gateway. Single interface for all tool calls. Routes to GitHub, Jira, or builtin tools. Injects credentials from Integration table. Runs trust inspector pipeline before every execution. Will be open-sourced as a neutral project.
-**Auth model:** Org-level (shared token for all agents in org) + User-level (personal token, actions attributed to user).
-**Unblocked:** Start now.
-**Delivers:** `gateway.call(toolName, params, orgContext)` interface + GitHub MCP + Jira MCP + builtin tools (read_file, write_file, bash).
+**Prompts:**
 
-### [AGENT 2] Graph Derivation Engine
+- Agent 2: `docs/current/agent-2-graph-derive-prompt.md`
+- Agent 3: `docs/current/agent-3-kloudi-fs-prompt.md`
+- Agent 4: `docs/current/agent-4-execution-engine-prompt.md`
 
-**Package:** `packages/core/graph-derive/` (new — replaces old `import/skill-to-graph.ts`)
-**What:** Reads SOP markdown, sends to LLM, derives `.graph.json` matching SopNode schema (description, context_sources, available_tools, trust_required). AI-powered, not rule-based.
-**Unblocked:** Start now. SopNode schema already defined in seed SOPs.
-**Delivers:** `deriveGraph(markdown: string) → SopNode[]`
+---
 
-### [AGENT 3] kloudi-fs
+## MCP Gateway production sessions (run before P0 fixes)
 
-**Package:** Separate repo (open source)
-**What:** Agent filesystem. Copy Mesa's approach, build our own. FUSE mount + versioning + TypeScript SDK. Each org = one repo. kloudi.os is the first consumer. Will be donated to ecosystem.
-**Unblocked:** Start now.
-**Delivers:** `read/write SOP files`, bidirectional sync with Postgres jsonb
-**Brief:** `docs/future/session-g-kloudi-fs.md`
+Run these before implementing auth/billing/rate limiting for the gateway:
 
-### [AGENT 4] AI-Native Execution Engine
-
-**Package:** `packages/core/execution/engine.ts` (new — replaces deleted `execution-engine.ts`)
-**What:** The inner loop from `docs/current/agent-loop-design.md`. LLM is control flow. SOP graph provides context assembly path. Vercel AI SDK for LLM calls. MCP Gateway for tools.
-**Depends on:** Agent 1 (MCP Gateway interface — can mock for first 2 days)
-**Delivers:** `runSop(sopId, params, orgContext) → EventStream`
-
-### [AGENT 5] REPL Loop / CLI
-
-**Package:** `apps/cli/` (extend existing)
-**What:** Outer conversational loop. Machine speaks first. User converses. Drives inner engine. Pi's EventStream pattern + OpenCode's session management.
-**Depends on:** Agent 4 engine interface
-**Delivers:** `kloudi` REPL — Machine greets, user talks, trust gates inline
-
-### [AGENT 6] Web App + wterm
-
-**Package:** `apps/web/` (extend existing)
-**What:** wterm in right panel connected to agent loop via WebSocket. Markdown SOP editor with auto-derive (calls Agent 2 on save). Feed cards with approval buttons.
-**Depends on:** Agent 4 EventStream interface + Agent 2 derive
-**Delivers:** wterm works, markdown editor derives graph on save, feed shows execution cards
+1. **`docs/current/session-office-hours-mcp-gateway.md`** — product direction, narrowest wedge, what features are actually needed vs OpenRouter/AI SDK
+2. **`docs/current/session-plan-eng-review-mcp-gateway.md`** — lock production architecture: auth model, billing pipeline, trust layer decision, rate limiting, deployment topology
 
 ---
 
 ## Design needed before code
-
-These need a design session before implementation. Briefs in `docs/future/`.
 
 | What                                                      | Where                                       | Stage   |
 | --------------------------------------------------------- | ------------------------------------------- | ------- |
@@ -149,5 +140,5 @@ These need a design session before implementation. Briefs in `docs/future/`.
 | Background mode: observer + planner                       | No brief yet                                | Stage 2 |
 | Backlink system for SOP knowledge network                 | No brief yet                                | Stage 2 |
 | Trust model: per-user evolving scores                     | No brief yet                                | Stage 2 |
-| Onboarding mode: scan org + generate SOPs                 | `docs/future/session-d-onboarding-mode.md`  | Stage 3 |
+| Onboarding mode: scan org → generate SOPs                 | `docs/future/session-d-onboarding-mode.md`  | Stage 3 |
 | Learning mode: trace analysis + SOP proposals             | No brief yet                                | Stage 3 |
