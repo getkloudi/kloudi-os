@@ -20,18 +20,6 @@ const mockCache = {
   delete: jest.fn().mockResolvedValue(true),
 };
 
-const mockAuth = {
-  createSession: jest.fn().mockResolvedValue({
-    accessToken: 'test-token',
-    refreshToken: 'test-refresh-token',
-  }),
-  validateSession: jest.fn().mockResolvedValue({
-    userId: 'health-check',
-    permissions: [],
-    roles: [],
-  }),
-};
-
 const mockEventBus = {
   emit: jest.fn(),
   on: jest.fn(),
@@ -79,7 +67,6 @@ jest.unstable_mockModule('@kloudi/infrastructure/cache', () => ({
     getInstance: jest.fn(() => mockCache),
   },
 }));
-
 
 jest.unstable_mockModule('@kloudi/infrastructure/events', () => ({
   EventBus: {
