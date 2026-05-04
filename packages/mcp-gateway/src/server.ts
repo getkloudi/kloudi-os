@@ -21,7 +21,7 @@ import { createHash, randomBytes, timingSafeEqual } from 'crypto';
 import cors from 'cors';
 import { z } from 'zod';
 import { GatewayImpl } from './gateway.js';
-import { ToolRegistry, type PendingGate } from './registry.js';
+import { ToolRegistry } from './registry.js';
 import { registerAllTools } from './tools/index.js';
 import { runInspectors } from './inspectors/index.js';
 import { safeDecrypt } from '@kloudi/shared/crypto/credentials';
@@ -212,38 +212,29 @@ app.post(
         nodeId: context.nodeId,
       };
 
-      try {
-        const credentials = await resolveCredentials(
-          tool.definition.integration,
-          tool.definition.authType,
-          context
-        );
-        const gate: PendingGate = {
-          tool,
+      const gateKey = `${context.executionId}:${context.nodeId}`;
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h TTL
+
+      const { Database } = await import('@kloudi/infrastructure/database');
+      const db = await Database.getInstance().getClient();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (db as any).trustGate.upsert({
+        where: { gateKey },
+        create: {
+          gateKey,
+          toolName,
           params,
-          context,
-          trustCtx,
-          credentials,
-        };
-        gateway.setPendingTrustGate(
-          `${context.executionId}:${context.nodeId}`,
-          gate
-        );
-      } catch {
-        // Credentials unavailable — gate fires without pre-resolved creds,
-        // will re-resolve on approval
-        const gate: PendingGate = {
-          tool,
+          orgContext: context as unknown as Record<string, unknown>,
+          trustCtx: trustCtx as unknown as Record<string, unknown>,
+          expiresAt,
+        },
+        update: {
           params,
-          context,
-          trustCtx,
-          credentials: {},
-        };
-        gateway.setPendingTrustGate(
-          `${context.executionId}:${context.nodeId}`,
-          gate
-        );
-      }
+          orgContext: context as unknown as Record<string, unknown>,
+          trustCtx: trustCtx as unknown as Record<string, unknown>,
+          expiresAt,
+        },
+      });
 
       res.json({ status: 'trust_gate', trustGateContext: trustCtx });
       return;
@@ -317,20 +308,76 @@ app.post(
       return;
     }
     const { executionId, nodeId, decision } = parsedResume.data;
-    const result = await gateway.resumeAfterApproval(
-      executionId,
-      nodeId,
-      decision
-    );
 
-    if (result.status === 'success') {
-      recordUsage(organizationId, 'mcp-gateway', 'tool_call', 1, {
-        toolName: result.meta?.toolName,
-        resumedFromTrustGate: true,
-      }).catch(() => {});
+    const gateKey = `${executionId}:${nodeId}`;
+    const { Database } = await import('@kloudi/infrastructure/database');
+    const db = await Database.getInstance().getClient();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const gate = await (db as any).trustGate.findUnique({ where: { gateKey } });
+    if (!gate) {
+      res
+        .status(404)
+        .json({ status: 'error', error: 'No pending trust gate found' });
+      return;
     }
 
-    res.json(result);
+    // Reject: delete gate and return
+    if (decision === 'reject') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (db as any).trustGate.delete({ where: { gateKey } });
+      res.json({ status: 'blocked', blockReason: 'Rejected by user' });
+      return;
+    }
+
+    // Approve: re-resolve credentials and execute
+    try {
+      const orgCtx = gate.orgContext as OrgContext;
+      const toolName = gate.toolName as string;
+      const params = gate.params as Record<string, unknown>;
+      const tool = registry.get(toolName);
+      if (!tool) {
+        res
+          .status(404)
+          .json({ status: 'error', error: `Tool not found: ${toolName}` });
+        return;
+      }
+
+      const credentials = await resolveCredentials(
+        tool.definition.integration,
+        tool.definition.authType,
+        orgCtx
+      );
+      const result = await gateway.callWithCredentials(
+        toolName,
+        params,
+        credentials,
+        orgCtx
+      );
+
+      // Delete gate after successful execution
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (db as any).trustGate.delete({ where: { gateKey } });
+
+      if (result.status === 'success') {
+        recordUsage(organizationId, 'mcp-gateway', 'tool_call', 1, {
+          toolName,
+          resumedFromTrustGate: true,
+        }).catch(() => {});
+      }
+
+      res.json(result);
+    } catch (err) {
+      const requestId = `${executionId}:${nodeId}`;
+      console.error('[gateway] trust gate resume failed', {
+        requestId,
+        gateKey,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      res
+        .status(500)
+        .json({ status: 'error', error: 'Internal error', requestId });
+    }
   }
 );
 
