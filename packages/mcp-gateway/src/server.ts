@@ -24,7 +24,7 @@ import { GatewayImpl } from './gateway.js';
 import { ToolRegistry, type PendingGate } from './registry.js';
 import { registerAllTools } from './tools/index.js';
 import { runInspectors } from './inspectors/index.js';
-import { decryptCredentials } from '@kloudi/core/organization/integration-service';
+import { safeDecrypt } from '@kloudi/shared/crypto/credentials';
 import { recordUsage } from '@kloudi/platform/billing';
 import type { TrustGateContext, OrgContext } from './types.js';
 
@@ -80,27 +80,7 @@ async function resolveCredentials(
   }
 
   const raw = record['credentials'];
-  // safeDecrypt: handles both AES-256-GCM encrypted strings and legacy plaintext objects
-  if (typeof raw === 'string') {
-    try {
-      const parsed = JSON.parse(raw) as Record<string, unknown>;
-      if (
-        typeof parsed['iv'] === 'string' &&
-        typeof parsed['data'] === 'string' &&
-        typeof parsed['tag'] === 'string'
-      ) {
-        return decryptCredentials(raw);
-      }
-    } catch {
-      // not JSON — fall through
-    }
-  }
-  if (typeof raw === 'object' && raw !== null) {
-    return raw as Record<string, string>;
-  }
-  return decryptCredentials(
-    typeof raw === 'string' ? raw : JSON.stringify(raw)
-  );
+  return safeDecrypt(raw);
 }
 
 // API key authentication middleware

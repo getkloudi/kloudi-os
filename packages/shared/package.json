@@ -33,6 +33,10 @@
     "./prompt-manager": {
       "types": "./dist/prompt-manager/index.d.ts",
       "import": "./dist/prompt-manager/index.js"
+    },
+    "./crypto/credentials": {
+      "types": "./dist/crypto/credentials.d.ts",
+      "import": "./dist/crypto/credentials.js"
     }
   },
   "scripts": {
