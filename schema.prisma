@@ -165,3 +165,18 @@ model ApiKey {
   @@map("api_keys")
 }
 
+model TrustGate {
+  id          String   @id @default(cuid())
+  gateKey     String   @unique  // "executionId:nodeId"
+  toolName    String
+  params      Json
+  orgContext  Json     // OrgContext (organizationId, executionId, nodeId, userId?)
+  trustCtx    Json     // TrustGateContext
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  @@index([gateKey])
+  @@index([expiresAt])
+  @@map("trust_gates")
+}
+
