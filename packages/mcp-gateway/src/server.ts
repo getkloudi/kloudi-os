@@ -26,6 +26,7 @@ import { registerAllTools } from './tools/index.js';
 import { runInspectors } from './inspectors/index.js';
 import { safeDecrypt } from '@kloudi/shared/crypto/credentials';
 import { recordUsage } from '@kloudi/platform/billing';
+import { rateLimitMiddleware } from './middleware/rate-limit.js';
 import type { TrustGateContext, OrgContext } from './types.js';
 
 const PORT = parseInt(process.env['PORT'] ?? '3010', 10);
@@ -158,54 +159,95 @@ app.post('/admin/api-keys', async (req: Request, res: Response) => {
 });
 
 // POST /tools/call — governance wrapper
-app.post('/tools/call', requireApiKey, async (req: Request, res: Response) => {
-  const bodySchema = z.object({
-    toolName: z.string().min(1),
-    params: z.record(z.string(), z.unknown()).default({}),
-  });
-  const parsed = bodySchema.safeParse(req.body);
-  if (!parsed.success) {
-    res
-      .status(400)
-      .json({ error: 'Invalid request body', details: parsed.error.flatten() });
-    return;
-  }
-  const { toolName, params } = parsed.data;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const organizationId = (req as any).organizationId as string;
-  const reqId = `ext-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const context: OrgContext = {
-    organizationId,
-    executionId: organizationId,
-    nodeId: reqId,
-  };
-
-  const tool = registry.get(toolName);
-  if (!tool) {
-    res
-      .status(404)
-      .json({ status: 'error', error: `Tool not found: ${toolName}` });
-    return;
-  }
-
-  const inspection = await runInspectors(tool, params, context);
-
-  if (inspection.verdict === 'block') {
-    res.json({ status: 'blocked', blockReason: inspection.reason });
-    return;
-  }
-
-  if (inspection.verdict === 'prompt') {
-    const trustCtx: TrustGateContext = {
-      toolName,
-      description: `${tool.definition.description} — params: ${JSON.stringify(params)}`,
-      params,
-      riskLevel: tool.definition.defaultTrust === 'block' ? 'high' : 'medium',
-      isDestructive: tool.definition.defaultTrust === 'prompt',
-      requiresUserLevel: tool.definition.authType === 'user',
-      executionId: context.executionId,
-      nodeId: context.nodeId,
+app.post(
+  '/tools/call',
+  requireApiKey,
+  rateLimitMiddleware,
+  async (req: Request, res: Response) => {
+    const bodySchema = z.object({
+      toolName: z.string().min(1),
+      params: z.record(z.string(), z.unknown()).default({}),
+    });
+    const parsed = bodySchema.safeParse(req.body);
+    if (!parsed.success) {
+      res
+        .status(400)
+        .json({ error: 'Invalid request body', details: parsed.error.flatten() });
+      return;
+    }
+    const { toolName, params } = parsed.data;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const organizationId = (req as any).organizationId as string;
+    const reqId = `ext-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const context: OrgContext = {
+      organizationId,
+      executionId: organizationId,
+      nodeId: reqId,
     };
+
+    const tool = registry.get(toolName);
+    if (!tool) {
+      res
+        .status(404)
+        .json({ status: 'error', error: `Tool not found: ${toolName}` });
+      return;
+    }
+
+    const inspection = await runInspectors(tool, params, context);
+
+    if (inspection.verdict === 'block') {
+      res.json({ status: 'blocked', blockReason: inspection.reason });
+      return;
+    }
+
+    if (inspection.verdict === 'prompt') {
+      const trustCtx: TrustGateContext = {
+        toolName,
+        description: `${tool.definition.description} — params: ${JSON.stringify(params)}`,
+        params,
+        riskLevel: tool.definition.defaultTrust === 'block' ? 'high' : 'medium',
+        isDestructive: tool.definition.defaultTrust === 'prompt',
+        requiresUserLevel: tool.definition.authType === 'user',
+        executionId: context.executionId,
+        nodeId: context.nodeId,
+      };
+
+      try {
+        const credentials = await resolveCredentials(
+          tool.definition.integration,
+          tool.definition.authType,
+          context
+        );
+        const gate: PendingGate = {
+          tool,
+          params,
+          context,
+          trustCtx,
+          credentials,
+        };
+        gateway.setPendingTrustGate(
+          `${context.executionId}:${context.nodeId}`,
+          gate
+        );
+      } catch {
+        // Credentials unavailable — gate fires without pre-resolved creds,
+        // will re-resolve on approval
+        const gate: PendingGate = {
+          tool,
+          params,
+          context,
+          trustCtx,
+          credentials: {},
+        };
+        gateway.setPendingTrustGate(
+          `${context.executionId}:${context.nodeId}`,
+          gate
+        );
+      }
+
+      res.json({ status: 'trust_gate', trustGateContext: trustCtx });
+      return;
+    }
 
     try {
       const credentials = await resolveCredentials(
@@ -213,77 +255,46 @@ app.post('/tools/call', requireApiKey, async (req: Request, res: Response) => {
         tool.definition.authType,
         context
       );
-      const gate: PendingGate = {
-        tool,
+      const result = await gateway.callWithCredentials(
+        toolName,
         params,
-        context,
-        trustCtx,
         credentials,
-      };
-      gateway.setPendingTrustGate(
-        `${context.executionId}:${context.nodeId}`,
-        gate
+        context
       );
-    } catch {
-      // Credentials unavailable — gate fires without pre-resolved creds,
-      // will re-resolve on approval
-      const gate: PendingGate = {
-        tool,
-        params,
-        context,
-        trustCtx,
-        credentials: {},
-      };
-      gateway.setPendingTrustGate(
-        `${context.executionId}:${context.nodeId}`,
-        gate
-      );
+      // Record usage async — don't block the response
+      recordUsage(organizationId, 'mcp-gateway', 'tool_call', 1, {
+        toolName,
+      }).catch(() => {});
+      res.json(result);
+    } catch (err) {
+      console.error('[gateway] tool call failed', {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        requestId: (req as any).requestId,
+        toolName,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      res.status(500).json({
+        status: 'error',
+        error: 'Internal error',
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        requestId: (req as any).requestId,
+      });
     }
-
-    res.json({ status: 'trust_gate', trustGateContext: trustCtx });
-    return;
   }
-
-  try {
-    const credentials = await resolveCredentials(
-      tool.definition.integration,
-      tool.definition.authType,
-      context
-    );
-    const result = await gateway.callWithCredentials(
-      toolName,
-      params,
-      credentials,
-      context
-    );
-    // Record usage async — don't block the response
-    recordUsage(organizationId, 'mcp-gateway', 'tool_call', 1, {
-      toolName,
-    }).catch(() => {});
-    res.json(result);
-  } catch (err) {
-    console.error('[gateway] tool call failed', {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      requestId: (req as any).requestId,
-      toolName,
-      error: err instanceof Error ? err.message : String(err),
-    });
-    res.status(500).json({
-      status: 'error',
-      error: 'Internal error',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      requestId: (req as any).requestId,
-    });
-  }
-});
+);
 
 // GET /tools?organizationId=xxx
-app.get('/tools', requireApiKey, async (req: Request, res: Response) => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const organizationId = (req as any).organizationId as string;
-  const tools = await gateway.listTools(organizationId);
-  res.json({ tools });
-});
+app.get(
+  '/tools',
+  requireApiKey,
+  rateLimitMiddleware,
+  async (req: Request, res: Response) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const organizationId = (req as any).organizationId as string;
+    const tools = await gateway.listTools(organizationId);
+    res.json({ tools });
+  }
+);
 
 // POST /tools/resume
 app.post(
