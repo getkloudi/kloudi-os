@@ -23,8 +23,8 @@ export interface OrgContext {
   /** Organization ID — used to look up Integration credentials */
   organizationId: string;
 
-  /** User ID — used for user-level auth and trust scoring */
-  userId: string;
+  /** User ID — used for user-level auth and trust scoring. Optional for API-key-authenticated calls. */
+  userId?: string;
 
   /** Execution ID — for trace logging and trust gate context */
   executionId: string;

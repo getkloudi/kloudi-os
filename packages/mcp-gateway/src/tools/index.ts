@@ -4,7 +4,9 @@ import { registerGitHubTools } from './github/index.js';
 import { registerJiraTools } from './jira/index.js';
 
 export function registerAllTools(registry: ToolRegistry): void {
-  registerBuiltinTools(registry);
+  if (process.env['ENABLE_BUILTIN_TOOLS'] === 'true') {
+    registerBuiltinTools(registry);
+  }
   registerGitHubTools(registry);
   registerJiraTools(registry);
 }
