@@ -51,12 +51,14 @@
     "@kloudi/infrastructure": "workspace:*",
     "@kloudi/platform": "workspace:*",
     "@kloudi/shared": "workspace:*",
+    "cors": "^2.8.6",
     "express": "^5.1.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@jest/globals": "^30.0.0",
     "@swc/jest": "^0.2.0",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/node": "^25.1.0",
     "jest": "^30.0.0",

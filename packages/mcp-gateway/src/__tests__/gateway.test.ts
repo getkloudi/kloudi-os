@@ -1,4 +1,7 @@
 import { describe, test, expect, beforeEach } from '@jest/globals';
+
+// @kloudi/infrastructure/database is mapped to a test mock via jest.config.js
+// moduleNameMapper — no live DB connection is required.
 import { securityInspect } from '../inspectors/security.js';
 import { repetitionInspect } from '../inspectors/repetition.js';
 import { trustInspect } from '../inspectors/trust.js';
