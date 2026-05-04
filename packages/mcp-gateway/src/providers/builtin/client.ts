@@ -1,6 +1,9 @@
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'fs';
 import { dirname, join, resolve } from 'path';
-import { execSync } from 'child_process';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 
 export interface ReadFileResult {
   content: string;
@@ -34,17 +37,16 @@ export const builtin = {
     return { written: true, path };
   },
 
-  bash: (command: string): BashResult => {
+  bash: async (command: string): Promise<BashResult> => {
     try {
-      const output = execSync(command, {
-        encoding: 'utf-8',
+      const { stdout } = await execAsync(command, {
         timeout: 30000,
         maxBuffer: 1024 * 1024 * 10,
       });
-      return { output, exitCode: 0 };
+      return { output: stdout, exitCode: 0 };
     } catch (err: unknown) {
-      const e = err as { stderr?: string; message: string; status?: number };
-      return { output: e.stderr ?? e.message, exitCode: e.status ?? 1 };
+      const e = err as { stderr?: string; message: string; code?: number };
+      return { output: e.stderr ?? e.message, exitCode: e.code ?? 1 };
     }
   },
 

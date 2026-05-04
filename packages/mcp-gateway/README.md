@@ -16,12 +16,9 @@ The same tools are accessible four ways. Pick based on your consumer.
 ### SDK — TypeScript in-process
 
 ```typescript
-import { GatewayImpl, ToolRegistry } from '@kloudi/mcp-gateway';
-import { registerAllTools } from '@kloudi/mcp-gateway/tools'; // internal
+import { createGateway } from '@kloudi/mcp-gateway';
 
-const registry = new ToolRegistry();
-registerAllTools(registry);
-const gateway = new GatewayImpl(registry);
+const gateway = createGateway();
 
 const result = await gateway.call(
   'github_create_pr',

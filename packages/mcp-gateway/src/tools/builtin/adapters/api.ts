@@ -74,8 +74,8 @@ export function buildBuiltinApiTools(): InternalTool[] {
       adapters: [
         {
           type: 'api',
-          execute: async (params, _credentials, _context) =>
-            builtin.bash(params['command'] as string),
+          execute: (_params, _credentials, _context) =>
+            builtin.bash(_params['command'] as string),
         },
       ],
     },

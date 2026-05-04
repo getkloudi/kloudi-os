@@ -2,16 +2,29 @@
  * MCP Gateway — Public API
  *
  * Two surfaces:
- *   SDK  — GatewayImpl + ToolRegistry + typed provider modules (no governance)
+ *   SDK  — createGateway() or GatewayImpl + typed provider modules (no governance)
  *   API  — Use the standalone server (server.ts) which adds inspectors + credential injection
  *
  * Usage (execution engine, in-process):
- *   import { GatewayImpl, ToolRegistry } from '@kloudi/mcp-gateway';
+ *   import { createGateway } from '@kloudi/mcp-gateway';
+ *   const gateway = createGateway();
  *
  * Usage (typed provider, direct):
  *   import { github } from '@kloudi/mcp-gateway/github';
  *   await github.createPr({ owner, repo, title, body, base, head }, token);
  */
+
+import { GatewayImpl } from './gateway.js';
+import { ToolRegistry } from './registry.js';
+import { registerAllTools } from './tools/index.js';
+import type { MCPGateway } from './types.js';
+
+/** Create a fully configured gateway with all built-in tools registered. */
+export function createGateway(): MCPGateway {
+  const registry = new ToolRegistry();
+  registerAllTools(registry);
+  return new GatewayImpl(registry);
+}
 
 // Types
 export type {
@@ -30,7 +43,7 @@ export type {
   GatewayEventHandler,
 } from './types.js';
 
-// SDK — runtime classes
+// SDK — runtime classes (for power users who need custom tool sets)
 export { GatewayImpl } from './gateway.js';
 export { ToolRegistry } from './registry.js';
 export type { InternalTool, ToolAdapter, PendingGate } from './registry.js';

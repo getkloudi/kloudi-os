@@ -22,5 +22,5 @@ export async function runInspectors(
   const repetition = repetitionInspect(tool, params, context);
   if (repetition.verdict !== 'allow') return repetition;
 
-  return { verdict: 'allow', inspector: 'security' };
+  return { verdict: 'allow', inspector: 'repetition' };
 }

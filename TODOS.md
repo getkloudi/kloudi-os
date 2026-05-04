@@ -17,6 +17,16 @@ Add AES-256-GCM encryption at application layer before storing, decrypt on read.
 
 ## P1 — Do before any real user touches this
 
+### MCP Gateway HTTP API has no authentication
+
+`packages/mcp-gateway/src/server.ts` — `POST /tools/call` accepts any request with no auth check. The `OrgContext` in the request body is caller-supplied — nothing verifies the caller is allowed to act for that `organizationId`. A malicious caller could inject any org ID and execute tools using that org's credentials.
+**Fix:** validate Bearer token against the auth service and verify `organizationId` membership — same pattern as `apps/api/lib/auth-middleware.ts`. Acceptable for V0 internal use only.
+
+### MCP Gateway builtin tools have no path sanitization
+
+`packages/mcp-gateway/src/providers/builtin/client.ts` — `read_file` and `write_file` accept arbitrary paths with no bounds checking. Nothing prevents reads from `~/.ssh/id_rsa` or writes to `/etc/passwd` if the LLM produces such a path. The security inspector only blocks `rm -rf` patterns, not path traversal.
+**Fix:** validate paths against a configurable `allowedPaths` list before executing. Acceptable for V0 since `write_file` always fires a trust gate.
+
 ### CLI ls/trace have no auth
 
 `apps/cli/commands/ls.ts` and `apps/cli/commands/trace.ts` call the API with no auth headers. Will 401.
