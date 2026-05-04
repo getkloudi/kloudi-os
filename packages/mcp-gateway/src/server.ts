@@ -32,6 +32,14 @@ const PORT = parseInt(process.env['PORT'] ?? '3010', 10);
 const app: Express = express();
 app.use(express.json());
 
+// Request ID middleware — attach a unique ID to every request for tracing
+app.use((req: Request, _res: Response, next: () => void) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (req as any).requestId =
+    `gw-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  next();
+});
+
 // Bootstrap
 const registry = new ToolRegistry();
 registerAllTools(registry);
@@ -266,9 +274,17 @@ app.post('/tools/call', requireApiKey, async (req: Request, res: Response) => {
     }).catch(() => {});
     res.json(result);
   } catch (err) {
+    console.error('[gateway] tool call failed', {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      requestId: (req as any).requestId,
+      toolName,
+      error: err instanceof Error ? err.message : String(err),
+    });
     res.status(500).json({
       status: 'error',
-      error: err instanceof Error ? err.message : String(err),
+      error: 'Internal error',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      requestId: (req as any).requestId,
     });
   }
 });
@@ -282,6 +298,7 @@ app.get('/tools', requireApiKey, async (req: Request, res: Response) => {
 });
 
 // POST /tools/resume
+<<<<<<< HEAD
 app.post(
   '/tools/resume',
   requireApiKey,
@@ -318,6 +335,37 @@ app.post(
     }
 
     res.json(result);
+||||||| parent of 3de233d (feat: scrub error messages from 500 responses, add request IDs)
+app.post('/tools/resume', async (req: Request, res: Response) => {
+  const resumeSchema = z.object({
+    executionId: z.string().min(1),
+    nodeId: z.string().min(1),
+    decision: z.enum(['approve', 'reject']),
+  });
+  const parsedResume = resumeSchema.safeParse(req.body);
+  if (!parsedResume.success) {
+    res
+      .status(400)
+      .json({
+        error: 'Invalid request body',
+        details: parsedResume.error.flatten(),
+      });
+    return;
+=======
+app.post('/tools/resume', async (req: Request, res: Response) => {
+  const resumeSchema = z.object({
+    executionId: z.string().min(1),
+    nodeId: z.string().min(1),
+    decision: z.enum(['approve', 'reject']),
+  });
+  const parsedResume = resumeSchema.safeParse(req.body);
+  if (!parsedResume.success) {
+    res.status(400).json({
+      error: 'Invalid request body',
+      details: parsedResume.error.flatten(),
+    });
+    return;
+>>>>>>> 3de233d (feat: scrub error messages from 500 responses, add request IDs)
   }
 );
 
