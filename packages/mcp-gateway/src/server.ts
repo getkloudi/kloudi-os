@@ -18,6 +18,7 @@
 
 import express, { type Express, type Request, type Response } from 'express';
 import { createHash, randomBytes, timingSafeEqual } from 'crypto';
+import { z } from 'zod';
 import { GatewayImpl } from './gateway.js';
 import { ToolRegistry, type PendingGate } from './registry.js';
 import { registerAllTools } from './tools/index.js';
@@ -67,7 +68,11 @@ async function resolveCredentials(
   if (typeof raw === 'string') {
     try {
       const parsed = JSON.parse(raw) as Record<string, unknown>;
-      if (typeof parsed['iv'] === 'string' && typeof parsed['data'] === 'string' && typeof parsed['tag'] === 'string') {
+      if (
+        typeof parsed['iv'] === 'string' &&
+        typeof parsed['data'] === 'string' &&
+        typeof parsed['tag'] === 'string'
+      ) {
         return decryptCredentials(raw);
       }
     } catch {
@@ -77,7 +82,9 @@ async function resolveCredentials(
   if (typeof raw === 'object' && raw !== null) {
     return raw as Record<string, string>;
   }
-  return decryptCredentials(typeof raw === 'string' ? raw : JSON.stringify(raw));
+  return decryptCredentials(
+    typeof raw === 'string' ? raw : JSON.stringify(raw)
+  );
 }
 
 // API key authentication middleware
@@ -133,10 +140,18 @@ app.post('/admin/api-keys', async (req: Request, res: Response) => {
     res.status(403).json({ error: 'Forbidden' });
     return;
   }
-  const { organizationId, name } = req.body as {
-    organizationId: string;
-    name: string;
-  };
+  const schema = z.object({
+    organizationId: z.string().min(1),
+    name: z.string().min(1),
+  });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) {
+    res
+      .status(400)
+      .json({ error: 'Missing required fields: organizationId, name' });
+    return;
+  }
+  const { organizationId, name } = parsed.data;
   const rawKey = randomBytes(32).toString('hex');
   const keyHash = createHash('sha256').update(rawKey).digest('hex');
   const { Database } = await import('@kloudi/infrastructure/database');
@@ -156,7 +171,11 @@ app.post('/tools/call', requireApiKey, async (req: Request, res: Response) => {
   const organizationId = (req as any).organizationId as string;
   // build context from authenticated org
   const reqId = `ext-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const context: OrgContext = { organizationId, executionId: organizationId, nodeId: reqId };
+  const context: OrgContext = {
+    organizationId,
+    executionId: organizationId,
+    nodeId: reqId,
+  };
 
   const tool = registry.get(toolName);
   if (!tool) {
