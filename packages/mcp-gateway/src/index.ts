@@ -26,6 +26,9 @@ export function createGateway(): MCPGateway {
   return new GatewayImpl(registry);
 }
 
+/** Pre-built default gateway — zero config. */
+export const gateway: MCPGateway = createGateway();
+
 // Types
 export type {
   MCPGateway,

@@ -3,8 +3,9 @@
 OpenRouter for MCP tools. Single call routes to GitHub, Jira, or any tool — with credentials and governance built in.
 
 ```typescript
+import { gateway } from '@kloudi/mcp-gateway';
+
 const result = await gateway.call('github_create_pr', params, context);
-// credentials injected, trust gate fires, result returned
 ```
 
 ---
@@ -16,9 +17,7 @@ The same tools are accessible four ways. Pick based on your consumer.
 ### SDK — TypeScript in-process
 
 ```typescript
-import { createGateway } from '@kloudi/mcp-gateway';
-
-const gateway = createGateway();
+import { gateway } from '@kloudi/mcp-gateway';
 
 const result = await gateway.call(
   'github_create_pr',
@@ -40,6 +39,16 @@ const result = await gateway.call(
 ```
 
 No inspectors in SDK mode — bare tool routing. Use when your agent runs in the same process.
+
+Need a custom tool set? Use `createGateway()`:
+
+```typescript
+import { createGateway, ToolRegistry } from '@kloudi/mcp-gateway';
+
+const registry = new ToolRegistry();
+// register only what you need
+const myGateway = createGateway({ registry });
+```
 
 ### HTTP API — any language
 
