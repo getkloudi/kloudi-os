@@ -128,7 +128,7 @@ export interface WorkspaceFile extends BaseEntity {
   path: string;
   content: string;
   hash: string;
-  workspaceId: string;
+  organizationId: string;
   lastSyncedAt: Date;
 }
 
@@ -174,7 +174,7 @@ export interface GraphNode {
   type: NodeType;
   name: string;
   description?: string;
-  config: Record<string, unknown>;  // type-specific config (LLMConfig, ToolConfig, etc.)
+  config: Record<string, unknown>; // type-specific config (LLMConfig, ToolConfig, etc.)
   constraints?: Constraint[];
   timeout_ms?: number;
   retry_count?: number;
@@ -209,8 +209,8 @@ export interface Constraint {
   enforcement: 'block' | 'warn' | 'log';
 }
 
-// Procedure/Entity types
-export interface ProcedureEntity {
+// SOP/Entity types
+export interface SopEntity {
   id: string;
   slug: string;
   name: string;
@@ -220,7 +220,7 @@ export interface ProcedureEntity {
   graph: Graph;
   parameters: Record<string, ParameterDefinition>;
   constraints: Record<string, string>;
-  workspaceId: string;
+  organizationId: string;
   systemPrompt?: string;
   parentEntityId?: string;
   tags?: string[];
@@ -256,7 +256,7 @@ export interface NodeResult {
   nodeType: string;
   output?: unknown;
   error?: string;
-  chosenOption?: string;  // for interpolative nodes — the chosen next node ID
+  chosenOption?: string; // for interpolative nodes — the chosen next node ID
 }
 
 export interface ExecutionResult {
@@ -278,7 +278,10 @@ export interface ToolDefinition {
   name: string;
   description: string;
   parameters: ToolParameters;
-  execute: (params: Record<string, unknown>, context: ToolContext) => Promise<unknown>;
+  execute: (
+    params: Record<string, unknown>,
+    context: ToolContext
+  ) => Promise<unknown>;
 }
 
 export interface ToolParameters {
@@ -294,7 +297,7 @@ export interface ToolParameterProperty {
 }
 
 export interface ToolContext {
-  workspaceId?: string;
+  organizationId?: string;
   userId?: string;
   tokens?: Record<string, string>;
   [key: string]: unknown;
@@ -325,7 +328,11 @@ export interface LoggerInstance {
   debug(message: string, meta?: Record<string, unknown>): void;
   info(message: string, meta?: Record<string, unknown>): void;
   warn(message: string, meta?: Record<string, unknown>): void;
-  error(message: string, error?: Error | unknown, meta?: Record<string, unknown>): void;
+  error(
+    message: string,
+    error?: Error | unknown,
+    meta?: Record<string, unknown>
+  ): void;
   time(label: string): { end: (meta?: Record<string, unknown>) => void };
 }
 

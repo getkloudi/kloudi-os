@@ -6,7 +6,11 @@ import { Logger } from '@kloudi/shared/logger';
 /** Logger interface from shared package */
 interface LoggerInstance {
   info: (message: string, metadata?: Record<string, unknown>) => void;
-  error: (message: string, error?: Error | null, metadata?: Record<string, unknown>) => void;
+  error: (
+    message: string,
+    error?: Error | null,
+    metadata?: Record<string, unknown>
+  ) => void;
   warn: (message: string, metadata?: Record<string, unknown>) => void;
   debug: (message: string, metadata?: Record<string, unknown>) => void;
 }
@@ -59,15 +63,29 @@ interface HealthCheckResult {
 export class RedisAdapter {
   private static instance: RedisAdapter | null = null;
 
-  private config: Required<Pick<RedisAdapterConfig, 'redisUrl' | 'defaultTtl' | 'retryDelayOnFailover' | 'maxRetriesPerRequest'>> & RedisAdapterConfig;
+  private config: Required<
+    Pick<
+      RedisAdapterConfig,
+      | 'redisUrl'
+      | 'defaultTtl'
+      | 'retryDelayOnFailover'
+      | 'maxRetriesPerRequest'
+    >
+  > &
+    RedisAdapterConfig;
   private redis: Redis | null;
   private connectionPromise: Promise<void> | null;
   private stats: CacheStats;
 
   constructor(options: RedisAdapterConfig = {}) {
     this.config = {
-      redisUrl: options.redisUrl ?? (Config.get('cache.redisUrl') as string | null) ?? process.env['REDIS_URL'] ?? '',
-      defaultTtl: options.defaultTtl ?? (Config.get('cache.defaultTtl', 3600) as number),
+      redisUrl:
+        options.redisUrl ??
+        (Config.get('cache.redisUrl') as string | null) ??
+        process.env['REDIS_URL'] ??
+        '',
+      defaultTtl:
+        options.defaultTtl ?? (Config.get('cache.defaultTtl', 3600) as number),
       retryDelayOnFailover: options.retryDelayOnFailover ?? 100,
       maxRetriesPerRequest: options.maxRetriesPerRequest ?? 3,
       ...options,
@@ -195,7 +213,11 @@ export class RedisAdapter {
    * @returns Success status
    * @throws If Redis operation fails
    */
-  async set<T>(key: string, value: T, ttl: number | null = null): Promise<boolean> {
+  async set<T>(
+    key: string,
+    value: T,
+    ttl: number | null = null
+  ): Promise<boolean> {
     if (!this.redis) {
       throw new Error('Redis client is not initialized');
     }

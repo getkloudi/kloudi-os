@@ -12,11 +12,9 @@
   "exclude": [
     "**/*.test.ts",
     "**/*.spec.ts",
+    "prisma/seed.ts",
     "dist",
     "node_modules"
   ],
-  "references": [
-    { "path": "../shared" },
-    { "path": "../infrastructure" }
-  ]
+  "references": [{ "path": "../shared" }, { "path": "../infrastructure" }]
 }

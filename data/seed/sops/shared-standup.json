@@ -1,0 +1,59 @@
+{
+  "name": "Daily Standup",
+  "slug": "shared-standup",
+  "description": "Generate a daily standup update from git activity, Jira board, and open PRs.",
+  "level": "playbook",
+  "parameters": {
+    "sinceDays": {
+      "type": "number",
+      "required": false,
+      "description": "Days to look back (default: 1)"
+    }
+  },
+  "constraints": {
+    "maxRetries": 1,
+    "timeoutMs": 300000
+  },
+  "metadata": {
+    "version": "2.0.0",
+    "department": "shared"
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "read_activity",
+        "name": "Read recent activity",
+        "description": "Read git log from the last day and list open PRs. Understand what was done and what is in flight.",
+        "context_sources": [],
+        "available_tools": ["bash"],
+        "trust_required": "auto",
+        "position": { "x": 0, "y": 0 }
+      },
+      {
+        "id": "read_jira",
+        "name": "Read Jira board",
+        "description": "Read Jira tickets assigned to the current user that are in progress, in review, or done in the last day.",
+        "context_sources": [],
+        "available_tools": ["jira_get_issue", "jira_search_issues"],
+        "trust_required": "auto",
+        "position": { "x": 0, "y": 100 }
+      },
+      {
+        "id": "compose_standup",
+        "name": "Compose standup update",
+        "description": "Write a standup update with three sections: Yesterday (done), Today (planned), Blockers. Keep it to 3-5 bullets per section. Be specific — reference story IDs and PR titles. If no blockers, say None.",
+        "context_sources": [
+          { "type": "var", "node_id": "read_activity" },
+          { "type": "var", "node_id": "read_jira" }
+        ],
+        "available_tools": [],
+        "trust_required": "auto",
+        "position": { "x": 0, "y": 200 }
+      }
+    ],
+    "edges": [
+      { "from": "read_activity", "to": "compose_standup" },
+      { "from": "read_jira", "to": "compose_standup" }
+    ]
+  }
+}

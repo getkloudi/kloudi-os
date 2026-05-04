@@ -1,12 +1,31 @@
-# AGENTS.md
+# CLAUDE.md
 
-This file contains essential information for agentic coding agents working in this JS monorepo boilerplate repository.
+Essential information for any agent — human or AI — working in this repo.
+
+## READ FIRST — Doc Structure
+
+```
+docs/current/     ← Start here. Active, locked docs.
+  00-start-here.md          ← Single entry point. Read this first.
+  the-machine-design.md     ← Locked architecture
+  agent-loop-design.md      ← AI-native execution engine (the nucleus)
+  product-architecture.md   ← All modules, team topology, Stage 1 cut
+  session-summary.md        ← 12-hour design session context
+  designs/                  ← UI prototypes (open v6 in browser)
+
+docs/future/      ← Upcoming design sessions (don't build yet)
+docs/archive/     ← Old but relevant (explains why we got here)
+docs/trash/       ← Superseded. Do not read.
+```
+
+**Do not reference anything in `docs/trash/`.** Especially `docs/specs/execution-engine-plan.md` — it describes the old deterministic engine, which is superseded by the AI-native design.
 
 ## gstack
 
 Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
 
 Available skills:
+
 - `/plan-ceo-review` — Founder/CEO mode: rethink the problem, find the 10-star product
 - `/plan-eng-review` — Eng manager mode: lock in architecture, data flow, edge cases, tests
 - `/plan-design-review` — Designer mode: 80-item design audit with letter grades
@@ -20,16 +39,23 @@ Available skills:
 - `/retro` — Engineering retrospective with per-person feedback
 - `/document-release` — Update docs to match what you just shipped
 
-## 🏗️ Current Build: ExecutionEngine (Phase 1)
+## 🏗️ Current Build: The Machine — Stage 1
 
-**READ FIRST:** `docs/specs/execution-engine-plan.md` contains all locked architecture decisions, PR breakdown, file plan, error handling, state machine, and UI design from CEO/eng/design reviews.
+**READ FIRST:** `docs/current/00-start-here.md` — single entry point, reading order, current status.
+
+**What exists:** CLI (`kloudi run`, `kloudi init`, `kloudi ls`, `kloudi trace`), API, execution engine (deterministic — AI-native engine is the next big build), web UI (Home/Feed, Browse, Editor, Analytics).
+
+**What to build:** See `TODOS.md` for the ordered task list. Fix P0/P1 bugs before anything else.
 
 **Key rules for implementation:**
-- Engine-first build order — don't build CRUD for tables the engine doesn't use yet
-- Async execution — POST /procedures/:id/run returns 202, graph runs via setImmediate
-- Node revisit guard — any node visited >1 triggers waiting_input + WebSocket human approval
-- Engine owns AIClient, passes to executors via context
-- SubEntityExecutor receives engine at call time (not construction) to avoid circular dep
+
+- Always use `git pull --rebase` — never create merge commits on pull
+- All work happens on `develop` — never commit directly to `main`
+- `main` only receives code through PRs from `develop`
+- SOPs are the universal format — processes (guides/) and artifacts (projects/) are both SOPs
+- LLM IS the control flow — no if/else branches on node types in the execution engine
+- Async execution — POST /sops/:id/run returns 202, graph runs via setImmediate
+- Trust gates pause execution, persist to Postgres (waiting_input), survive restarts
 - All relative imports need .js extensions (nodenext ESM)
 - Single-line conventional commits, no co-author branding
 
@@ -328,69 +354,116 @@ jest --testNamePattern="failing test name"
 
 ## 🌐 Deployment
 
+### Branching & Environments
+
+| Branch    | Environment | Deploy trigger |
+| --------- | ----------- | -------------- |
+| `develop` | Beta        | Auto on push   |
+| `main`    | Production  | Auto on push   |
+
+CLI publishes to npm only from `main` via `cli-v*` GitHub release tags.
+
 ### Platform Layout
 
-| Workload | Platform | Region | URL |
-|---|---|---|---|
-| **Web** (Next.js) | Vercel | auto | `kloudi-os-web` project |
-| **API** (Express) | Render | Virginia (US East) | `https://kloudi-os.onrender.com` |
-| **Database** | Neon | us-east-1 | Neon project `kloudi-os` |
-| **Cache** | Upstash Redis | us-east-1 | `kloudios-beta-redis` |
-| **MCP server** | TBD | — | — |
-| **CLI** | npm publish | — | TBD |
+|                            | Beta                                                          | Production                                               |
+| -------------------------- | ------------------------------------------------------------- | -------------------------------------------------------- |
+| **API** (Render)           | `kloudi-api-beta` → https://kloudi-api-beta-wivn.onrender.com | `kloudi-api-prod` → https://kloudi-api-prod.onrender.com |
+| **Database** (Neon)        | `kloudi-os-beta` (curly-grass-31791879)                       | `kloudi-os` (dry-fog-30866369)                           |
+| **Cache** (Upstash)        | `kloudios-beta-redis` (KloudiOS Beta team)                    | `kloudios-prod-redis` (KloudiOS Prod team)               |
+| **Web** (Vercel)           | `kloudi-web-beta`                                             | `kloudi-web-prod`                                        |
+| **CLI** (npm)              | —                                                             | `@kloudi/cli` on `cli-v*` tag                            |
+| **MCP**                    | Mounted on API (future)                                       | Mounted on API (future)                                  |
+| **Internal API** (Render)  | `kloudi-internal-api` (srv-d7dtopkvikkc73ed2sag)              | —                                                        |
+| **Ops Dashboard** (Vercel) | `kloudi-internal-web-beta`                                    | `kloudi-internal-web-prod`                               |
 
-All production services are in **us-east** for low latency. All free tier.
+All services in **us-east / Virginia**. All free tier. Each environment has fully isolated workspaces across Render, Neon, and Upstash.
 
-### Vercel (Web)
+### Render
 
-- **Project**: `kloudi-os-web` on team `nitish-mehrotras-projects-cd0dbf7d`
-- **Root Directory**: `apps/web`
-- **Build Command**: `turbo run build` (auto-detected)
-- **GitHub repo**: `nitishMehrotra/kloudi-os` (private)
-- **PR previews**: Automatic — every push gets a unique preview URL
-- **Production**: Deploys on push to `main`
-
-### Render (API)
-
-- **Service**: `kloudi-os` (ID: `srv-d7dnq267r5hc73d4rksg`)
-- **Workspace**: `KloudiOS Beta` (ID: `tea-d7dnd8vaqgkc73fomlmg`)
-- **Runtime**: Docker (uses `./Dockerfile`)
-- **Plan**: Free (spins down after 15min inactivity, cold starts ~30s)
-- **Auto-deploy**: On push to `main`
-- **URL**: `https://kloudi-os.onrender.com`
-- **Health check**: `GET /health`
+|                  | Beta                                                  | Prod                                                  |
+| ---------------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| **Workspace**    | KloudiOS Beta (tea-d7dq40jeo5us73fr9ve0)              | KloudiOS Prod (tea-d7dnd8vaqgkc73fomlmg)              |
+| **Product API**  | `kloudi-api-beta` (srv-d7dqddt7vvec73fog8ng)          | `kloudi-api-prod` (srv-d7dqhre7r5hc73d5regg)          |
+| **Internal API** | `kloudi-internal-api-beta` (srv-d7dvdke7r5hc73a4faog) | `kloudi-internal-api-prod` (srv-d7dtopkvikkc73ed2sag) |
+| **Branch**       | `develop`                                             | `main`                                                |
+| **Runtime**      | Docker (`Dockerfile` / `Dockerfile.internal-api`)     | Docker                                                |
+| **Region**       | Virginia                                              | Virginia                                              |
+| **Plan**         | Free                                                  | Free                                                  |
+| **Health**       | `GET /health`                                         | `GET /health`                                         |
 
 ### Neon (PostgreSQL)
 
-- **Project**: `kloudi-os` (ID: `dry-fog-30866369`)
-- **Region**: `aws-us-east-1`
-- **Postgres version**: 17
-- **Plan**: Free (0.5GB storage, auto-suspend)
-- **CLI**: `neonctl` (authenticated as `nitishmehrotra@gmail.com`)
+|                | Beta                                    | Prod                           |
+| -------------- | --------------------------------------- | ------------------------------ |
+| **Org**        | KloudiOS Beta                           | KloudiOS Prod                  |
+| **Project**    | `kloudi-os-beta` (curly-grass-31791879) | `kloudi-os` (dry-fog-30866369) |
+| **Region**     | aws-us-east-1                           | aws-us-east-1                  |
+| **PG version** | 17                                      | 17                             |
 
 ### Upstash (Redis)
 
-- **Database**: `kloudios-beta-redis`
-- **Region**: `us-east-1` (global)
-- **Plan**: Free (10K commands/day)
-- **CLI**: `npx @upstash/cli` (authenticated)
+|              | Beta                  | Prod                  |
+| ------------ | --------------------- | --------------------- |
+| **Team**     | KloudiOS Beta         | KloudiOS Prod         |
+| **Database** | `kloudios-beta-redis` | `kloudios-prod-redis` |
+| **Region**   | us-east-1             | us-east-1             |
+
+### Vercel (Web + Ops)
+
+All Vercel projects are on the **kloudi** team (`team_7bbzc2nIu43AyJHvuR2rk3VD`).
+
+| Project                    | App        | Root Dir   | Branch    | URL                                         |
+| -------------------------- | ---------- | ---------- | --------- | ------------------------------------------- |
+| `kloudi-web-beta`          | `apps/web` | `apps/web` | `develop` | https://kloudi-web-beta.vercel.app          |
+| `kloudi-web-prod`          | `apps/web` | `apps/web` | `main`    | —                                           |
+| `kloudi-internal-web-beta` | `apps/ops` | `apps/ops` | `develop` | https://kloudi-internal-web-beta.vercel.app |
+| `kloudi-internal-web-prod` | `apps/ops` | `apps/ops` | `main`    | —                                           |
+
+### Internal Dashboard
+
+**Internal API** (Render):
+
+|             | Beta                                                  | Prod                                                  |
+| ----------- | ----------------------------------------------------- | ----------------------------------------------------- |
+| **Service** | `kloudi-internal-api-beta` (srv-d7dvdke7r5hc73a4faog) | `kloudi-internal-api-prod` (srv-d7dtopkvikkc73ed2sag) |
+| **URL**     | https://kloudi-internal-api-beta.onrender.com         | https://kloudi-internal-api-prod.onrender.com         |
+| **Branch**  | `develop`                                             | `main`                                                |
+
+- **Dockerfile**: `Dockerfile.internal-api` (at repo root, no root-directory)
+- **Port**: 3002
+- **Health**: `GET /health`
+- **Auth**: Google OAuth + email allowlist (`OPS_ALLOWED_EMAILS`)
+- **DB**: Same Neon instance per environment (shared `DATABASE_URL`)
+
+**Ops Dashboard** (Vercel):
+
+- **Project**: `kloudi-internal-web-beta` / `kloudi-internal-web-prod`
+- **Root Directory**: `apps/ops`
+- **Port**: 3003 (dev)
+- **Env**: `NEXT_PUBLIC_OPS_API_URL` points to internal-api Render URL
 
 ### CLI Tools
 
 ```bash
 # Render
 render login
-render deploys list srv-d7dnq267r5hc73d4rksg --output text
+render deploys list srv-d7dqhre7r5hc73d5regg --output text  # prod
+render deploys list srv-d7dqddt7vvec73fog8ng --output text   # beta
 
 # Neon
 neonctl projects list
-neonctl connection-string --project-id dry-fog-30866369
+neonctl connection-string --project-id dry-fog-30866369       # prod
+neonctl connection-string --project-id curly-grass-31791879   # beta
 
 # Upstash
 npx @upstash/cli redis list --json
 
 # Vercel (MCP configured)
 claude mcp add --transport http vercel https://mcp.vercel.com
+
+# CLI publish (from main only)
+git tag cli-v0.1.0 && git push origin cli-v0.1.0
+# Then create GitHub release from the tag
 ```
 
 ## ⚙️ Configuration System
@@ -411,6 +484,7 @@ Dashboard         # Production values (Render, Vercel, etc.)
 - Production: set env vars in the hosting dashboard (Render, Vercel, etc.)
 
 ## Design System
+
 Always read `DESIGN.md` before making any visual or UI decisions.
 All font choices, colors, spacing, and aesthetic direction are defined there.
 Do not deviate without explicit user approval.

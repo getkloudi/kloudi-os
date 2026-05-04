@@ -18,11 +18,7 @@ export const githubCLIToolDefinitions: CLIToolDefinition[] = [
     name: 'github.createBranch',
     description: 'Create and checkout a new git branch',
     command: 'git',
-    args: (params) => [
-      'checkout',
-      '-b',
-      String(params['branchName'] ?? ''),
-    ],
+    args: (params) => ['checkout', '-b', String(params['branchName'] ?? '')],
     parameters: {
       type: 'object',
       properties: {

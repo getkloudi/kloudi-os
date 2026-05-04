@@ -2,7 +2,7 @@ import type {
   ContextWindow,
   ContextBudget,
   ContextItem,
-  ProcedureRecord,
+  SopRecord,
 } from './types.js';
 import { Logger } from '@kloudi/shared/logger';
 
@@ -17,19 +17,22 @@ export class ContextManager {
   /**
    * Creates initial context window with system prompt + SOP content.
    */
-  initialize(entity: ProcedureRecord): ContextWindow {
+  initialize(entity: SopRecord): ContextWindow {
     // Check if entity has metadata with a contextBudget override
     const entityAny = entity as unknown as Record<string, unknown>;
-    const metadata = entityAny['metadata'] as Record<string, unknown> | undefined;
+    const metadata = entityAny['metadata'] as
+      | Record<string, unknown>
+      | undefined;
     const budget: ContextBudget =
       metadata && typeof metadata === 'object' && 'contextBudget' in metadata
         ? (metadata['contextBudget'] as ContextBudget)
         : { ...DEFAULT_BUDGET };
 
-    const systemContent = `You are executing procedure: ${entity.name}\n${entity.description || ''}`;
-    const sopContent = typeof entity.graph === 'string'
-      ? entity.graph
-      : JSON.stringify(entity.graph);
+    const systemContent = `You are executing SOP: ${entity.name}\n${entity.description || ''}`;
+    const sopContent =
+      typeof entity.graph === 'string'
+        ? entity.graph
+        : JSON.stringify(entity.graph);
 
     const systemItem: ContextItem = {
       id: 'system',
@@ -64,9 +67,10 @@ export class ContextManager {
     window: ContextWindow,
     nodeId: string,
     output: unknown,
-    tokensUsed: number,
+    tokensUsed: number
   ): void {
-    const content = typeof output === 'string' ? output : JSON.stringify(output);
+    const content =
+      typeof output === 'string' ? output : JSON.stringify(output);
     const tokens = tokensUsed || this.countTokens(content);
 
     const item: ContextItem = {
@@ -96,7 +100,10 @@ export class ContextManager {
         const toTruncate = nonSystem[0];
         if (toTruncate) {
           const halfTokens = Math.floor(toTruncate.tokens / 2);
-          toTruncate.content = toTruncate.content.slice(0, toTruncate.content.length / 2);
+          toTruncate.content = toTruncate.content.slice(
+            0,
+            toTruncate.content.length / 2
+          );
           window.totalTokensUsed -= halfTokens;
           toTruncate.tokens -= halfTokens;
           logger.warn('Context over budget, truncated oldest non-system item', {

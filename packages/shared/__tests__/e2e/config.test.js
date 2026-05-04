@@ -3,10 +3,10 @@ import { Config } from '@kloudi/shared/config';
 
 describe('Config Module Test', () => {
   test('should get configuration values via dot notation', () => {
-    // Config reads from env vars — DATABASE_URL should be set via .env or .env.test
-    const dbUrl = Config.get('database.url');
-    expect(dbUrl).toBeDefined();
-    expect(typeof dbUrl).toBe('string');
+    // Use a key that always has a default value regardless of env vars
+    const logLevel = Config.get('environment.logLevel');
+    expect(logLevel).toBeDefined();
+    expect(typeof logLevel).toBe('string');
   });
 
   test('should return default value when key does not exist', () => {

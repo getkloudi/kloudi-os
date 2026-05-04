@@ -81,8 +81,7 @@ export class MCPClientAdapter {
 
       return toolNames;
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : String(error);
+      const message = error instanceof Error ? error.message : String(error);
       logger.error(
         `Failed to connect to MCP server: ${serverName}`,
         error instanceof Error ? error : null,
@@ -97,9 +96,7 @@ export class MCPClientAdapter {
   /**
    * Discover tools from the MCP server and register them in the registry.
    */
-  private async discoverAndRegister(
-    registry: ToolRegistry
-  ): Promise<string[]> {
+  private async discoverAndRegister(registry: ToolRegistry): Promise<string[]> {
     if (!this.client) {
       throw new Error('MCP client not connected');
     }
@@ -117,21 +114,19 @@ export class MCPClientAdapter {
       };
 
       // Build ToolParameters from MCP input schema
-      const properties: Record<
-        string,
-        { type: string; description?: string }
-      > = {};
+      const properties: Record<string, { type: string; description?: string }> =
+        {};
       if (inputSchema.properties) {
-        for (const [key, value] of Object.entries(
-          inputSchema.properties
-        )) {
+        for (const [key, value] of Object.entries(inputSchema.properties)) {
           const prop = value as {
             type?: string;
             description?: string;
           };
           properties[key] = {
             type: (prop.type as string) ?? 'string',
-            ...(prop.description != null ? { description: prop.description } : {}),
+            ...(prop.description != null
+              ? { description: prop.description }
+              : {}),
           };
         }
       }
@@ -159,9 +154,7 @@ export class MCPClientAdapter {
       logger.debug(`Registered MCP tool: ${toolName}`);
     }
 
-    logger.info(
-      `Discovered ${registeredNames.length} tools from MCP server`
-    );
+    logger.info(`Discovered ${registeredNames.length} tools from MCP server`);
     return registeredNames;
   }
 
@@ -191,8 +184,7 @@ export class MCPClientAdapter {
       timer.end({ success: true });
       return result;
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : String(error);
+      const message = error instanceof Error ? error.message : String(error);
       timer.end({ success: false, error: message });
       throw error;
     }
@@ -208,9 +200,7 @@ export class MCPClientAdapter {
       for (const name of this.registeredToolNames) {
         registry.unregister(name);
       }
-      logger.debug(
-        `Unregistered ${this.registeredToolNames.length} MCP tools`
-      );
+      logger.debug(`Unregistered ${this.registeredToolNames.length} MCP tools`);
     }
 
     this.registeredToolNames = [];
@@ -220,8 +210,7 @@ export class MCPClientAdapter {
         await this.client.close();
       } catch (error) {
         logger.warn(`Error closing MCP client for ${serverName}`, {
-          error:
-            error instanceof Error ? error.message : String(error),
+          error: error instanceof Error ? error.message : String(error),
         });
       }
       this.client = null;
@@ -232,8 +221,7 @@ export class MCPClientAdapter {
         await this.transport.close();
       } catch (error) {
         logger.warn(`Error closing MCP transport for ${serverName}`, {
-          error:
-            error instanceof Error ? error.message : String(error),
+          error: error instanceof Error ? error.message : String(error),
         });
       }
       this.transport = null;

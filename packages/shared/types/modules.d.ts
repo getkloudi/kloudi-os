@@ -28,15 +28,31 @@ declare module 'handlebars' {
     data?: Record<string, unknown>;
     helpers?: Record<string, HelperDelegate>;
     partials?: Record<string, HandlebarsTemplateDelegate>;
-    decorators?: Record<string, (fn: HelperDelegate, props: Record<string, unknown>, container: unknown, options: HelperOptions) => HelperDelegate>;
+    decorators?: Record<
+      string,
+      (
+        fn: HelperDelegate,
+        props: Record<string, unknown>,
+        container: unknown,
+        options: HelperOptions
+      ) => HelperDelegate
+    >;
   }
 
   export type HandlebarsTemplateDelegate<T = unknown> = TemplateDelegate<T>;
 
   export function registerHelper(name: string, fn: HelperDelegate): void;
-  export function registerPartial(name: string, partial: string | TemplateDelegate): void;
-  export function compile<T = unknown>(input: string, options?: CompileOptions): TemplateDelegate<T>;
-  export function template<T = unknown>(precompilation: TemplateSpecification): TemplateDelegate<T>;
+  export function registerPartial(
+    name: string,
+    partial: string | TemplateDelegate
+  ): void;
+  export function compile<T = unknown>(
+    input: string,
+    options?: CompileOptions
+  ): TemplateDelegate<T>;
+  export function template<T = unknown>(
+    precompilation: TemplateSpecification
+  ): TemplateDelegate<T>;
 
   export interface CompileOptions {
     data?: boolean;
@@ -52,8 +68,22 @@ declare module 'handlebars' {
   }
 
   export interface TemplateSpecification {
-    main: (container: unknown, depth0: unknown, helpers: unknown, partials: unknown, data: unknown) => string;
-    main_d?: (container: unknown, depth0: unknown, helpers: unknown, partials: unknown, data: unknown, blockParams: unknown, depths: unknown) => string;
+    main: (
+      container: unknown,
+      depth0: unknown,
+      helpers: unknown,
+      partials: unknown,
+      data: unknown
+    ) => string;
+    main_d?: (
+      container: unknown,
+      depth0: unknown,
+      helpers: unknown,
+      partials: unknown,
+      data: unknown,
+      blockParams: unknown,
+      depths: unknown
+    ) => string;
     useData?: boolean;
     useDepths?: boolean;
     usePartial?: boolean;
@@ -90,7 +120,10 @@ declare module 'braintrust' {
   }
 
   export interface Prompt {
-    build(data: Record<string, unknown>, options?: { flavor?: string }): BuiltPrompt;
+    build(
+      data: Record<string, unknown>,
+      options?: { flavor?: string }
+    ): BuiltPrompt;
     render(data: Record<string, unknown>): string;
   }
 

@@ -19,7 +19,10 @@ interface BraintrustBuiltPrompt {
 
 /** Braintrust prompt */
 interface BraintrustPrompt {
-  build: (data: TemplateData, options: { flavor: string }) => BraintrustBuiltPrompt;
+  build: (
+    data: TemplateData,
+    options: { flavor: string }
+  ) => BraintrustBuiltPrompt;
 }
 
 /** Filesystem error with code */
@@ -44,32 +47,53 @@ export class PromptManager {
    * Register default Handlebars helpers used across all tools
    */
   registerDefaultHelpers(): void {
-    Handlebars.registerHelper('json', (context?: unknown): string | SafeString =>
-      JSON.stringify(context, null, 2)
+    Handlebars.registerHelper(
+      'json',
+      (context?: unknown): string | SafeString =>
+        JSON.stringify(context, null, 2)
     );
 
-    Handlebars.registerHelper('truncate', (context?: unknown, options?: HelperOptions): string | SafeString => {
-      const text = typeof context === 'string' ? context : '';
-      const length = typeof options?.hash?.['length'] === 'number' ? options.hash['length'] : 2000;
-      return text.length > length
-        ? text.slice(0, length) + '\n...[truncated]'
-        : text;
-    });
-
-    Handlebars.registerHelper('unless', function (this: unknown, conditional?: unknown, options?: HelperOptions): string | SafeString {
-      if (!conditional && options) {
-        return options.fn(this);
-      } else if (options) {
-        return options.inverse(this);
+    Handlebars.registerHelper(
+      'truncate',
+      (context?: unknown, options?: HelperOptions): string | SafeString => {
+        const text = typeof context === 'string' ? context : '';
+        const length =
+          typeof options?.hash?.['length'] === 'number'
+            ? options.hash['length']
+            : 2000;
+        return text.length > length
+          ? text.slice(0, length) + '\n...[truncated]'
+          : text;
       }
-      return '';
-    });
+    );
+
+    Handlebars.registerHelper(
+      'unless',
+      function (
+        this: unknown,
+        conditional?: unknown,
+        options?: HelperOptions
+      ): string | SafeString {
+        if (!conditional && options) {
+          return options.fn(this);
+        } else if (options) {
+          return options.inverse(this);
+        }
+        return '';
+      }
+    );
 
     // Equality helper for conditionals
-    Handlebars.registerHelper('eq', function (context?: unknown, options?: HelperOptions): string | SafeString {
-      const compareValue = options?.hash?.['value'];
-      return context === compareValue ? 'true' : '';
-    });
+    Handlebars.registerHelper(
+      'eq',
+      function (
+        context?: unknown,
+        options?: HelperOptions
+      ): string | SafeString {
+        const compareValue = options?.hash?.['value'];
+        return context === compareValue ? 'true' : '';
+      }
+    );
   }
 
   /**
@@ -119,7 +143,8 @@ export class PromptManager {
       const template = Handlebars.compile(templateSource);
       return template(data);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       throw new Error(
         `Failed to render template ${templateName}: ${errorMessage}`
       );
@@ -132,7 +157,11 @@ export class PromptManager {
    * @param promptsDir - Directory containing the templates
    * @param data - Data to pass to the template
    */
-  async renderFromDir(templateName: string, promptsDir: string, data: TemplateData = {}): Promise<string> {
+  async renderFromDir(
+    templateName: string,
+    promptsDir: string,
+    data: TemplateData = {}
+  ): Promise<string> {
     const templatePath = path.join(promptsDir, `${templateName}.hbs`);
     const templateSource = await fs.readFile(templatePath, 'utf8');
     const template = Handlebars.compile(templateSource);
@@ -144,9 +173,16 @@ export class PromptManager {
    * @param slug - Braintrust prompt slug (e.g., 'architectural-story')
    * @param data - Template variables
    */
-  async renderFromBraintrust(slug: string, data: TemplateData = {}): Promise<string> {
-    const projectName = Config.get('promptManagement.braintrust.projectName') as string | null;
-    const apiKey = Config.get('promptManagement.braintrust.apiKey') as string | null;
+  async renderFromBraintrust(
+    slug: string,
+    data: TemplateData = {}
+  ): Promise<string> {
+    const projectName = Config.get(
+      'promptManagement.braintrust.projectName'
+    ) as string | null;
+    const apiKey = Config.get('promptManagement.braintrust.apiKey') as
+      | string
+      | null;
 
     if (!projectName || !apiKey) {
       throw new Error(
@@ -154,7 +190,10 @@ export class PromptManager {
       );
     }
 
-    const prompt = await loadPrompt({ projectName, slug }) as BraintrustPrompt;
+    const prompt = (await loadPrompt({
+      projectName,
+      slug,
+    })) as BraintrustPrompt;
     const builtPrompt = prompt.build(data, { flavor: 'chat' });
     return builtPrompt.messages.map((m) => m.content).join('\n');
   }

@@ -52,8 +52,12 @@ export default function LoginPage() {
             <span className="text-xl font-bold text-white">L</span>
           </div>
           <div className="space-y-1 text-center">
-            <h1 className="text-2xl font-semibold text-foreground">Sign in to lore.dev</h1>
-            <p className="text-sm text-muted-foreground">Enter your credentials to continue</p>
+            <h1 className="text-2xl font-semibold text-foreground">
+              Sign in to lore.dev
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Enter your credentials to continue
+            </p>
           </div>
         </div>
 
@@ -67,7 +71,10 @@ export default function LoginPage() {
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium text-foreground">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-foreground"
+            >
               Email
             </label>
             <input
@@ -84,7 +91,10 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="password" className="block text-sm font-medium text-foreground">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-foreground"
+            >
               Password
             </label>
             <input
@@ -118,7 +128,10 @@ export default function LoginPage() {
         {/* Link to register */}
         <p className="text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-blue-400 hover:text-blue-300 transition-colors">
+          <Link
+            href="/register"
+            className="text-blue-400 hover:text-blue-300 transition-colors"
+          >
             Create one
           </Link>
         </p>

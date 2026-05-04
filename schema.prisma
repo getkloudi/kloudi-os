@@ -19,7 +19,7 @@ datasource db {
 // ===========================================
 
 // Auth Domain Models
-// User authentication and session management
+// User authentication, session management, organization membership
 
 model User {
   id        String   @id @default(cuid())
@@ -29,7 +29,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  sessions  Session[]
+  sessions    Session[]
+  memberships Membership[]
 
   @@map("users")
 }
@@ -45,6 +46,34 @@ model Session {
 
   @@index([userId])
   @@map("sessions")
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+
+  @@map("organizations")
+}
+
+model Membership {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  role           String   @default("member") // owner, admin, member
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@map("memberships")
 }
 
 
@@ -77,7 +106,7 @@ model Pattern {
   @@map("patterns")
 }
 
-model Procedure {
+model Sop {
   id              String   @id @default(cuid())
   slug            String
   name            String
@@ -87,7 +116,7 @@ model Procedure {
   graph           Json     @default("{\"nodes\": [], \"edges\": []}")
   parameters      Json     @default("{}")
   constraints     Json     @default("{}")
-  workspaceId     String
+  organizationId  String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -101,21 +130,21 @@ model Procedure {
   avgTokensUsed   Int?
 
   // Relations
-  parentEntity    Procedure?  @relation("ProcedureHierarchy", fields: [parentEntityId], references: [id])
-  childEntities   Procedure[] @relation("ProcedureHierarchy")
+  parentEntity    Sop?        @relation("SopHierarchy", fields: [parentEntityId], references: [id])
+  childEntities   Sop[]       @relation("SopHierarchy")
   executions      Execution[]
 
-  @@unique([workspaceId, slug])
-  @@index([workspaceId])
+  @@unique([organizationId, slug])
+  @@index([organizationId])
   @@index([level])
   @@index([maturity])
   @@index([parentEntityId])
-  @@map("procedures")
+  @@map("sops")
 }
 
 model Execution {
   id            String    @id @default(cuid())
-  procedureId   String
+  sopId         String
   status        String    @default("pending")  // pending, running, waiting_input, completed, failed, cancelled
   parameters    Json      @default("{}")
   variables     Json      @default("{}")        // accumulated node outputs
@@ -126,14 +155,14 @@ model Execution {
   durationMs    Int?
   startedAt     DateTime  @default(now())
   completedAt   DateTime?
-  workspaceId   String
-  userId        String?                         // who triggered this execution (for activity feed)
+  organizationId String
+  userId         String?                        // who triggered this execution (for activity feed)
 
-  procedure      Procedure       @relation(fields: [procedureId], references: [id], onDelete: Cascade)
+  sop            Sop             @relation(fields: [sopId], references: [id], onDelete: Cascade)
   executionNodes ExecutionNode[]
 
-  @@index([procedureId])
-  @@index([workspaceId])
+  @@index([sopId])
+  @@index([organizationId])
   @@index([status])
   @@map("executions")
 }
@@ -158,5 +187,21 @@ model ExecutionNode {
   @@unique([executionId, nodeId, attemptNumber])
   @@index([executionId])
   @@map("execution_nodes")
+}
+
+model Integration {
+  id             String   @id @default(cuid())
+  organizationId String
+  type           String   // github, jira, openai, anthropic
+  name           String
+  credentials    Json     @default("{}")  // plain JSON for now
+  config         Json     @default("{}")  // non-secret settings
+  status         String   @default("active") // active, inactive, error
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, type])
+  @@index([organizationId])
+  @@map("integrations")
 }
 

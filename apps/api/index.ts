@@ -13,6 +13,8 @@ import { setupErrorHandling, setupMiddleware } from './lib/middleware.js';
 import { authMiddleware } from './lib/auth-middleware.js';
 import { loadAllRoutes } from './lib/route-loader.js';
 import { setupWebSocket } from './lib/websocket.js';
+import { ToolRegistry } from '@kloudi/tools';
+import { registerAllTools } from '@kloudi/tools/startup';
 
 const logger = Logger.getInstance('api-server');
 const PORT = process.env['PORT'] ?? 3001;
@@ -43,6 +45,11 @@ async function startServer(): Promise<void> {
       createHealthEndpoint({ port: PORT, environment: ENVIRONMENT })
     );
 
+    // Register tools
+    logger.info('🔧 Registering tools...');
+    const registry = ToolRegistry.getInstance();
+    await registerAllTools(registry);
+
     // Load all routes (auto-discovery)
     logger.info('🔍 Loading routes...');
     await loadAllRoutes(app);
@@ -64,12 +71,19 @@ async function startServer(): Promise<void> {
     // Setup graceful shutdown
     setupGracefulShutdown();
   } catch (error) {
-    logger.error('❌ Server startup failed', error instanceof Error ? error : null, {});
+    logger.error(
+      '❌ Server startup failed',
+      error instanceof Error ? error : null,
+      {}
+    );
     process.exit(1);
   }
 }
 
-async function startHTTPServer(app: Application, port: string | number): Promise<void> {
+async function startHTTPServer(
+  app: Application,
+  port: string | number
+): Promise<void> {
   return new Promise((resolve, reject) => {
     httpServer = app.listen(port, () => {
       logger.info(`✅ Server listening on port ${port}`);

@@ -10,7 +10,8 @@
       "cache": false
     },
     "type-check": {
-      "cache": false
+      "cache": false,
+      "dependsOn": ["^build"]
     },
     "test": {
       "cache": false,
@@ -30,7 +31,7 @@
     "build": {
       "cache": true,
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "node_modules/.prisma/client/**"]
+      "outputs": ["dist/**", ".next/**", "node_modules/.prisma/client/**"]
     },
     "dev": {
       "cache": false,

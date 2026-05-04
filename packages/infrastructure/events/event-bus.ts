@@ -6,7 +6,11 @@ import { Logger } from '@kloudi/shared/logger';
 /** Logger interface from shared package */
 interface LoggerInstance {
   info: (message: string, metadata?: Record<string, unknown>) => void;
-  error: (message: string, error?: Error | null, metadata?: Record<string, unknown>) => void;
+  error: (
+    message: string,
+    error?: Error | null,
+    metadata?: Record<string, unknown>
+  ) => void;
   warn: (message: string, metadata?: Record<string, unknown>) => void;
   debug: (message: string, metadata?: Record<string, unknown>) => void;
 }
@@ -80,7 +84,10 @@ interface Subscription {
   id: string;
   eventType: string;
   handler: EventHandler;
-  options: Required<Pick<SubscriptionOptions, 'priority' | 'maxRetries' | 'timeout'>> & SubscriptionOptions;
+  options: Required<
+    Pick<SubscriptionOptions, 'priority' | 'maxRetries' | 'timeout'>
+  > &
+    SubscriptionOptions;
   stats: SubscriptionStats;
 }
 
@@ -146,7 +153,22 @@ interface HealthCheckResult {
 export class EventBus {
   private static instance: EventBus | null = null;
 
-  private config: Required<Pick<EventBusConfig, 'enabled' | 'redisUrl' | 'maxRetries' | 'retryDelay' | 'maxRetryDelay' | 'deadLetterEnabled' | 'maxSubscribers' | 'eventStoreTtl' | 'eventStoreMaxSize' | 'deadLetterMaxSize'>> & EventBusConfig;
+  private config: Required<
+    Pick<
+      EventBusConfig,
+      | 'enabled'
+      | 'redisUrl'
+      | 'maxRetries'
+      | 'retryDelay'
+      | 'maxRetryDelay'
+      | 'deadLetterEnabled'
+      | 'maxSubscribers'
+      | 'eventStoreTtl'
+      | 'eventStoreMaxSize'
+      | 'deadLetterMaxSize'
+    >
+  > &
+    EventBusConfig;
   private subscribers: Map<string, Subscription[]>;
   private redisPublisher: Redis | null;
   private redisSubscriber: Redis | null;
@@ -158,9 +180,15 @@ export class EventBus {
 
   constructor(options: EventBusConfig = {}) {
     this.config = {
-      enabled: options.enabled ?? (Config.get('events.enabled', true) as boolean),
-      redisUrl: options.redisUrl ?? (Config.get('cache.redisUrl') as string | null) ?? process.env['REDIS_URL'] ?? '',
-      maxRetries: options.maxRetries ?? (Config.get('events.retryAttempts', 3) as number),
+      enabled:
+        options.enabled ?? (Config.get('events.enabled', true) as boolean),
+      redisUrl:
+        options.redisUrl ??
+        (Config.get('cache.redisUrl') as string | null) ??
+        process.env['REDIS_URL'] ??
+        '',
+      maxRetries:
+        options.maxRetries ?? (Config.get('events.retryAttempts', 3) as number),
       retryDelay: options.retryDelay ?? 1000,
       maxRetryDelay: options.maxRetryDelay ?? 30000,
       deadLetterEnabled: options.deadLetterEnabled ?? true,
@@ -296,7 +324,11 @@ export class EventBus {
    * @param options - Publishing options
    * @returns Success status
    */
-  async publish(eventType: string, data: Record<string, unknown> = {}, options: PublishOptions = {}): Promise<boolean> {
+  async publish(
+    eventType: string,
+    data: Record<string, unknown> = {},
+    options: PublishOptions = {}
+  ): Promise<boolean> {
     if (!this.config.enabled) {
       return false;
     }
@@ -333,7 +365,11 @@ export class EventBus {
    * @param options - Subscription options
    * @returns Subscription ID
    */
-  subscribe(eventType: string, handler: EventHandler, options: SubscriptionOptions = {}): string {
+  subscribe(
+    eventType: string,
+    handler: EventHandler,
+    options: SubscriptionOptions = {}
+  ): string {
     if (!this.config.enabled) {
       throw new Error('Event bus is disabled');
     }
@@ -382,9 +418,7 @@ export class EventBus {
       .get(eventType)!
       .sort((a, b) => b.options.priority - a.options.priority);
 
-    logger.info(
-      `Subscribed to event: ${eventType} (ID: ${subscription.id})`
-    );
+    logger.info(`Subscribed to event: ${eventType} (ID: ${subscription.id})`);
 
     return subscription.id;
   }
@@ -460,7 +494,11 @@ export class EventBus {
   /**
    * Create event object
    */
-  private createEvent(eventType: string, data: Record<string, unknown>, options: PublishOptions = {}): DomainEvent {
+  private createEvent(
+    eventType: string,
+    data: Record<string, unknown>,
+    options: PublishOptions = {}
+  ): DomainEvent {
     return {
       id: this.generateEventId(),
       type: eventType,
@@ -533,7 +571,10 @@ export class EventBus {
   /**
    * Deliver event to specific subscriber with retry logic
    */
-  private async deliverToSubscriber(event: DomainEvent, subscription: Subscription): Promise<void> {
+  private async deliverToSubscriber(
+    event: DomainEvent,
+    subscription: Subscription
+  ): Promise<void> {
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     try {
       // Create timeout promise
@@ -575,7 +616,11 @@ export class EventBus {
   /**
    * Handle delivery failure with retry logic
    */
-  private async handleDeliveryFailure(event: DomainEvent, subscription: Subscription, error: Error): Promise<void> {
+  private async handleDeliveryFailure(
+    event: DomainEvent,
+    subscription: Subscription,
+    error: Error
+  ): Promise<void> {
     const retryCount = event.metadata.retryCount;
     const maxRetries = subscription.options.maxRetries;
 
@@ -626,7 +671,11 @@ export class EventBus {
   /**
    * Schedule event retry
    */
-  private scheduleRetry(event: DomainEvent, subscription: Subscription, delay: number): void {
+  private scheduleRetry(
+    event: DomainEvent,
+    subscription: Subscription,
+    delay: number
+  ): void {
     setTimeout(() => {
       void this.deliverToSubscriber(event, subscription);
     }, delay);
@@ -635,7 +684,11 @@ export class EventBus {
   /**
    * Send event to Redis dead letter queue
    */
-  private async sendToDeadLetterQueue(event: DomainEvent, subscription: Subscription, error: Error): Promise<void> {
+  private async sendToDeadLetterQueue(
+    event: DomainEvent,
+    subscription: Subscription,
+    error: Error
+  ): Promise<void> {
     try {
       const key = 'eventbus:deadletter';
       const deadLetterEntry: DeadLetterEntry = {
@@ -717,7 +770,10 @@ export class EventBus {
   /**
    * Replay events from store
    */
-  async replayEvents(eventType: string | null = null, fromTimestamp: Date | null = null): Promise<number> {
+  async replayEvents(
+    eventType: string | null = null,
+    fromTimestamp: Date | null = null
+  ): Promise<number> {
     try {
       const key = 'eventbus:events';
       const entries = await this.redisStorage!.lrange(key, 0, -1);
@@ -728,7 +784,9 @@ export class EventBus {
       }
 
       if (fromTimestamp) {
-        events = events.filter((event) => new Date(event.timestamp) >= fromTimestamp);
+        events = events.filter(
+          (event) => new Date(event.timestamp) >= fromTimestamp
+        );
       }
 
       logger.info(`Replaying ${events.length} events...`);
@@ -846,11 +904,19 @@ export class Events {
     return defaultEventBus;
   }
 
-  static async publish(eventType: string, data: Record<string, unknown>, options: PublishOptions = {}): Promise<boolean> {
+  static async publish(
+    eventType: string,
+    data: Record<string, unknown>,
+    options: PublishOptions = {}
+  ): Promise<boolean> {
     return defaultEventBus.publish(eventType, data, options);
   }
 
-  static subscribe(eventType: string, handler: EventHandler, options: SubscriptionOptions = {}): string {
+  static subscribe(
+    eventType: string,
+    handler: EventHandler,
+    options: SubscriptionOptions = {}
+  ): string {
     return defaultEventBus.subscribe(eventType, handler, options);
   }
 
@@ -862,7 +928,10 @@ export class Events {
     return defaultEventBus.getDeadLetterQueue();
   }
 
-  static async replayEvents(eventType: string | null, fromTimestamp: Date | null): Promise<number> {
+  static async replayEvents(
+    eventType: string | null,
+    fromTimestamp: Date | null
+  ): Promise<number> {
     return defaultEventBus.replayEvents(eventType, fromTimestamp);
   }
 

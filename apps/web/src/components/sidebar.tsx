@@ -1,7 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronRight, ChevronDown, FileText, Folder, Zap, Target, BookOpen } from 'lucide-react';
+import {
+  ChevronRight,
+  ChevronDown,
+  FileText,
+  Folder,
+  Zap,
+  Target,
+  BookOpen,
+} from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 

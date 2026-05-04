@@ -3,8 +3,11 @@
  * Checks variables first, then parameters.
  */
 export function getNestedValue(
-  ctx: { variables: Record<string, unknown>; parameters: Record<string, unknown> },
-  path: string,
+  ctx: {
+    variables: Record<string, unknown>;
+    parameters: Record<string, unknown>;
+  },
+  path: string
 ): unknown {
   const parts = path.split('.');
   const root = parts[0] as string;
@@ -13,9 +16,11 @@ export function getNestedValue(
 
   // Check variables first, then parameters
   let value: unknown =
-    root in ctx.variables ? ctx.variables[root] :
-    root in ctx.parameters ? ctx.parameters[root] :
-    undefined;
+    root in ctx.variables
+      ? ctx.variables[root]
+      : root in ctx.parameters
+        ? ctx.parameters[root]
+        : undefined;
 
   if (value === undefined) {
     return undefined;

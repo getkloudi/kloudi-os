@@ -1,0 +1,108 @@
+{
+  "name": "Engineering Implementation",
+  "slug": "engineering-impl",
+  "description": "Pick up a Jira story, read the ERD and relevant code, plan the implementation, write the code, run tests, and open a PR.",
+  "level": "playbook",
+  "parameters": {
+    "jiraStoryId": {
+      "type": "string",
+      "required": true,
+      "description": "Jira story ID to implement (e.g. ACME-456)"
+    }
+  },
+  "constraints": {
+    "maxRetries": 2,
+    "timeoutMs": 3600000
+  },
+  "metadata": {
+    "version": "2.0.0",
+    "department": "engineering"
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "read_story",
+        "name": "Read the story",
+        "description": "Read the Jira story. Understand the requirements, acceptance criteria, and any linked ERD or spec. Identify which files will be affected.",
+        "context_sources": [],
+        "available_tools": ["jira_get_issue"],
+        "trust_required": "auto",
+        "position": { "x": 0, "y": 0 }
+      },
+      {
+        "id": "read_codebase",
+        "name": "Read the relevant code",
+        "description": "Read the files most likely affected by this story. Understand the existing patterns, data models, and conventions before writing anything.",
+        "context_sources": [{ "type": "var", "node_id": "read_story" }],
+        "available_tools": ["read_file", "list_directory", "search_files"],
+        "trust_required": "auto",
+        "position": { "x": 0, "y": 100 }
+      },
+      {
+        "id": "plan_implementation",
+        "name": "Plan the implementation",
+        "description": "Write a step-by-step implementation plan. List every file to create or modify, the changes to each, and the test strategy. Be specific — this plan drives all subsequent steps.",
+        "context_sources": [
+          { "type": "var", "node_id": "read_story" },
+          { "type": "var", "node_id": "read_codebase" }
+        ],
+        "available_tools": [],
+        "trust_required": "auto",
+        "position": { "x": 0, "y": 200 }
+      },
+      {
+        "id": "create_branch",
+        "name": "Create feature branch",
+        "description": "Create a git branch named feat/{jiraStoryId} from the default branch.",
+        "context_sources": [
+          { "type": "var", "node_id": "plan_implementation" }
+        ],
+        "available_tools": ["bash"],
+        "trust_required": "prompt",
+        "position": { "x": 0, "y": 300 }
+      },
+      {
+        "id": "write_code",
+        "name": "Write the implementation",
+        "description": "Implement the plan. Write or modify every file listed in the plan. Follow the existing code conventions exactly. Write code that a senior engineer would be proud to merge.",
+        "context_sources": [
+          { "type": "var", "node_id": "read_codebase" },
+          { "type": "var", "node_id": "plan_implementation" }
+        ],
+        "available_tools": ["read_file", "write_file", "edit_file", "bash"],
+        "trust_required": "prompt",
+        "position": { "x": 0, "y": 400 }
+      },
+      {
+        "id": "run_tests",
+        "name": "Run the test suite",
+        "description": "Run the tests. If they fail, read the failure output, fix the code, and run again. Do not open a PR until tests pass.",
+        "context_sources": [{ "type": "var", "node_id": "write_code" }],
+        "available_tools": ["bash"],
+        "trust_required": "auto",
+        "position": { "x": 0, "y": 500 }
+      },
+      {
+        "id": "create_pr",
+        "name": "Create pull request",
+        "description": "Create a PR with a clear title and description. Include: what was changed, why, and how to test it. Link the Jira story in the PR body.",
+        "context_sources": [
+          { "type": "var", "node_id": "read_story" },
+          { "type": "var", "node_id": "plan_implementation" },
+          { "type": "var", "node_id": "run_tests" }
+        ],
+        "available_tools": ["github_create_pr"],
+        "trust_required": "prompt",
+        "position": { "x": 0, "y": 600 }
+      }
+    ],
+    "edges": [
+      { "from": "read_story", "to": "read_codebase" },
+      { "from": "read_codebase", "to": "plan_implementation" },
+      { "from": "plan_implementation", "to": "create_branch" },
+      { "from": "create_branch", "to": "write_code" },
+      { "from": "write_code", "to": "run_tests" },
+      { "from": "run_tests", "to": "create_pr" }
+    ]
+  }
+}

@@ -1,4 +1,4 @@
-// --- Graph types (match Procedure.graph JSONB structure) ---
+// --- Graph types (match Sop.graph JSONB structure) ---
 // These re-export from @kloudi/shared/types for consistency,
 // but also define execution-specific types.
 
@@ -40,24 +40,25 @@ export interface InterpolativeConfig {
 
 // --- Execution types ---
 
-export type { ProcedureRecord } from '../procedures/procedure-repository.js';
+export type { SopRecord } from '../sops/sop-repository.js';
 
 export interface ExecutionContext {
   executionId: string;
-  entity: import('../procedures/procedure-repository.js').ProcedureRecord;
+  entity: import('../sops/sop-repository.js').SopRecord;
   parameters: Record<string, unknown>;
   variables: Record<string, unknown>;
   currentNodeId: string | null;
   contextWindow: ContextWindow;
   visitedNodes: Map<string, number>;
-  workspaceId: string;
+  organizationId: string;
+  credentials?: Record<string, Record<string, string>>;
 }
 
 export interface NodeExecutor {
   execute(
     node: import('@kloudi/shared/types').GraphNode,
     ctx: ExecutionContext,
-    engine?: ExecutionEngine,
+    engine?: ExecutionEngine
   ): Promise<NodeResult>;
 }
 
@@ -85,22 +86,32 @@ export interface TrustGateContext {
   nodeId: string;
   nodeName: string;
   nodeType: NodeType;
-  action: string;           // human-readable: "Call Jira API: createIssue"
+  action: string; // human-readable: "Call Jira API: createIssue"
   config: Record<string, unknown>; // resolved node config
-  reasoning?: string;       // LLM reasoning if available
-  visitCount: number;       // how many times this node has run
+  reasoning?: string; // LLM reasoning if available
+  visitCount: number; // how many times this node has run
 }
 
 // --- Callbacks ---
 
 export interface ExecutionCallbacks {
   onNodeStart?: (executionId: string, nodeId: string, nodeName: string) => void;
-  onNodeComplete?: (executionId: string, nodeId: string, output: unknown) => void;
+  onNodeComplete?: (
+    executionId: string,
+    nodeId: string,
+    output: unknown
+  ) => void;
   onNodeFailed?: (executionId: string, nodeId: string, error: string) => void;
   onExecutionComplete?: (executionId: string, result: unknown) => void;
   onExecutionFailed?: (executionId: string, error: string) => void;
-  onHumanApprovalNeeded?: (executionId: string, nodeId: string, question: string) => Promise<string>;
-  onTrustGateTriggered?: (context: TrustGateContext) => Promise<'approve' | 'reject'>;
+  onHumanApprovalNeeded?: (
+    executionId: string,
+    nodeId: string,
+    question: string
+  ) => Promise<string>;
+  onTrustGateTriggered?: (
+    context: TrustGateContext
+  ) => Promise<'approve' | 'reject'>;
 }
 
 // --- Context types ---
@@ -136,5 +147,6 @@ export interface EvictedItem {
   reason: string;
 }
 
-// Forward reference to avoid circular import
-export type ExecutionEngine = import('./execution-engine.js').ExecutionEngine;
+// ExecutionEngine type — to be implemented as AI-native engine (docs/current/agent-loop-design.md)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ExecutionEngine = any;

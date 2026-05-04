@@ -1,28 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
+    --bg-0: #f5f6f8;
+    --bg-1: #ffffff;
+    --bg-2: #f0f1f4;
+    --bg-3: #e8e9ee;
+    --bg-4: #dfe0e6;
+    --bg-5: #d3d5dc;
+    --text-1: #131520;
+    --text-2: #5c5f72;
+    --text-3: #8b8ea0;
+    --text-4: #b5b8c8;
+    --accent: #636bff;
+    --accent-s: rgba(99, 107, 255, 0.08);
+    --accent-h: #4f57e8;
+    --green: #1a9a6a;
+    --green-s: rgba(26, 154, 106, 0.08);
+    --amber: #c48a20;
+    --amber-s: rgba(196, 138, 32, 0.08);
+    --red: #d04040;
+    --red-s: rgba(208, 64, 64, 0.08);
+    --blue: #3080d0;
+    --blue-s: rgba(48, 128, 208, 0.08);
+    --border: #e2e4ea;
+    --glow: rgba(74, 82, 224, 0.03);
+    --rail-bg: rgba(255, 255, 255, 0.92);
+
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --border: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --foreground: 230 30% 10%;
+    --muted: 230 12% 95%;
+    --muted-foreground: 230 10% 45%;
+    --accent-tw: 237 100% 69%;
+    --accent-foreground: 0 0% 100%;
+    --border-tw: 230 12% 90%;
+    --ring: 237 100% 69%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --bg-0: #0a0b0e;
+    --bg-1: #101114;
+    --bg-2: #161719;
+    --bg-3: #1c1d21;
+    --bg-4: #242529;
+    --bg-5: #2e3035;
+    --text-1: #f0f1f4;
+    --text-2: #a0a4b4;
+    --text-3: #636678;
+    --text-4: #3e4050;
+    --accent: #636bff;
+    --accent-s: rgba(99, 107, 255, 0.12);
+    --accent-h: #7b82ff;
+    --green: #36d89a;
+    --green-s: rgba(54, 216, 154, 0.12);
+    --amber: #e8a63e;
+    --amber-s: rgba(232, 166, 62, 0.12);
+    --red: #e85b5b;
+    --red-s: rgba(232, 91, 91, 0.12);
+    --blue: #4fa0e8;
+    --blue-s: rgba(79, 160, 232, 0.12);
+    --border: #1e2024;
+    --glow: rgba(99, 107, 255, 0.04);
+    --rail-bg: rgba(16, 17, 20, 0.92);
+
+    --background: 228 22% 6%;
+    --foreground: 228 12% 95%;
+    --muted: 228 10% 12%;
+    --muted-foreground: 228 10% 65%;
+    --accent-tw: 237 100% 69%;
+    --accent-foreground: 0 0% 100%;
+    --border-tw: 228 10% 13%;
+    --ring: 237 100% 69%;
   }
 }
 
@@ -32,24 +84,53 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'DM Sans', system-ui, sans-serif;
   }
 }
 
-/* Custom scrollbar for dark theme */
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
 .dark ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
-
 .dark ::-webkit-scrollbar-track {
-  background: hsl(var(--muted));
+  background: var(--bg-1);
 }
-
 .dark ::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground));
-  border-radius: 4px;
+  background: var(--bg-4);
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--bg-5);
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--foreground) / 0.5);
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }

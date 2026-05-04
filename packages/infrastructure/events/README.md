@@ -53,7 +53,7 @@ const eventBus = EventBus.getInstance();
 await eventBus.publish('user.created', {
   userId: '123',
   email: 'user@example.com',
-  name: 'John Doe'
+  name: 'John Doe',
 });
 
 // Publish with options
@@ -62,12 +62,12 @@ await eventBus.publish(
   {
     orderId: '456',
     total: 99.99,
-    items: ['item1', 'item2']
+    items: ['item1', 'item2'],
   },
   {
     priority: 'high',
     source: 'checkout-service',
-    correlationId: 'abc-123'
+    correlationId: 'abc-123',
   }
 );
 ```
@@ -93,7 +93,7 @@ eventBus.subscribe(
   },
   {
     maxRetries: 3,
-    retryDelay: 1000  // milliseconds
+    retryDelay: 1000, // milliseconds
   }
 );
 
@@ -135,7 +135,7 @@ const recentEvents = await eventBus.getRecentEvents('user.created', 50);
 // Replay events
 for (const event of recentEvents) {
   await eventBus.publish(event.type, event.data, {
-    correlationId: `replay-${event.id}`
+    correlationId: `replay-${event.id}`,
   });
 }
 ```
@@ -149,11 +149,11 @@ const failedEvents = await eventBus.getDeadLetterQueue(20);
 console.log('Failed events:', failedEvents.length);
 
 // Analyze failures
-failedEvents.forEach(event => {
+failedEvents.forEach((event) => {
   console.log({
     type: event.type,
     attempts: event.metadata.attempts,
-    lastError: event.metadata.lastError
+    lastError: event.metadata.lastError,
   });
 });
 
@@ -216,7 +216,7 @@ await eventBus.publish('order.delivered', { orderId, deliveredAt });
 await eventBus.publish('user.registered', {
   userId,
   email,
-  correlationId: sagaId
+  correlationId: sagaId,
 });
 
 // Service B: Profile Creation
@@ -224,7 +224,7 @@ eventBus.subscribe('user.registered', async (event) => {
   await createProfile(event.data.userId);
   await eventBus.publish('profile.created', {
     userId: event.data.userId,
-    correlationId: event.correlationId
+    correlationId: event.correlationId,
   });
 });
 
@@ -234,7 +234,7 @@ eventBus.subscribe('profile.created', async (event) => {
   await eventBus.publish('email.sent', {
     userId: event.data.userId,
     type: 'welcome',
-    correlationId: event.correlationId
+    correlationId: event.correlationId,
   });
 });
 ```
@@ -253,7 +253,7 @@ eventBus.subscribe('payment.processed', async (event) => {
     await eventBus.publish('payment.failed', {
       orderId: event.data.orderId,
       error: error.message,
-      originalEvent: event
+      originalEvent: event,
     });
 
     throw error; // Will trigger retry or DLQ
@@ -278,7 +278,10 @@ const eventBus = EventBus.getInstance();
 console.log('EventBus initialized:', eventBus.isInitialized());
 
 // Check subscriber count
-console.log('Active subscribers:', eventBus.getSubscribers('user.created').length);
+console.log(
+  'Active subscribers:',
+  eventBus.getSubscribers('user.created').length
+);
 ```
 
 #### Connection issues

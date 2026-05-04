@@ -1,0 +1,92 @@
+{
+  "name": "Engineering Ship",
+  "slug": "engineering-ship",
+  "description": "Sync with base branch, run tests, review the diff, commit, push, and create a PR.",
+  "level": "playbook",
+  "parameters": {
+    "baseBranch": {
+      "type": "string",
+      "required": false,
+      "description": "Base branch to merge into (defaults to main/develop)"
+    }
+  },
+  "constraints": {
+    "maxRetries": 1,
+    "timeoutMs": 1800000
+  },
+  "metadata": {
+    "version": "2.0.0",
+    "department": "engineering"
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "check_status",
+        "name": "Check current state",
+        "description": "Check git status, current branch, and what's changed since the base branch. Understand what is about to ship.",
+        "context_sources": [],
+        "available_tools": ["bash"],
+        "trust_required": "auto",
+        "position": { "x": 0, "y": 0 }
+      },
+      {
+        "id": "sync_base",
+        "name": "Sync with base branch",
+        "description": "Fetch and merge the base branch into the current branch. Resolve any conflicts.",
+        "context_sources": [{ "type": "var", "node_id": "check_status" }],
+        "available_tools": ["bash"],
+        "trust_required": "prompt",
+        "position": { "x": 0, "y": 100 }
+      },
+      {
+        "id": "run_tests",
+        "name": "Run tests",
+        "description": "Run the full test suite. Do not continue if tests fail.",
+        "context_sources": [],
+        "available_tools": ["bash"],
+        "trust_required": "auto",
+        "position": { "x": 0, "y": 200 }
+      },
+      {
+        "id": "review_diff",
+        "name": "Review the diff",
+        "description": "Review the diff for dead code, missing error handling, security issues, and stale comments. Flag anything that needs human judgment before shipping.",
+        "context_sources": [
+          { "type": "var", "node_id": "check_status" },
+          { "type": "var", "node_id": "run_tests" }
+        ],
+        "available_tools": ["bash", "read_file"],
+        "trust_required": "auto",
+        "position": { "x": 0, "y": 300 }
+      },
+      {
+        "id": "commit_push",
+        "name": "Commit and push",
+        "description": "Stage all changes, create a single-line conventional commit, and push to remote.",
+        "context_sources": [{ "type": "var", "node_id": "review_diff" }],
+        "available_tools": ["bash"],
+        "trust_required": "prompt",
+        "position": { "x": 0, "y": 400 }
+      },
+      {
+        "id": "create_pr",
+        "name": "Create pull request",
+        "description": "Open a PR to the base branch with a clear title and summary of what changed and why.",
+        "context_sources": [
+          { "type": "var", "node_id": "check_status" },
+          { "type": "var", "node_id": "review_diff" }
+        ],
+        "available_tools": ["github_create_pr"],
+        "trust_required": "prompt",
+        "position": { "x": 0, "y": 500 }
+      }
+    ],
+    "edges": [
+      { "from": "check_status", "to": "sync_base" },
+      { "from": "sync_base", "to": "run_tests" },
+      { "from": "run_tests", "to": "review_diff" },
+      { "from": "review_diff", "to": "commit_push" },
+      { "from": "commit_push", "to": "create_pr" }
+    ]
+  }
+}

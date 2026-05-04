@@ -42,7 +42,9 @@ export class ProviderManager {
         return openai(modelName) as unknown as LanguageModel;
       }
       case 'anthropic': {
-        const anthropicKey = Config.get('ai.apiKeys.anthropic') as string | null;
+        const anthropicKey = Config.get('ai.apiKeys.anthropic') as
+          | string
+          | null;
 
         if (!anthropicKey) {
           throw new Error(

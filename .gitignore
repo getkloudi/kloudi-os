@@ -7,7 +7,6 @@ yarn-error.log*
 # Environment variables
 .env
 .env.local
-.env.test
 .env.development.local
 .env.test.local
 .env.production.local
@@ -65,3 +64,4 @@ tmp/
 packages/infrastructure/config/local.yml
 *local*.yml
 docs/
+.gstack/

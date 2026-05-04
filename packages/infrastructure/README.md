@@ -95,7 +95,10 @@ const result = await ai.generateText([{ role: 'user', content: 'Hello!' }]);
 
 // Events (singleton)
 import { EventBus } from '@kloudi/infrastructure/events';
-await EventBus.publish('user.created', { userId: '123', email: 'user@example.com' });
+await EventBus.publish('user.created', {
+  userId: '123',
+  email: 'user@example.com',
+});
 
 // Subscribe to events
 EventBus.subscribe('user.created', (event) => {
