@@ -63,9 +63,21 @@ async function resolveCredentials(
   }
 
   const raw = record['credentials'];
-  return decryptCredentials(
-    typeof raw === 'string' ? raw : JSON.stringify(raw)
-  );
+  // safeDecrypt: handles both AES-256-GCM encrypted strings and legacy plaintext objects
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      if (typeof parsed['iv'] === 'string' && typeof parsed['data'] === 'string' && typeof parsed['tag'] === 'string') {
+        return decryptCredentials(raw);
+      }
+    } catch {
+      // not JSON — fall through
+    }
+  }
+  if (typeof raw === 'object' && raw !== null) {
+    return raw as Record<string, string>;
+  }
+  return decryptCredentials(typeof raw === 'string' ? raw : JSON.stringify(raw));
 }
 
 // API key authentication middleware
