@@ -17,7 +17,12 @@
  */
 
 import express, { type Express, type Request, type Response } from 'express';
+<<<<<<< HEAD
 import { createHash, randomBytes, timingSafeEqual } from 'crypto';
+||||||| parent of 475e66a (feat: add CORS middleware with GATEWAY_CORS_ORIGINS env config)
+=======
+import cors from 'cors';
+>>>>>>> 475e66a (feat: add CORS middleware with GATEWAY_CORS_ORIGINS env config)
 import { z } from 'zod';
 import { GatewayImpl } from './gateway.js';
 import { ToolRegistry, type PendingGate } from './registry.js';
@@ -31,6 +36,13 @@ const PORT = parseInt(process.env['PORT'] ?? '3010', 10);
 
 const app: Express = express();
 app.use(express.json());
+app.use(
+  cors({
+    origin: process.env['GATEWAY_CORS_ORIGINS']?.split(',') ?? [],
+    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Admin-Key'],
+  })
+);
 
 // Request ID middleware — attach a unique ID to every request for tracing
 app.use((req: Request, _res: Response, next: () => void) => {
