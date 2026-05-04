@@ -50,8 +50,10 @@ Available skills:
 **Key rules for implementation:**
 
 - Always use `git pull --rebase` — never create merge commits on pull
-- All work happens on `develop` — never commit directly to `main`
-- `main` only receives code through PRs from `develop`
+- All work happens on **feature branches**, never directly on `develop` or `main`
+- Feature branches merge into `develop` via PR, then `develop` merges into `main` via PR
+- Branch naming: `feat/<name>`, `fix/<name>`, `chore/<name>`
+- Squash-merging develop → main then rebasing develop causes conflicts; feature branches avoid this entirely
 - SOPs are the universal format — processes (guides/) and artifacts (projects/) are both SOPs
 - LLM IS the control flow — no if/else branches on node types in the execution engine
 - Async execution — POST /sops/:id/run returns 202, graph runs via setImmediate
