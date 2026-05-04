@@ -17,12 +17,8 @@
  */
 
 import express, { type Express, type Request, type Response } from 'express';
-<<<<<<< HEAD
 import { createHash, randomBytes, timingSafeEqual } from 'crypto';
-||||||| parent of 475e66a (feat: add CORS middleware with GATEWAY_CORS_ORIGINS env config)
-=======
 import cors from 'cors';
->>>>>>> 475e66a (feat: add CORS middleware with GATEWAY_CORS_ORIGINS env config)
 import { z } from 'zod';
 import { GatewayImpl } from './gateway.js';
 import { ToolRegistry, type PendingGate } from './registry.js';
@@ -186,23 +182,6 @@ app.post('/tools/call', requireApiKey, async (req: Request, res: Response) => {
   const bodySchema = z.object({
     toolName: z.string().min(1),
     params: z.record(z.string(), z.unknown()).default({}),
-<<<<<<< HEAD
-||||||| parent of e778c13 (fix: use z.record(z.string(), z.unknown()) for strict TS compatibility)
-    params: z.record(z.unknown()).default({}),
-    context: z.object({
-      organizationId: z.string(),
-      userId: z.string(),
-      executionId: z.string(),
-      nodeId: z.string(),
-    }),
-=======
-    context: z.object({
-      organizationId: z.string(),
-      userId: z.string(),
-      executionId: z.string(),
-      nodeId: z.string(),
-    }),
->>>>>>> e778c13 (fix: use z.record(z.string(), z.unknown()) for strict TS compatibility)
   });
   const parsed = bodySchema.safeParse(req.body);
   if (!parsed.success) {
@@ -327,7 +306,6 @@ app.get('/tools', requireApiKey, async (req: Request, res: Response) => {
 });
 
 // POST /tools/resume
-<<<<<<< HEAD
 app.post(
   '/tools/resume',
   requireApiKey,
@@ -341,12 +319,10 @@ app.post(
     });
     const parsedResume = resumeSchema.safeParse(req.body);
     if (!parsedResume.success) {
-      res
-        .status(400)
-        .json({
-          error: 'Invalid request body',
-          details: parsedResume.error.flatten(),
-        });
+      res.status(400).json({
+        error: 'Invalid request body',
+        details: parsedResume.error.flatten(),
+      });
       return;
     }
     const { executionId, nodeId, decision } = parsedResume.data;
@@ -364,37 +340,6 @@ app.post(
     }
 
     res.json(result);
-||||||| parent of 3de233d (feat: scrub error messages from 500 responses, add request IDs)
-app.post('/tools/resume', async (req: Request, res: Response) => {
-  const resumeSchema = z.object({
-    executionId: z.string().min(1),
-    nodeId: z.string().min(1),
-    decision: z.enum(['approve', 'reject']),
-  });
-  const parsedResume = resumeSchema.safeParse(req.body);
-  if (!parsedResume.success) {
-    res
-      .status(400)
-      .json({
-        error: 'Invalid request body',
-        details: parsedResume.error.flatten(),
-      });
-    return;
-=======
-app.post('/tools/resume', async (req: Request, res: Response) => {
-  const resumeSchema = z.object({
-    executionId: z.string().min(1),
-    nodeId: z.string().min(1),
-    decision: z.enum(['approve', 'reject']),
-  });
-  const parsedResume = resumeSchema.safeParse(req.body);
-  if (!parsedResume.success) {
-    res.status(400).json({
-      error: 'Invalid request body',
-      details: parsedResume.error.flatten(),
-    });
-    return;
->>>>>>> 3de233d (feat: scrub error messages from 500 responses, add request IDs)
   }
 );
 
