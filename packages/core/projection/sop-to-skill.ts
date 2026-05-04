@@ -16,8 +16,14 @@ interface SopInput {
     nodes: {
       id: string;
       name: string;
-      type: string;
-      config: Record<string, unknown>;
+      description?: string;
+      // AI-native schema
+      available_tools?: string[];
+      trust_required?: string;
+      context_sources?: unknown[];
+      // Legacy schema
+      type?: string;
+      config?: Record<string, unknown>;
     }[];
     edges: { from?: string; source?: string; to?: string; target?: string }[];
   };
@@ -98,18 +104,36 @@ export function projectToSkillMd(sop: SopInput): string {
 }
 
 function projectNode(node: {
-  type: string;
-  config: Record<string, unknown>;
+  description?: string;
+  available_tools?: string[];
+  trust_required?: string;
+  type?: string;
+  config?: Record<string, unknown>;
 }): string[] {
   const lines: string[] = [];
-  const config = node.config;
 
+  // AI-native schema: description + available_tools
+  if (!node.type && (node.description ?? node.available_tools)) {
+    if (node.description) lines.push(node.description);
+    if (node.available_tools && node.available_tools.length > 0) {
+      lines.push('');
+      lines.push(
+        `Tools: ${node.available_tools.map((t) => `\`${t}\``).join(', ')}`
+      );
+    }
+    if (node.trust_required && node.trust_required !== 'auto') {
+      lines.push('');
+      lines.push(`Trust: ${node.trust_required}`);
+    }
+    return lines;
+  }
+
+  // Legacy schema: type + config
+  const config = node.config ?? {};
   switch (node.type) {
     case 'llm_generate': {
       const prompt = config['prompt_template'] as string | undefined;
-      if (prompt) {
-        lines.push(prompt);
-      }
+      if (prompt) lines.push(prompt);
       break;
     }
 
@@ -165,15 +189,26 @@ function projectNode(node: {
 }
 
 function extractAllowedTools(
-  nodes: { type: string; config: Record<string, unknown> }[]
+  nodes: {
+    type?: string;
+    config?: Record<string, unknown>;
+    available_tools?: string[];
+  }[]
 ): string[] {
   const tools = new Set<string>();
 
   for (const node of nodes) {
-    if (node.type === 'tool_call') {
+    // AI-native schema: collect from available_tools array
+    if (node.available_tools) {
+      for (const t of node.available_tools) {
+        tools.add(t);
+      }
+    }
+
+    // Legacy schema: extract from tool_call config
+    if (node.type === 'tool_call' && node.config) {
       const toolName = node.config['tool_name'] as string | undefined;
       if (toolName) {
-        // Map tool names to generic tool categories
         if (toolName.startsWith('github.') || toolName === 'git') {
           tools.add('Bash');
         } else if (toolName.includes('.')) {

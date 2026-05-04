@@ -71,11 +71,9 @@ export function setupRoutes(app: Application): void {
   app.post(
     '/api/executions/:id/resume',
     async (_req: Request, res: Response) => {
-      res
-        .status(501)
-        .json({
-          error: 'Resume not yet implemented. Coming with AI-native engine.',
-        });
+      res.status(501).json({
+        error: 'Resume not yet implemented. Coming with AI-native engine.',
+      });
     }
   );
 
