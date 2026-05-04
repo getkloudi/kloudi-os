@@ -15,104 +15,19 @@ datasource db {
 
 
 // ===========================================
-// PACKAGES/AUTH DOMAIN
-// ===========================================
-
-// Auth Domain Models
-// User authentication, session management, organization membership
-
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  username  String   @unique
-  password  String   // Hashed password
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  sessions    Session[]
-  memberships Membership[]
-
-  @@map("users")
-}
-
-model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("sessions")
-}
-
-model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  memberships Membership[]
-
-  @@map("organizations")
-}
-
-model Membership {
-  id             String   @id @default(cuid())
-  userId         String
-  organizationId String
-  role           String   @default("member") // owner, admin, member
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, organizationId])
-  @@index([organizationId])
-  @@map("memberships")
-}
-
-
-// ===========================================
 // PACKAGES/CORE DOMAIN
 // ===========================================
 
-// Core Domain Models
-// Decision management, pattern templates, and procedural entities
-
-model Decision {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  status      String   @default("draft")  // draft, published, archived
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("decisions")
-}
-
-model Pattern {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  content     Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("patterns")
-}
+// Core Domain Models — kloudi
+// SOPs, Executions, Integrations
 
 model Sop {
   id              String   @id @default(cuid())
   slug            String
   name            String
   description     String?
-  level           String   @default("task")      // guide, project, task, skill
-  maturity        String   @default("draft")     // draft, curated, validated
+  level           String   @default("task")    // playbook, artifact, role
+  maturity        String   @default("draft")   // draft, curated, validated
   graph           Json     @default("{\"nodes\": [], \"edges\": []}")
   parameters      Json     @default("{}")
   constraints     Json     @default("{}")
@@ -120,8 +35,6 @@ model Sop {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  // Added for execution engine
-  parentEntityId  String?
   tags            String[] @default([])
   metadata        Json     @default("{}")
   executionCount  Int      @default(0)
@@ -129,34 +42,38 @@ model Sop {
   avgDurationMs   Int?
   avgTokensUsed   Int?
 
-  // Relations
-  parentEntity    Sop?        @relation("SopHierarchy", fields: [parentEntityId], references: [id])
-  childEntities   Sop[]       @relation("SopHierarchy")
+  // Marketplace fields — null until V4, accumulate quality signal from V0
+  source          String   @default("org-created")  // org-created, marketplace, machine-generated
+  version         String   @default("1.0.0")
+  qualityScore    Float?
+  isPublic        Boolean  @default(false)
+  marketplaceId   String?
+
   executions      Execution[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
   @@index([level])
   @@index([maturity])
-  @@index([parentEntityId])
   @@map("sops")
 }
 
 model Execution {
-  id            String    @id @default(cuid())
-  sopId         String
-  status        String    @default("pending")  // pending, running, waiting_input, completed, failed, cancelled
-  parameters    Json      @default("{}")
-  variables     Json      @default("{}")        // accumulated node outputs
-  currentNodeId String?
-  result        Json?
-  error         String?
-  tokensUsed    Int       @default(0)
-  durationMs    Int?
-  startedAt     DateTime  @default(now())
-  completedAt   DateTime?
+  id             String    @id @default(cuid())
+  sopId          String
+  status         String    @default("pending")  // pending, running, waiting_input, completed, failed, cancelled
+  parameters     Json      @default("{}")
+  variables      Json      @default("{}")        // accumulated node outputs
+  currentNodeId  String?
+  result         Json?
+  error          String?
+  tokensUsed     Int       @default(0)
+  durationMs     Int?
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
   organizationId String
-  userId         String?                        // who triggered this execution (for activity feed)
+  userId         String?
+  triggeredBy    String    @default("user")      // user, webhook, scheduler
 
   sop            Sop             @relation(fields: [sopId], references: [id], onDelete: Cascade)
   executionNodes ExecutionNode[]
@@ -192,10 +109,10 @@ model ExecutionNode {
 model Integration {
   id             String   @id @default(cuid())
   organizationId String
-  type           String   // github, jira, openai, anthropic
+  type           String   // github, jira, slack, confluence
   name           String
-  credentials    Json     @default("{}")  // plain JSON for now
-  config         Json     @default("{}")  // non-secret settings
+  credentials    Json     @default("{}")  // Encrypted with AES-256-GCM via IntegrationService
+  config         Json     @default("{}")
   status         String   @default("active") // active, inactive, error
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -203,5 +120,48 @@ model Integration {
   @@unique([organizationId, type])
   @@index([organizationId])
   @@map("integrations")
+}
+
+model UsageEvent {
+  id             String   @id @default(cuid())
+  organizationId String
+  product        String   // 'mcp-gateway' | 'kloudi-machine'
+  eventType      String   // 'tool_call' | 'sop_execution' | 'agent_session'
+  units          Int      @default(1)
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+
+  @@index([organizationId])
+  @@index([product])
+  @@index([createdAt])
+  @@map("usage_events")
+}
+
+model BillingSubscription {
+  id                   String    @id @default(cuid())
+  organizationId       String    @unique
+  stripeCustomerId     String?   @unique
+  stripeSubscriptionId String?   @unique
+  product              String    // 'mcp-gateway' | 'kloudi-machine'
+  tier                 String    @default("free") // free | pro | enterprise
+  status               String    @default("active") // active | cancelled | past_due
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([organizationId])
+  @@map("billing_subscriptions")
+}
+
+model ApiKey {
+  id             String    @id @default(cuid())
+  organizationId String
+  keyHash        String    @unique  // SHA-256 of the raw key
+  name           String
+  lastUsedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([organizationId])
+  @@map("api_keys")
 }
 

@@ -434,9 +434,15 @@ importers:
 
   packages/mcp-gateway:
     dependencies:
+      '@kloudi/core':
+        specifier: workspace:*
+        version: link:../core
       '@kloudi/infrastructure':
         specifier: workspace:*
         version: link:../infrastructure
+      '@kloudi/platform':
+        specifier: workspace:*
+        version: link:../platform
       '@kloudi/shared':
         specifier: workspace:*
         version: link:../shared

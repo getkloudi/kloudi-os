@@ -132,3 +132,15 @@ model BillingSubscription {
   @@index([organizationId])
   @@map("billing_subscriptions")
 }
+
+model ApiKey {
+  id             String    @id @default(cuid())
+  organizationId String
+  keyHash        String    @unique  // SHA-256 of the raw key
+  name           String
+  lastUsedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([organizationId])
+  @@map("api_keys")
+}

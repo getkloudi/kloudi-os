@@ -13,13 +13,17 @@
  *   DELETE /servers/:id       Unregister an MCP server (stub)
  *   GET  /mcp                 MCP protocol surface (stub)
  *   GET  /health              Health check
+ *   POST /admin/api-keys      Provision API keys (admin-only)
  */
 
 import express, { type Express, type Request, type Response } from 'express';
+import { createHash, randomBytes } from 'crypto';
 import { GatewayImpl } from './gateway.js';
 import { ToolRegistry, type PendingGate } from './registry.js';
 import { registerAllTools } from './tools/index.js';
 import { runInspectors } from './inspectors/index.js';
+import { decryptCredentials } from '@kloudi/core/organization/integration-service';
+import { recordUsage } from '@kloudi/platform/billing';
 import type { TrustGateContext, OrgContext } from './types.js';
 
 const PORT = parseInt(process.env['PORT'] ?? '3010', 10);
@@ -58,8 +62,46 @@ async function resolveCredentials(
     );
   }
 
-  // V0: return raw credentials. P0 TODO: AES-256-GCM decrypt before returning.
-  return record['credentials'] as Record<string, string>;
+  const raw = record['credentials'];
+  return decryptCredentials(
+    typeof raw === 'string' ? raw : JSON.stringify(raw)
+  );
+}
+
+// API key authentication middleware
+async function requireApiKey(
+  req: Request,
+  res: Response,
+  next: () => void
+): Promise<void> {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader?.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Missing or invalid Authorization header' });
+    return;
+  }
+  const rawKey = authHeader.slice(7);
+  const keyHash = createHash('sha256').update(rawKey).digest('hex');
+
+  const { Database } = await import('@kloudi/infrastructure/database');
+  const db = await Database.getInstance().getClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const apiKey = await (db as any).apiKey.findUnique({ where: { keyHash } });
+  if (!apiKey) {
+    res.status(401).json({ error: 'Invalid API key' });
+    return;
+  }
+
+  // Set org on request, update lastUsedAt async (don't block the request)
+  (req as any).organizationId = apiKey.organizationId; // eslint-disable-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (db as any).apiKey
+    .update({
+      where: { id: apiKey.id },
+      data: { lastUsedAt: new Date() },
+    })
+    .catch(() => {});
+
+  next();
 }
 
 // Health check — no auth required
@@ -67,13 +109,36 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', service: 'mcp-gateway', version: '0.1.0' });
 });
 
+// POST /admin/api-keys — provision API keys (admin-only)
+app.post('/admin/api-keys', async (req: Request, res: Response) => {
+  const adminKey = req.headers['x-admin-key'];
+  if (adminKey !== process.env['GATEWAY_ADMIN_KEY']) {
+    res.status(403).json({ error: 'Forbidden' });
+    return;
+  }
+  const { organizationId, name } = req.body as {
+    organizationId: string;
+    name: string;
+  };
+  const rawKey = randomBytes(32).toString('hex');
+  const keyHash = createHash('sha256').update(rawKey).digest('hex');
+  const { Database } = await import('@kloudi/infrastructure/database');
+  const db = await Database.getInstance().getClient();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (db as any).apiKey.create({ data: { organizationId, keyHash, name } });
+  res.json({ key: rawKey }); // Only returned once — store it
+});
+
 // POST /tools/call — governance wrapper
-app.post('/tools/call', async (req: Request, res: Response) => {
-  const { toolName, params, context } = req.body as {
+app.post('/tools/call', requireApiKey, async (req: Request, res: Response) => {
+  const { toolName, params } = req.body as {
     toolName: string;
     params: Record<string, unknown>;
-    context: OrgContext;
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const organizationId = (req as any).organizationId as string;
+  // build context from authenticated org
+  const context: OrgContext = { organizationId, executionId: '', nodeId: '' };
 
   const tool = registry.get(toolName);
   if (!tool) {
@@ -151,6 +216,10 @@ app.post('/tools/call', async (req: Request, res: Response) => {
       credentials,
       context
     );
+    // Record usage async — don't block the response
+    recordUsage(organizationId, 'mcp-gateway', 'tool_call', 1, {
+      toolName,
+    }).catch(() => {});
     res.json(result);
   } catch (err) {
     res.status(500).json({
@@ -161,26 +230,42 @@ app.post('/tools/call', async (req: Request, res: Response) => {
 });
 
 // GET /tools?organizationId=xxx
-app.get('/tools', async (req: Request, res: Response) => {
-  const { organizationId } = req.query as { organizationId?: string };
-  const tools = await gateway.listTools(organizationId ?? '');
+app.get('/tools', requireApiKey, async (req: Request, res: Response) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const organizationId = (req as any).organizationId as string;
+  const tools = await gateway.listTools(organizationId);
   res.json({ tools });
 });
 
 // POST /tools/resume
-app.post('/tools/resume', async (req: Request, res: Response) => {
-  const { executionId, nodeId, decision } = req.body as {
-    executionId: string;
-    nodeId: string;
-    decision: 'approve' | 'reject';
-  };
-  const result = await gateway.resumeAfterApproval(
-    executionId,
-    nodeId,
-    decision
-  );
-  res.json(result);
-});
+app.post(
+  '/tools/resume',
+  requireApiKey,
+  async (req: Request, res: Response) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const organizationId = (req as any).organizationId as string;
+    const { executionId, nodeId, decision } = req.body as {
+      executionId: string;
+      nodeId: string;
+      decision: 'approve' | 'reject';
+    };
+    const result = await gateway.resumeAfterApproval(
+      executionId,
+      nodeId,
+      decision
+    );
+
+    // Record usage on successful approval + execution
+    if (result.status === 'success') {
+      recordUsage(organizationId, 'mcp-gateway', 'tool_call', 1, {
+        toolName: result.meta?.toolName,
+        resumedFromTrustGate: true,
+      }).catch(() => {});
+    }
+
+    res.json(result);
+  }
+);
 
 // POST /servers/register — stub
 app.post('/servers/register', async (_req: Request, res: Response) => {
