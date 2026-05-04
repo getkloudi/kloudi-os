@@ -17,7 +17,7 @@
  */
 
 import express, { type Express, type Request, type Response } from 'express';
-import { createHash, randomBytes } from 'crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'crypto';
 import { GatewayImpl } from './gateway.js';
 import { ToolRegistry, type PendingGate } from './registry.js';
 import { registerAllTools } from './tools/index.js';
@@ -124,7 +124,12 @@ app.get('/health', (_req: Request, res: Response) => {
 // POST /admin/api-keys — provision API keys (admin-only)
 app.post('/admin/api-keys', async (req: Request, res: Response) => {
   const adminKey = req.headers['x-admin-key'];
-  if (adminKey !== process.env['GATEWAY_ADMIN_KEY']) {
+  const expectedKey = process.env['GATEWAY_ADMIN_KEY'] ?? '';
+  const providedKey = typeof adminKey === 'string' ? adminKey : '';
+  const keysMatch =
+    providedKey.length === expectedKey.length &&
+    timingSafeEqual(Buffer.from(providedKey), Buffer.from(expectedKey));
+  if (!keysMatch) {
     res.status(403).json({ error: 'Forbidden' });
     return;
   }
