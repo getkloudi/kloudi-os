@@ -138,7 +138,8 @@ app.post('/tools/call', requireApiKey, async (req: Request, res: Response) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const organizationId = (req as any).organizationId as string;
   // build context from authenticated org
-  const context: OrgContext = { organizationId, executionId: '', nodeId: '' };
+  const reqId = `ext-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const context: OrgContext = { organizationId, executionId: organizationId, nodeId: reqId };
 
   const tool = registry.get(toolName);
   if (!tool) {
