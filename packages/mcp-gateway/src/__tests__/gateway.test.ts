@@ -1,4 +1,21 @@
-import { describe, test, expect, beforeEach } from '@jest/globals';
+import { describe, test, expect, beforeEach, jest } from '@jest/globals';
+
+// Mock the infrastructure database so listForOrg does not hit Postgres in tests.
+jest.mock('@kloudi/infrastructure/database', () => ({
+  Database: {
+    getInstance: () => ({
+      getClient: async () => ({
+        integration: {
+          findMany: async () => [
+            { type: 'builtin' },
+            { type: 'github' },
+            { type: 'jira' },
+          ],
+        },
+      }),
+    }),
+  },
+}));
 import { securityInspect } from '../inspectors/security.js';
 import { repetitionInspect } from '../inspectors/repetition.js';
 import { trustInspect } from '../inspectors/trust.js';

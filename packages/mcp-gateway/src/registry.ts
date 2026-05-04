@@ -44,7 +44,26 @@ export class ToolRegistry {
     return this.tools.get(toolName);
   }
 
-  listForOrg(_organizationId: string): ToolDefinition[] {
+  async listForOrg(organizationId: string): Promise<ToolDefinition[]> {
+    const { Database } = await import('@kloudi/infrastructure/database');
+    const db = await Database.getInstance().getClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const integrations = await (db as any).integration.findMany({
+      where: { organizationId, status: 'active' },
+      select: { type: true },
+    });
+    const connectedTypes = new Set(integrations.map((i: { type: string }) => i.type));
+
+    return Array.from(this.tools.values())
+      .filter(
+        (t) =>
+          t.definition.integration === 'builtin' ||
+          connectedTypes.has(t.definition.integration)
+      )
+      .map((t) => t.definition);
+  }
+
+  listAllTools(): ToolDefinition[] {
     return Array.from(this.tools.values()).map((t) => t.definition);
   }
 
