@@ -47,7 +47,6 @@
     "test:ci": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage --passWithNoTests"
   },
   "dependencies": {
-    "@kloudi/core": "workspace:*",
     "@kloudi/infrastructure": "workspace:*",
     "@kloudi/platform": "workspace:*",
     "@kloudi/shared": "workspace:*",
