@@ -186,6 +186,23 @@ app.post('/tools/call', requireApiKey, async (req: Request, res: Response) => {
   const bodySchema = z.object({
     toolName: z.string().min(1),
     params: z.record(z.string(), z.unknown()).default({}),
+<<<<<<< HEAD
+||||||| parent of e778c13 (fix: use z.record(z.string(), z.unknown()) for strict TS compatibility)
+    params: z.record(z.unknown()).default({}),
+    context: z.object({
+      organizationId: z.string(),
+      userId: z.string(),
+      executionId: z.string(),
+      nodeId: z.string(),
+    }),
+=======
+    context: z.object({
+      organizationId: z.string(),
+      userId: z.string(),
+      executionId: z.string(),
+      nodeId: z.string(),
+    }),
+>>>>>>> e778c13 (fix: use z.record(z.string(), z.unknown()) for strict TS compatibility)
   });
   const parsed = bodySchema.safeParse(req.body);
   if (!parsed.success) {
