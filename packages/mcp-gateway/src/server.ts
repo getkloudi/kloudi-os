@@ -163,13 +163,20 @@ app.post('/admin/api-keys', async (req: Request, res: Response) => {
 
 // POST /tools/call — governance wrapper
 app.post('/tools/call', requireApiKey, async (req: Request, res: Response) => {
-  const { toolName, params } = req.body as {
-    toolName: string;
-    params: Record<string, unknown>;
-  };
+  const bodySchema = z.object({
+    toolName: z.string().min(1),
+    params: z.record(z.string(), z.unknown()).default({}),
+  });
+  const parsed = bodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    res
+      .status(400)
+      .json({ error: 'Invalid request body', details: parsed.error.flatten() });
+    return;
+  }
+  const { toolName, params } = parsed.data;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const organizationId = (req as any).organizationId as string;
-  // build context from authenticated org
   const reqId = `ext-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const context: OrgContext = {
     organizationId,
@@ -281,18 +288,28 @@ app.post(
   async (req: Request, res: Response) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const organizationId = (req as any).organizationId as string;
-    const { executionId, nodeId, decision } = req.body as {
-      executionId: string;
-      nodeId: string;
-      decision: 'approve' | 'reject';
-    };
+    const resumeSchema = z.object({
+      executionId: z.string().min(1),
+      nodeId: z.string().min(1),
+      decision: z.enum(['approve', 'reject']),
+    });
+    const parsedResume = resumeSchema.safeParse(req.body);
+    if (!parsedResume.success) {
+      res
+        .status(400)
+        .json({
+          error: 'Invalid request body',
+          details: parsedResume.error.flatten(),
+        });
+      return;
+    }
+    const { executionId, nodeId, decision } = parsedResume.data;
     const result = await gateway.resumeAfterApproval(
       executionId,
       nodeId,
       decision
     );
 
-    // Record usage on successful approval + execution
     if (result.status === 'success') {
       recordUsage(organizationId, 'mcp-gateway', 'tool_call', 1, {
         toolName: result.meta?.toolName,
