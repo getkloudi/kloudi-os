@@ -80,11 +80,6 @@ jest.unstable_mockModule('@kloudi/infrastructure/cache', () => ({
   },
 }));
 
-jest.unstable_mockModule('@kloudi/auth', () => ({
-  JwtManager: {
-    getInstance: jest.fn(() => mockAuth),
-  },
-}));
 
 jest.unstable_mockModule('@kloudi/infrastructure/events', () => ({
   EventBus: {
@@ -214,10 +209,16 @@ describe('API Server Production Code', () => {
   describe('Health Endpoint Tests', () => {
     beforeEach(async () => {
       await setupMiddleware(app);
+      // Mock fetch so the auth service HTTP health check doesn't hit a real server
+      globalThis.fetch = jest.fn().mockResolvedValue({ ok: true });
       app.get(
         '/health',
         createHealthEndpoint({ port: 3001, environment: 'test' })
       );
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
     });
 
     test('should respond to health check with 200 status', async () => {
