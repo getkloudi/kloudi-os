@@ -61,8 +61,23 @@
     "shared",
     "types",
     "utilities",
-    "constants"
+    "constants",
+    "logger",
+    "kloudi"
   ],
   "author": "nitishmehrotra@gmail.com",
-  "license": "SEE LICENSE IN ../../LICENSE"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/getkloudi/kloudi-os.git",
+    "directory": "packages/shared"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
 }

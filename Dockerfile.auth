@@ -7,10 +7,10 @@ COPY . .
 # Install dependencies
 RUN corepack enable && pnpm install --frozen-lockfile
 
-# Build auth — generates auth's own Prisma client from apps/auth/prisma/schema.prisma
-# (auth is self-contained: no workspace deps, no shared Prisma client, ready to
-# extract to its own repo)
-RUN pnpm --filter @kloudi/auth build
+# Build auth and its only workspace dep (@kloudi/shared for Logger). When auth
+# extracts to its own repo, this resolves @kloudi/shared from npm and the
+# turbo dep traversal collapses to a single-package build.
+RUN pnpm exec turbo run build --filter=@kloudi/auth...
 
 EXPOSE 3004
 # Migrations are managed by the API service (single source of truth at prisma/migrations/).
