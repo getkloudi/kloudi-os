@@ -1,7 +1,20 @@
-// Better Auth schema (with organization plugin)
-// Generated reference: https://www.better-auth.com/docs/adapters/prisma
-// Plugin reference: https://www.better-auth.com/docs/plugins/organization
-// Edited in this file, then `pnpm schema:build` regenerates the root schema.prisma.
+// Auth service — self-contained Prisma schema
+// This schema is independent of the rest of the monorepo. The auth service
+// owns its own Prisma client and migrations. Other services consume auth via
+// HTTP API (validate-session, etc.), never via direct DB access.
+//
+// When auth moves to its own repo, this entire file moves with it unchanged.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Better Auth core ──────────────────────────────────────────────────────
 
 model User {
   id            String   @id
@@ -67,6 +80,8 @@ model Verification {
   @@index([identifier])
   @@map("verification")
 }
+
+// ─── Organization plugin ───────────────────────────────────────────────────
 
 model Organization {
   id        String   @id

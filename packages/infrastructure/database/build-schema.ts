@@ -99,7 +99,10 @@ datasource db {
       });
     }
 
-    // Scan apps/*/prisma/schema.prisma (excluding apps/api)
+    // Scan apps/*/prisma/schema.prisma (excluding apps/api and apps/auth)
+    // apps/auth owns its own self-contained Prisma schema + client. It is
+    // intentionally excluded from the aggregated root schema so the auth
+    // service can be extracted to its own repo without rewiring the build.
     const appsDir = path.join(this.rootDir, 'apps');
     if (fs.existsSync(appsDir)) {
       const apps = fs.readdirSync(appsDir).filter((item) => {
@@ -107,7 +110,8 @@ datasource db {
         return (
           fs.statSync(itemPath).isDirectory() &&
           !item.startsWith('.') &&
-          item !== 'api' // Exclude apps/api
+          item !== 'api' && // Exclude apps/api
+          item !== 'auth' // Exclude apps/auth (self-contained)
         );
       });
 

@@ -2,15 +2,17 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from '@better-auth/prisma-adapter';
 import { organization } from 'better-auth/plugins';
 import { Resend } from 'resend';
-import { Database } from '@kloudi/infrastructure/database';
+import { PrismaClient } from '../prisma/generated/client/index.js';
 
 const resend = new Resend(process.env['RESEND_API_KEY']);
 
-export async function createAuth() {
-  const db = await Database.getInstance().getClient();
+// Module-level Prisma client. Reused across all auth requests.
+// Disposed in index.ts on graceful shutdown.
+export const prisma = new PrismaClient();
 
+export async function createAuth() {
   return betterAuth({
-    database: prismaAdapter(db as Parameters<typeof prismaAdapter>[0], {
+    database: prismaAdapter(prisma, {
       provider: 'postgresql',
     }),
 

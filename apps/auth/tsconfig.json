@@ -9,9 +9,5 @@
     "noEmit": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["dist", "node_modules"],
-  "references": [
-    { "path": "../../packages/shared" },
-    { "path": "../../packages/infrastructure" }
-  ]
+  "exclude": ["dist", "node_modules", "prisma/generated"]
 }
