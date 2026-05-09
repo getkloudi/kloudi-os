@@ -370,6 +370,7 @@ CLI publishes to npm only from `main` via `cli-v*` GitHub release tags.
 |                            | Beta                                                          | Production                                               |
 | -------------------------- | ------------------------------------------------------------- | -------------------------------------------------------- |
 | **API** (Render)           | `kloudi-api-beta` → https://kloudi-api-beta-wivn.onrender.com | `kloudi-api-prod` → https://kloudi-api-prod.onrender.com |
+| **Auth** (Render)          | `kloudi-auth-beta` → https://kloudi-auth-beta.onrender.com    | `kloudi-auth-prod` (TBD)                                 |
 | **Database** (Neon)        | `kloudi-os-beta` (curly-grass-31791879)                       | `kloudi-os` (dry-fog-30866369)                           |
 | **Cache** (Upstash)        | `kloudios-beta-redis` (KloudiOS Beta team)                    | `kloudios-prod-redis` (KloudiOS Prod team)               |
 | **Web** (Vercel)           | `kloudi-web-beta`                                             | `kloudi-web-prod`                                        |
@@ -382,16 +383,17 @@ All services in **us-east / Virginia**. All free tier. Each environment has full
 
 ### Render
 
-|                  | Beta                                                  | Prod                                                  |
-| ---------------- | ----------------------------------------------------- | ----------------------------------------------------- |
-| **Workspace**    | KloudiOS Beta (tea-d7dq40jeo5us73fr9ve0)              | KloudiOS Prod (tea-d7dnd8vaqgkc73fomlmg)              |
-| **Product API**  | `kloudi-api-beta` (srv-d7dqddt7vvec73fog8ng)          | `kloudi-api-prod` (srv-d7dqhre7r5hc73d5regg)          |
-| **Internal API** | `kloudi-internal-api-beta` (srv-d7dvdke7r5hc73a4faog) | `kloudi-internal-api-prod` (srv-d7dtopkvikkc73ed2sag) |
-| **Branch**       | `develop`                                             | `main`                                                |
-| **Runtime**      | Docker (`Dockerfile` / `Dockerfile.internal-api`)     | Docker                                                |
-| **Region**       | Virginia                                              | Virginia                                              |
-| **Plan**         | Free                                                  | Free                                                  |
-| **Health**       | `GET /health`                                         | `GET /health`                                         |
+|                  | Beta                                                                  | Prod                                                  |
+| ---------------- | --------------------------------------------------------------------- | ----------------------------------------------------- |
+| **Workspace**    | KloudiOS Beta (tea-d7dq40jeo5us73fr9ve0)                              | KloudiOS Prod (tea-d7dnd8vaqgkc73fomlmg)              |
+| **Product API**  | `kloudi-api-beta` (srv-d7dqddt7vvec73fog8ng)                          | `kloudi-api-prod` (srv-d7dqhre7r5hc73d5regg)          |
+| **Auth Service** | `kloudi-auth-beta` (srv-d7vd53lckfvc73eg1ce0)                         | TBD                                                   |
+| **Internal API** | `kloudi-internal-api-beta` (srv-d7dvdke7r5hc73a4faog)                 | `kloudi-internal-api-prod` (srv-d7dtopkvikkc73ed2sag) |
+| **Branch**       | `develop`                                                             | `main`                                                |
+| **Runtime**      | Docker (`Dockerfile` / `Dockerfile.internal-api` / `Dockerfile.auth`) | Docker                                                |
+| **Region**       | Virginia                                                              | Virginia                                              |
+| **Plan**         | Free                                                                  | Free                                                  |
+| **Health**       | `GET /health`                                                         | `GET /health`                                         |
 
 ### Neon (PostgreSQL)
 
