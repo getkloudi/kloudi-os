@@ -8,7 +8,10 @@ const resend = new Resend(process.env['RESEND_API_KEY']);
 
 // Module-level Prisma client. Reused across all auth requests.
 // Disposed in index.ts on graceful shutdown.
-export const prisma = new PrismaClient();
+// Prisma 7 requires datasourceUrl to be passed explicitly (no `url` in schema).
+export const prisma = new PrismaClient({
+  datasourceUrl: process.env['DATABASE_URL'],
+});
 
 export async function createAuth() {
   return betterAuth({
