@@ -2,16 +2,20 @@ import { betterAuth } from 'better-auth';
 import { prismaAdapter } from '@better-auth/prisma-adapter';
 import { organization } from 'better-auth/plugins';
 import { Resend } from 'resend';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../prisma/generated/client/index.js';
 
 const resend = new Resend(process.env['RESEND_API_KEY']);
 
 // Module-level Prisma client. Reused across all auth requests.
 // Disposed in index.ts on graceful shutdown.
-// Prisma 7 requires datasourceUrl to be passed explicitly (no `url` in schema).
-export const prisma = new PrismaClient({
-  datasourceUrl: process.env['DATABASE_URL'],
+// Prisma 7 uses Driver Adapters: pass a pg connection pool config to PrismaPg,
+// then plug that into PrismaClient. Schema datasource has no `url` — connection
+// happens at runtime here.
+const adapter = new PrismaPg({
+  connectionString: process.env['DATABASE_URL']!,
 });
+export const prisma = new PrismaClient({ adapter });
 
 export async function createAuth() {
   return betterAuth({
