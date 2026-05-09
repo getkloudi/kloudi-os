@@ -14,7 +14,7 @@ async function start() {
     res.json({ status: 'ok', service: 'auth' });
   });
 
-  app.all('/api/auth/*', toNodeHandler(auth));
+  app.all('/api/auth/{*splat}', toNodeHandler(auth));
 
   app.listen(PORT, () => {
     logger.info(`auth listening on port ${PORT}`);
