@@ -91,7 +91,7 @@ pnpm lint                       # Run ESLint on all .js files
 pnpm build                      # Build for production
 
 # Single Test Commands
-pnpm --filter @kloudi/api test  # Run tests for API package only
+pnpm --filter @kloudi-os/api test  # Run tests for API package only
 NODE_OPTIONS='--experimental-vm-modules' jest  # Run Jest directly
 jest <path-to-test-file>        # Run specific test file
 jest --testNamePattern="<test>" # Run tests matching name pattern
@@ -129,7 +129,7 @@ import { UserAuth } from '../capabilities/auth.js';
 import { User } from '../core/user.js';
 
 // ✅ Use workspace imports for shared packages
-import { Database } from '@kloudi/infrastructure/database.js';
+import { Database } from '@kloudi-os/infrastructure/database.js';
 
 // ❌ Avoid deep relative imports
 import { Something } from '../../../infrastructure/database.js';
@@ -374,7 +374,7 @@ CLI publishes to npm only from `main` via `cli-v*` GitHub release tags.
 | **Database** (Neon)        | `kloudi-os-beta` (curly-grass-31791879)                       | `kloudi-os` (dry-fog-30866369)                           |
 | **Cache** (Upstash)        | `kloudios-beta-redis` (KloudiOS Beta team)                    | `kloudios-prod-redis` (KloudiOS Prod team)               |
 | **Web** (Vercel)           | `kloudi-web-beta`                                             | `kloudi-web-prod`                                        |
-| **CLI** (npm)              | —                                                             | `@kloudi/cli` on `cli-v*` tag                            |
+| **CLI** (npm)              | —                                                             | `@kloudi-os/cli` on `cli-v*` tag                         |
 | **MCP**                    | Mounted on API (future)                                       | Mounted on API (future)                                  |
 | **Internal API** (Render)  | `kloudi-internal-api` (srv-d7dtopkvikkc73ed2sag)              | —                                                        |
 | **Ops Dashboard** (Vercel) | `kloudi-internal-web-beta`                                    | `kloudi-internal-web-prod`                               |

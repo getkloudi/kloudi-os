@@ -1,5 +1,5 @@
 {
-  "name": "@kloudi/mcp-server",
+  "name": "@kloudi-os/mcp-server",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -14,9 +14,9 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "@kloudi/core": "workspace:*",
+    "@kloudi-os/core": "workspace:*",
     "@kloudi-os/infrastructure": "workspace:*",
-    "@kloudi/sdk": "workspace:*",
+    "@kloudi-os/sdk": "workspace:*",
     "@kloudi-os/shared": "workspace:*",
     "zod": "^3.25.0"
   }

@@ -34,7 +34,7 @@ default.yml → {NODE_ENV}.yml → local-{NODE_ENV}.yml → env vars
 ## Usage
 
 ```javascript
-import { Config } from '@kloudi/shared/config';
+import { Config } from '@kloudi-os/shared/config';
 
 // Get config value using dot notation
 const port = Config.get('application.port');

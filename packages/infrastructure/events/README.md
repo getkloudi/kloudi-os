@@ -44,7 +44,7 @@ export EVENTS_DLQ_TTL=604800   # Dead letter queue TTL (default: 7 days)
 #### Publishing Events
 
 ```javascript
-import { EventBus } from '@kloudi/infrastructure/events';
+import { EventBus } from '@kloudi-os/infrastructure/events';
 
 // Get singleton instance
 const eventBus = EventBus.getInstance();
@@ -75,7 +75,7 @@ await eventBus.publish(
 #### Subscribing to Events
 
 ```javascript
-import { EventBus } from '@kloudi/infrastructure/events';
+import { EventBus } from '@kloudi-os/infrastructure/events';
 
 const eventBus = EventBus.getInstance();
 
@@ -305,7 +305,7 @@ try {
 
 ```javascript
 // In tests, you can mock the EventBus
-jest.mock('@kloudi/infrastructure/events', () => ({
+jest.mock('@kloudi-os/infrastructure/events', () => ({
   EventBus: {
     getInstance: jest.fn(() => ({
       publish: jest.fn().mockResolvedValue(undefined),

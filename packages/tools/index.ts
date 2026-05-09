@@ -1,5 +1,5 @@
 /**
- * @kloudi/tools
+ * @kloudi-os/tools
  *
  * Tool registry and built-in tool adapters for lore.dev
  *
@@ -8,7 +8,7 @@
  * - Built-in tools: user, filesystem, shell, github
  *
  * Usage:
- *   import { ToolRegistry, registerBuiltinTools } from '@kloudi/tools';
+ *   import { ToolRegistry, registerBuiltinTools } from '@kloudi-os/tools';
  *
  *   const registry = ToolRegistry.getInstance();
  *   registerBuiltinTools(registry);

@@ -5,7 +5,7 @@ Business-aware AI infrastructure built on Vercel AI SDK, providing consistent AI
 ## Quick Start
 
 ```javascript
-import AIClient from '@kloudi/infrastructure/ai';
+import AIClient from '@kloudi-os/infrastructure/ai';
 
 // Business-aware AI client
 const ai = new AIClient({
@@ -194,7 +194,7 @@ Simple configuration via YAML - just set your Braintrust project name and API ke
 
 ```javascript
 // packages/mastishk/capabilities/ai-integration.js
-import AIClient from '@kloudi/infrastructure/ai';
+import AIClient from '@kloudi-os/infrastructure/ai';
 
 export class AIIntegration {
   static #aiClient = new AIClient({
@@ -233,7 +233,7 @@ const response = await openai.chat.completions.create({...});
 ### After (M2.3)
 
 ```javascript
-import AIClient from '@kloudi/infrastructure/ai';
+import AIClient from '@kloudi-os/infrastructure/ai';
 const ai = new AIClient({ context: 'app', provider: 'openai' });
 const result = await ai.generateText(messages);
 ```

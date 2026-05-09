@@ -1,5 +1,5 @@
 {
-  "name": "@kloudi/core",
+  "name": "@kloudi-os/core",
   "version": "0.1.0",
   "type": "module",
   "description": "Core business logic for Decision and Pattern domains",

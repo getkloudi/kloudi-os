@@ -14,8 +14,8 @@ import { setupErrorHandling, setupMiddleware } from './lib/middleware.js';
 import { authMiddleware } from './lib/auth-middleware.js';
 import { loadAllRoutes } from './lib/route-loader.js';
 import { setupWebSocket } from './lib/websocket.js';
-import { ToolRegistry } from '@kloudi/tools';
-import { registerAllTools } from '@kloudi/tools/startup';
+import { ToolRegistry } from '@kloudi-os/tools';
+import { registerAllTools } from '@kloudi-os/tools/startup';
 
 const logger = Logger.getInstance('api-server');
 const PORT = process.env['PORT'] ?? 3001;

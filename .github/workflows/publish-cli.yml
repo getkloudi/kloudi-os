@@ -10,7 +10,7 @@ env:
 
 jobs:
   publish:
-    name: Publish @kloudi/cli to npm
+    name: Publish @kloudi-os/cli to npm
     runs-on: ubuntu-latest
     if: startsWith(github.event.release.tag_name, 'cli-v')
     steps:
@@ -35,6 +35,6 @@ jobs:
         run: pnpm build
 
       - name: Publish to npm
-        run: pnpm --filter @kloudi/cli publish --no-git-checks
+        run: pnpm --filter @kloudi-os/cli publish --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

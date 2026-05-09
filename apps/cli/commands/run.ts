@@ -6,7 +6,7 @@
  */
 
 import { Command } from 'commander';
-import { KloudiClient } from '@kloudi/sdk';
+import { KloudiClient } from '@kloudi-os/sdk';
 import WebSocket from 'ws';
 import chalk from 'chalk';
 import { createInterface } from 'readline';

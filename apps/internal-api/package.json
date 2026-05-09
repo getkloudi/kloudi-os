@@ -1,5 +1,5 @@
 {
-  "name": "@kloudi/internal-api",
+  "name": "@kloudi-os/internal-api",
   "version": "0.1.0",
   "type": "module",
   "description": "Internal ops API with elevated access for the kloudi.os admin dashboard",

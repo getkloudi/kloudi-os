@@ -1,12 +1,12 @@
 /**
- * @kloudi/core
+ * @kloudi-os/core
  *
  * Core business logic for kloudi — SOPs, execution, projection, organization.
  *
  * Usage:
- *   import { SopService } from '@kloudi/core/sops';
- *   import { ContextManager } from '@kloudi/core/execution';
- *   import { OrganizationService } from '@kloudi/core/organization';
+ *   import { SopService } from '@kloudi-os/core/sops';
+ *   import { ContextManager } from '@kloudi-os/core/execution';
+ *   import { OrganizationService } from '@kloudi-os/core/organization';
  */
 
 export * from './sops/index.js';

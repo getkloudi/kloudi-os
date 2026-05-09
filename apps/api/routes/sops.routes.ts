@@ -6,12 +6,12 @@
  */
 
 import type { Application, Request, Response } from 'express';
-import { SopService } from '@kloudi/core';
+import { SopService } from '@kloudi-os/core';
 import type {
   SopLevelType,
   SopEntityData,
   SopMaturityType,
-} from '@kloudi/core';
+} from '@kloudi-os/core';
 import type { Graph } from '@kloudi-os/shared/types';
 import { Logger } from '@kloudi-os/shared/logger';
 

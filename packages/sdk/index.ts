@@ -1,5 +1,5 @@
 /**
- * @kloudi/sdk — Typed HTTP client for the kloudi.os API
+ * @kloudi-os/sdk — Typed HTTP client for the kloudi.os API
  *
  * Used by:
  *   - CLI (apps/cli) — renders API responses as terminal output
