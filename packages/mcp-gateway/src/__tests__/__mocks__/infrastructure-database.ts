@@ -1,5 +1,5 @@
 /**
- * Test mock for @kloudi/infrastructure/database.
+ * Test mock for @kloudi-os/infrastructure/database.
  *
  * Returns a fake Prisma client that simulates active integrations for all
  * known integration types used in mcp-gateway tests.

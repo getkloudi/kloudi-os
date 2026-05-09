@@ -1,5 +1,5 @@
 /**
- * @kloudi/shared
+ * @kloudi-os/shared
  *
  * Shared types, utilities, and constants for the Kloudi platform
  *
@@ -13,28 +13,28 @@
  *
  * Usage Examples:
  *   // Types and interfaces
- *   import { User, Decision, Project } from '@kloudi/shared/types';
+ *   import { User, Decision, Project } from '@kloudi-os/shared/types';
  *
  *   // Utility functions
- *   import { formatDate, slugify, generateId } from '@kloudi/shared/utils';
+ *   import { formatDate, slugify, generateId } from '@kloudi-os/shared/utils';
  *
  *   // Constants and enums
- *   import { Priority, DecisionStatus, UserRole } from '@kloudi/shared/constants';
+ *   import { Priority, DecisionStatus, UserRole } from '@kloudi-os/shared/constants';
  *
  *   // Configuration management
- *   import { Config } from '@kloudi/shared/config';
+ *   import { Config } from '@kloudi-os/shared/config';
  *   const dbUrl = Config.get('DATABASE_URL');
  *
  *   // Logging
- *   import { Logger } from '@kloudi/shared/logger';
+ *   import { Logger } from '@kloudi-os/shared/logger';
  *   const logger = Logger.getInstance('my-module');
  *
  *   // Events (moved to infrastructure)
- *   import { EventBus } from '@kloudi/infrastructure/events';
+ *   import { EventBus } from '@kloudi-os/infrastructure/events';
  *   await EventBus.publish('user.created', userData);
  *
  *   // Prompt templates
- *   import { PromptManager } from '@kloudi/shared/prompt-manager';
+ *   import { PromptManager } from '@kloudi-os/shared/prompt-manager';
  *   const prompt = await PromptManager.getTemplate('code-review');
  */
 

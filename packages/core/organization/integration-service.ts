@@ -1,9 +1,9 @@
-import { Database } from '@kloudi/infrastructure/database';
-import { Logger } from '@kloudi/shared/logger';
+import { Database } from '@kloudi-os/infrastructure/database';
+import { Logger } from '@kloudi-os/shared/logger';
 import {
   encryptCredentials,
   safeDecrypt,
-} from '@kloudi/shared/crypto/credentials';
+} from '@kloudi-os/shared/crypto/credentials';
 
 const logger = Logger.getInstance('integration-service');
 

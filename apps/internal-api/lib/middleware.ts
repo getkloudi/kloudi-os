@@ -1,5 +1,5 @@
 import type { Application, Request, Response, NextFunction } from 'express';
-import { Logger } from '@kloudi/shared/logger';
+import { Logger } from '@kloudi-os/shared/logger';
 import express from 'express';
 
 const logger = Logger.getInstance('ops-middleware');

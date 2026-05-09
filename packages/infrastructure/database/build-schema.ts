@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 // Inline logger — this script must run before workspace packages are built,
-// so it cannot import from @kloudi/shared.
+// so it cannot import from @kloudi-os/shared.
 const logger = {
   info: (msg: string, _meta?: Record<string, unknown>) =>
     console.log(`[schema] ${msg}`),

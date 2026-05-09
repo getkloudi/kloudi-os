@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import { PromptManager } from '@kloudi/shared/prompt-manager';
+import { PromptManager } from '@kloudi-os/shared/prompt-manager';
 
 describe('Prompt Manager Module Test', () => {
   test('should initialize prompt manager and register helpers', () => {

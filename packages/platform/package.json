@@ -20,7 +20,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@kloudi/infrastructure": "workspace:*",
+    "@kloudi-os/infrastructure": "workspace:*",
     "stripe": "^17.0.0"
   },
   "devDependencies": {

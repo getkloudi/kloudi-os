@@ -2,7 +2,7 @@ import type { Application } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { performance } from 'perf_hooks';
-import { Logger } from '@kloudi/shared/logger';
+import { Logger } from '@kloudi-os/shared/logger';
 
 const logger = Logger.getInstance('route-loader');
 

@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import { Logger } from '@kloudi/shared/logger';
+import { Logger } from '@kloudi-os/shared/logger';
 
 describe('Logger Module Test', () => {
   test('should create correlation IDs and have logging methods', () => {

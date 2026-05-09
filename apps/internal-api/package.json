@@ -19,8 +19,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@kloudi/infrastructure": "workspace:*",
-    "@kloudi/shared": "workspace:*",
+    "@kloudi-os/infrastructure": "workspace:*",
+    "@kloudi-os/shared": "workspace:*",
     "@prisma/client": "^7.3.0",
     "express": "5.2.1"
   },

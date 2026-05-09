@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import { ProviderManager } from '@kloudi/infrastructure/ai';
+import { ProviderManager } from '@kloudi-os/infrastructure/ai';
 
 // TODO: Restore AIClient tests once provider initialization is mockable.
 // Removed because:

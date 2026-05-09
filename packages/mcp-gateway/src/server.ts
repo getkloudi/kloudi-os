@@ -24,7 +24,7 @@ import { GatewayImpl } from './gateway.js';
 import { ToolRegistry } from './registry.js';
 import { registerAllTools } from './tools/index.js';
 import { runInspectors } from './inspectors/index.js';
-import { safeDecrypt } from '@kloudi/shared/crypto/credentials';
+import { safeDecrypt } from '@kloudi-os/shared/crypto/credentials';
 import { recordUsage } from '@kloudi/platform/billing';
 import { rateLimitMiddleware } from './middleware/rate-limit.js';
 import type { TrustGateContext, OrgContext } from './types.js';
@@ -62,7 +62,7 @@ async function resolveCredentials(
 ): Promise<Record<string, string>> {
   if (authType === 'none') return {};
 
-  const { Database } = await import('@kloudi/infrastructure/database');
+  const { Database } = await import('@kloudi-os/infrastructure/database');
   const db = await Database.getInstance().getClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -98,7 +98,7 @@ async function requireApiKey(
   const rawKey = authHeader.slice(7);
   const keyHash = createHash('sha256').update(rawKey).digest('hex');
 
-  const { Database } = await import('@kloudi/infrastructure/database');
+  const { Database } = await import('@kloudi-os/infrastructure/database');
   const db = await Database.getInstance().getClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const apiKey = await (db as any).apiKey.findUnique({ where: { keyHash } });
@@ -151,7 +151,7 @@ app.post('/admin/api-keys', async (req: Request, res: Response) => {
   const { organizationId, name } = parsed.data;
   const rawKey = randomBytes(32).toString('hex');
   const keyHash = createHash('sha256').update(rawKey).digest('hex');
-  const { Database } = await import('@kloudi/infrastructure/database');
+  const { Database } = await import('@kloudi-os/infrastructure/database');
   const db = await Database.getInstance().getClient();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   await (db as any).apiKey.create({ data: { organizationId, keyHash, name } });
@@ -172,7 +172,10 @@ app.post(
     if (!parsed.success) {
       res
         .status(400)
-        .json({ error: 'Invalid request body', details: parsed.error.flatten() });
+        .json({
+          error: 'Invalid request body',
+          details: parsed.error.flatten(),
+        });
       return;
     }
     const { toolName, params } = parsed.data;
@@ -215,7 +218,7 @@ app.post(
       const gateKey = `${context.executionId}:${context.nodeId}`;
       const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h TTL
 
-      const { Database } = await import('@kloudi/infrastructure/database');
+      const { Database } = await import('@kloudi-os/infrastructure/database');
       const db = await Database.getInstance().getClient();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (db as any).trustGate.upsert({
@@ -310,7 +313,7 @@ app.post(
     const { executionId, nodeId, decision } = parsedResume.data;
 
     const gateKey = `${executionId}:${nodeId}`;
-    const { Database } = await import('@kloudi/infrastructure/database');
+    const { Database } = await import('@kloudi-os/infrastructure/database');
     const db = await Database.getInstance().getClient();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -1,5 +1,5 @@
 {
-  "name": "@kloudi/infrastructure",
+  "name": "@kloudi-os/infrastructure",
   "version": "0.1.0",
   "type": "module",
   "description": "Production-grade infrastructure components for domain-driven development",
@@ -37,7 +37,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.29",
     "@ai-sdk/openai": "^3.0.21",
-    "@kloudi/shared": "workspace:^",
+    "@kloudi-os/shared": "workspace:^",
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "ai": "^6.0.59",

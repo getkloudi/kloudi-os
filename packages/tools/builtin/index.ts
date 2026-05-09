@@ -14,8 +14,8 @@ import {
 import { filesystemTools } from './filesystem.js';
 import { shellTools } from './shell.js';
 import { githubTools } from './github.js';
-import { Logger } from '@kloudi/shared/logger';
-import type { ToolDefinition } from '@kloudi/shared/types';
+import { Logger } from '@kloudi-os/shared/logger';
+import type { ToolDefinition } from '@kloudi-os/shared/types';
 
 const logger = Logger.getInstance('tools:builtin');
 

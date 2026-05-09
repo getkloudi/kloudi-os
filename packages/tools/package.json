@@ -35,7 +35,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@kloudi/shared": "workspace:*",
+    "@kloudi-os/shared": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "@octokit/rest": "^22.0.1",
     "@slack/web-api": "^7.13.0"

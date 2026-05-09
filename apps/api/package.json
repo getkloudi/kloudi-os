@@ -27,8 +27,8 @@
   "dependencies": {
     "@kloudi/auth": "workspace:*",
     "@kloudi/core": "workspace:*",
-    "@kloudi/infrastructure": "workspace:*",
-    "@kloudi/shared": "workspace:*",
+    "@kloudi-os/infrastructure": "workspace:*",
+    "@kloudi-os/shared": "workspace:*",
     "@kloudi/tools": "workspace:*",
     "@prisma/client": "^7.3.0",
     "express": "5.2.1",

@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import { slugify, generateId } from '@kloudi/shared/utils';
+import { slugify, generateId } from '@kloudi-os/shared/utils';
 
 describe('Utils Module Test', () => {
   test('should perform utility functions correctly', () => {

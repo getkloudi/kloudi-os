@@ -1,8 +1,8 @@
 // --- Graph types (match Sop.graph JSONB structure) ---
-// These re-export from @kloudi/shared/types for consistency,
+// These re-export from @kloudi-os/shared/types for consistency,
 // but also define execution-specific types.
 
-import type { NodeType } from '@kloudi/shared/types';
+import type { NodeType } from '@kloudi-os/shared/types';
 
 export type {
   GraphNode,
@@ -10,7 +10,7 @@ export type {
   Graph,
   NodeType,
   Constraint,
-} from '@kloudi/shared/types';
+} from '@kloudi-os/shared/types';
 
 // --- Node executor config types ---
 
@@ -56,7 +56,7 @@ export interface ExecutionContext {
 
 export interface NodeExecutor {
   execute(
-    node: import('@kloudi/shared/types').GraphNode,
+    node: import('@kloudi-os/shared/types').GraphNode,
     ctx: ExecutionContext,
     engine?: ExecutionEngine
   ): Promise<NodeResult>;

@@ -4,7 +4,7 @@ import type {
   ContextItem,
   SopRecord,
 } from './types.js';
-import { Logger } from '@kloudi/shared/logger';
+import { Logger } from '@kloudi-os/shared/logger';
 
 const logger = Logger.getInstance('context-manager');
 

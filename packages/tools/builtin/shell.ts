@@ -5,8 +5,8 @@
  */
 
 import { spawn } from 'child_process';
-import { Logger } from '@kloudi/shared/logger';
-import type { ToolDefinition, ToolContext } from '@kloudi/shared/types';
+import { Logger } from '@kloudi-os/shared/logger';
+import type { ToolDefinition, ToolContext } from '@kloudi-os/shared/types';
 
 const logger = Logger.getInstance('tools:shell');
 

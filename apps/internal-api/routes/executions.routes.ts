@@ -2,8 +2,8 @@ import type { Application, Request, Response } from 'express';
 import {
   PrismaManager,
   type PrismaModelMethods,
-} from '@kloudi/infrastructure/database';
-import { Logger } from '@kloudi/shared/logger';
+} from '@kloudi-os/infrastructure/database';
+import { Logger } from '@kloudi-os/shared/logger';
 
 const logger = Logger.getInstance('ops-executions');
 

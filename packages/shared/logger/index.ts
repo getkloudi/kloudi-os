@@ -1,6 +1,6 @@
 /* eslint-disable no-console -- User error feedback, not operational logging */
 import { randomUUID } from 'crypto';
-import { Config } from '@kloudi/shared/config';
+import { Config } from '@kloudi-os/shared/config';
 
 /** Log level names */
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';

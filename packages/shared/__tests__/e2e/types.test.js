@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import { UserRole } from '@kloudi/shared/types';
+import { UserRole } from '@kloudi-os/shared/types';
 
 describe('Types Module Test', () => {
   test('should have correct enum values and interface structure', () => {

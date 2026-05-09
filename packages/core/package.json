@@ -43,8 +43,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@kloudi/infrastructure": "workspace:*",
-    "@kloudi/shared": "workspace:*"
+    "@kloudi-os/infrastructure": "workspace:*",
+    "@kloudi-os/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^25.1.0",

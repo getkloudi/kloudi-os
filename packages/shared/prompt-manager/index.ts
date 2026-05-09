@@ -2,7 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import Handlebars, { type HelperOptions, type SafeString } from 'handlebars';
 import { loadPrompt } from 'braintrust';
-import { Config } from '@kloudi/shared/config';
+import { Config } from '@kloudi-os/shared/config';
 
 /** Template data object */
 type TemplateData = Record<string, unknown>;

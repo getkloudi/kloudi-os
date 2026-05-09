@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import { API_LIMITS, REGEX_PATTERNS } from '@kloudi/shared/constants';
+import { API_LIMITS, REGEX_PATTERNS } from '@kloudi-os/shared/constants';
 
 describe('Constants Module Test', () => {
   test('should provide platform-wide constants', () => {

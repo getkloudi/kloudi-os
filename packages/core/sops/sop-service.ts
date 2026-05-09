@@ -4,7 +4,7 @@
  * Handles validation, business rules, and orchestration.
  */
 
-import { Logger } from '@kloudi/shared/logger';
+import { Logger } from '@kloudi-os/shared/logger';
 import { SopEntity, SopLevel, SopMaturity } from './sop-entity.js';
 import type {
   SopEntityData,

@@ -1,6 +1,6 @@
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
-import { Config } from '@kloudi/shared/config';
+import { Config } from '@kloudi-os/shared/config';
 
 /** Language model interface - simplified from @ai-sdk/provider */
 interface LanguageModel {
