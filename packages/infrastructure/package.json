@@ -75,6 +75,9 @@
   },
   "files": [
     "dist",
+    "!dist/tsconfig.tsbuildinfo",
+    "!dist/database/build-schema.*",
+    "!dist/**/__tests__/**",
     "README.md"
   ]
 }

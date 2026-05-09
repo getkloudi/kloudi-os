@@ -14,12 +14,13 @@ type ConfigValue =
   | Record<string, unknown>;
 
 /**
- * Load .env file from the nearest ancestor directory into process.env.
- * Walks up from this package's directory to find the monorepo root .env.
- * Does NOT override existing environment variables.
+ * Load a single .env file by walking up the filesystem from this package's
+ * directory until found. Sets process.env keys that are NOT already set.
+ *
+ * Internal helper — public API is `loadEnvFiles()`.
  */
-function loadEnvFile(filename = '.env'): void {
-  let dir = __dirname;
+function loadEnvFile(filename: string, startDir?: string): void {
+  let dir = startDir ?? __dirname;
   // When running from dist/, start from the package root
   if (dir.includes('/dist/')) {
     dir = dir.replace(/\/dist\/.*$/, '');
@@ -52,13 +53,45 @@ function loadEnvFile(filename = '.env'): void {
   }
 }
 
-// Load environment-specific .env file first (higher priority values),
-// then base .env (fills in anything not already set)
-const nodeEnv = process.env['NODE_ENV'] ?? 'development';
-if (nodeEnv === 'test') {
-  loadEnvFile('.env.test');
+/**
+ * Load .env files from the nearest ancestor directory into process.env.
+ *
+ * **Opt-in.** This used to run automatically at module import time, which
+ * was a surprise for external library users. Now nothing happens until you
+ * call this explicitly.
+ *
+ * Order:
+ * 1. `.env.test` if `NODE_ENV=test` (overrides nothing already set)
+ * 2. `.env` (fills in anything still unset)
+ *
+ * Existing `process.env` values are never overridden — env vars set by your
+ * deploy platform (Render, Vercel, Docker) always win.
+ *
+ * Call this BEFORE the first `Config.get()`, otherwise the config snapshot
+ * won't include values from your .env files.
+ *
+ * @example
+ * ```ts
+ * import { loadEnvFiles, Config } from '@kloudi-os/shared/config';
+ * loadEnvFiles();
+ * const dbUrl = Config.get('database.url');
+ * ```
+ *
+ * @param options.startDir - Where to start the upward walk. Defaults to the
+ *   directory containing this module (works for both monorepo and
+ *   `node_modules`-installed scenarios).
+ */
+export function loadEnvFiles(options: { startDir?: string } = {}): void {
+  const nodeEnv = process.env['NODE_ENV'] ?? 'development';
+  if (nodeEnv === 'test') {
+    loadEnvFile('.env.test', options.startDir);
+  }
+  loadEnvFile('.env', options.startDir);
 }
-loadEnvFile('.env');
+
+// NOTE: `.env` files are NOT loaded automatically. Library consumers should
+// either set process.env via their deploy platform, use their own dotenv,
+// or call `loadEnvFiles()` explicitly at app boot.
 
 /**
  * Read an env var, returning undefined if missing.
@@ -74,6 +107,7 @@ function env(key: string): string | undefined {
  * No YAML, no merge hierarchy, no node-config.
  */
 function buildConfig() {
+  const nodeEnv = process.env['NODE_ENV'] ?? 'development';
   const isBeta = nodeEnv === 'beta';
   const isProduction = nodeEnv === 'production' || isBeta;
   const isDevelopment = nodeEnv === 'development';
@@ -259,5 +293,20 @@ class Environment {
   }
 }
 
-const Config = Environment.getInstance();
+// Lazy proxy — the Environment singleton is built on first method access,
+// not at module-import time. This lets consumers call `loadEnvFiles()` (or
+// otherwise populate process.env) BEFORE Config snapshots the values.
+//
+// Proxy traps cover both reads (get) and writes (set) so that direct
+// assignment like `Config.foo = bar` doesn't silently land on the empty
+// proxy target instead of the singleton.
+const Config = new Proxy({} as Environment, {
+  get(_target, prop, receiver) {
+    return Reflect.get(Environment.getInstance(), prop, receiver);
+  },
+  set(_target, prop, value, receiver) {
+    return Reflect.set(Environment.getInstance(), prop, value, receiver);
+  },
+});
+
 export { Config };

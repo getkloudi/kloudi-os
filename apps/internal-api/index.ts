@@ -1,3 +1,9 @@
+// Side-effect import: loads .env files BEFORE any other module's top-level
+// code runs. Required because ESM hoists all imports — placing a function
+// call between imports doesn't actually run it before later imports execute.
+// No-op in production where the deploy platform injects env vars directly.
+import '@kloudi-os/shared/config/auto-load';
+
 import type { Application } from 'express';
 import type { Server } from 'http';
 import initializeInfrastructure from '@kloudi-os/infrastructure';
