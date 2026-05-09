@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 
+// Side-effect import: load .env walking up from the user's current working
+// directory (not the package install location). This is the right behavior
+// for a CLI invoked from arbitrary project directories.
+import '@kloudi-os/shared/config/auto-load-cwd';
+
 import { Config } from '@kloudi-os/shared/config';
 import { Logger } from '@kloudi-os/shared/logger';
 import chalk from 'chalk';

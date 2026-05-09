@@ -26,6 +26,14 @@
       "types": "./dist/config/index.d.ts",
       "import": "./dist/config/index.js"
     },
+    "./config/auto-load": {
+      "types": "./dist/config/auto-load.d.ts",
+      "import": "./dist/config/auto-load.js"
+    },
+    "./config/auto-load-cwd": {
+      "types": "./dist/config/auto-load-cwd.d.ts",
+      "import": "./dist/config/auto-load-cwd.js"
+    },
     "./logger": {
       "types": "./dist/logger/index.d.ts",
       "import": "./dist/logger/index.js"
@@ -78,6 +86,8 @@
   },
   "files": [
     "dist",
+    "!dist/tsconfig.tsbuildinfo",
+    "!dist/**/__tests__/**",
     "README.md"
   ]
 }
