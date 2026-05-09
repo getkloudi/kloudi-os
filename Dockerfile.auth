@@ -1,20 +1,19 @@
 FROM node:22.17.0-alpine
 WORKDIR /app
 
-# Install turbo globally for build orchestration
-RUN npm install -g turbo
-
 # Copy everything — no manual package.json enumeration that breaks when packages change
 COPY . .
 
 # Install dependencies
 RUN corepack enable && pnpm install --frozen-lockfile
 
-# Generate Prisma client (schema.prisma is committed to git)
-RUN npx prisma generate
-
-# Build auth and all its dependencies
-RUN pnpm exec turbo run build --filter=@kloudi/auth...
+# Build auth — generates auth's own Prisma client from apps/auth/prisma/schema.prisma
+# (auth is self-contained: no workspace deps, no shared Prisma client, ready to
+# extract to its own repo)
+RUN pnpm --filter @kloudi/auth build
 
 EXPOSE 3004
-CMD sh -c "pnpm --filter @kloudi/auth start"
+# Migrations are managed by the API service (single source of truth at prisma/migrations/).
+# When auth moves to its own repo, it will own its migrations and switch to:
+#   CMD sh -c "pnpm prisma:migrate && pnpm start"
+CMD ["pnpm", "--filter", "@kloudi/auth", "start"]
