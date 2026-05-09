@@ -4,7 +4,7 @@
  */
 import { readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
-import { PrismaManager } from '@kloudi/infrastructure/database/prisma-manager.js';
+import { PrismaManager } from '@kloudi-os/infrastructure/database/prisma-manager.js';
 
 const SEED_DIR = join(import.meta.dirname, '../data/seed/sops');
 

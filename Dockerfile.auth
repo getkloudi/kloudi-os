@@ -7,13 +7,13 @@ COPY . .
 # Install dependencies
 RUN corepack enable && pnpm install --frozen-lockfile
 
-# Build auth and its only workspace dep (@kloudi/shared for Logger). When auth
-# extracts to its own repo, this resolves @kloudi/shared from npm and the
+# Build auth and its only workspace dep (@kloudi-os/shared for Logger). When auth
+# extracts to its own repo, this resolves @kloudi-os/shared from npm and the
 # turbo dep traversal collapses to a single-package build.
-RUN pnpm exec turbo run build --filter=@kloudi/auth...
+RUN pnpm exec turbo run build --filter=@kloudi-os/auth...
 
 EXPOSE 3004
 # Migrations are managed by the API service (single source of truth at prisma/migrations/).
 # When auth moves to its own repo, it will own its migrations and switch to:
 #   CMD sh -c "pnpm prisma:migrate && pnpm start"
-CMD ["pnpm", "--filter", "@kloudi/auth", "start"]
+CMD ["pnpm", "--filter", "@kloudi-os/auth", "start"]

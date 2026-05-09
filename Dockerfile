@@ -14,7 +14,7 @@ RUN corepack enable && pnpm install --frozen-lockfile
 RUN npx prisma generate
 
 # Build API and all its dependencies (turbo resolves the graph automatically)
-RUN pnpm exec turbo run build --filter=@kloudi/api...
+RUN pnpm exec turbo run build --filter=@kloudi-os/api...
 
 EXPOSE 3001
-CMD sh -c "npx prisma migrate deploy && pnpm --filter @kloudi/api start"
+CMD sh -c "npx prisma migrate deploy && pnpm --filter @kloudi-os/api start"
