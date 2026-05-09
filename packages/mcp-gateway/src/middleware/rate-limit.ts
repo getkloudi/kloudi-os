@@ -55,7 +55,7 @@ export async function rateLimitMiddleware(
 
   // Layer 2: Monthly quota from billing state
   try {
-    const { Database } = await import('@kloudi/infrastructure/database');
+    const { Database } = await import('@kloudi-os/infrastructure/database');
     const db = await Database.getInstance().getClient();
 
     const monthStart = new Date();

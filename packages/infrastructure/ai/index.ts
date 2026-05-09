@@ -1,8 +1,8 @@
 import { ProviderManager } from './providers/index.js';
 import { UsageTracker } from './monitoring/usage-tracker.js';
 export { ProviderManager, UsageTracker };
-import { Logger } from '@kloudi/shared/logger';
-import { Config } from '@kloudi/shared/config';
+import { Logger } from '@kloudi-os/shared/logger';
+import { Config } from '@kloudi-os/shared/config';
 
 /** Language model interface - simplified from @ai-sdk/provider */
 interface LanguageModel {

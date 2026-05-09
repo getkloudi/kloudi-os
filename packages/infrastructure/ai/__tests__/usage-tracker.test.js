@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import { UsageTracker } from '@kloudi/infrastructure/ai';
+import { UsageTracker } from '@kloudi-os/infrastructure/ai';
 
 // TODO: Expand tests when UsageTracker is implemented beyond no-op stub.
 // Currently UsageTracker is a placeholder that accepts config but doesn't

@@ -45,14 +45,16 @@ export class ToolRegistry {
   }
 
   async listForOrg(organizationId: string): Promise<ToolDefinition[]> {
-    const { Database } = await import('@kloudi/infrastructure/database');
+    const { Database } = await import('@kloudi-os/infrastructure/database');
     const db = await Database.getInstance().getClient();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const integrations = await (db as any).integration.findMany({
       where: { organizationId, status: 'active' },
       select: { type: true },
     });
-    const connectedTypes = new Set(integrations.map((i: { type: string }) => i.type));
+    const connectedTypes = new Set(
+      integrations.map((i: { type: string }) => i.type)
+    );
 
     return Array.from(this.tools.values())
       .filter(

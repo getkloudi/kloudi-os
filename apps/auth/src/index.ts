@@ -1,6 +1,6 @@
 import express from 'express';
 import { toNodeHandler } from 'better-auth/node';
-import { Logger } from '@kloudi/shared/logger';
+import { Logger } from '@kloudi-os/shared/logger';
 import { createAuth, prisma } from './auth.js';
 
 const logger = Logger.getInstance('auth');

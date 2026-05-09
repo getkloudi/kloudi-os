@@ -8,7 +8,7 @@
 import type { MCPServerConfig } from '../adapters/mcp-adapter.js';
 import { MCPClientAdapter } from '../adapters/mcp-adapter.js';
 import type { ToolRegistry } from '../registry.js';
-import { Logger } from '@kloudi/shared/logger';
+import { Logger } from '@kloudi-os/shared/logger';
 
 const logger = Logger.getInstance('tools:jira-mcp');
 

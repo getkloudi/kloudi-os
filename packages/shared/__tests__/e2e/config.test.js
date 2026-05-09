@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals';
-import { Config } from '@kloudi/shared/config';
+import { Config } from '@kloudi-os/shared/config';
 
 describe('Config Module Test', () => {
   test('should get configuration values via dot notation', () => {

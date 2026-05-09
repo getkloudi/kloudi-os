@@ -8,7 +8,7 @@
  * - skill: Reusable skill definitions
  */
 
-import type { Graph, GraphNode, GraphEdge } from '@kloudi/shared/types';
+import type { Graph, GraphNode, GraphEdge } from '@kloudi-os/shared/types';
 
 /**
  * SOP levels

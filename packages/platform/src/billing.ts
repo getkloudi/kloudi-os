@@ -20,7 +20,7 @@ export async function recordUsage(
   units = 1,
   metadata: Record<string, unknown> = {}
 ): Promise<void> {
-  const { Database } = await import('@kloudi/infrastructure/database');
+  const { Database } = await import('@kloudi-os/infrastructure/database');
   const db = await Database.getInstance().getClient();
   await (db as any).usageEvent.create({
     data: { organizationId, product, eventType, units, metadata },

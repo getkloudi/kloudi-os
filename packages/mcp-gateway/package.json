@@ -47,9 +47,9 @@
     "test:ci": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage --passWithNoTests"
   },
   "dependencies": {
-    "@kloudi/infrastructure": "workspace:*",
+    "@kloudi-os/infrastructure": "workspace:*",
     "@kloudi/platform": "workspace:*",
-    "@kloudi/shared": "workspace:*",
+    "@kloudi-os/shared": "workspace:*",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
     "cors": "^2.8.6",

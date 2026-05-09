@@ -7,8 +7,8 @@
 
 import { readFile, writeFile, readdir, stat, mkdir } from 'fs/promises';
 import { join, resolve, relative, dirname } from 'path';
-import { Logger } from '@kloudi/shared/logger';
-import type { ToolDefinition, ToolContext } from '@kloudi/shared/types';
+import { Logger } from '@kloudi-os/shared/logger';
+import type { ToolDefinition, ToolContext } from '@kloudi-os/shared/types';
 
 const logger = Logger.getInstance('tools:filesystem');
 

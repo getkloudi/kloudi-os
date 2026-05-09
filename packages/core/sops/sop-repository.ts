@@ -4,8 +4,8 @@
  * Handles all database operations for SOPs.
  */
 
-import { Database } from '@kloudi/infrastructure/database';
-import { Logger } from '@kloudi/shared/logger';
+import { Database } from '@kloudi-os/infrastructure/database';
+import { Logger } from '@kloudi-os/shared/logger';
 import type { SopEntityData, SopLevelType } from './sop-entity.js';
 
 const logger = Logger.getInstance('sops');

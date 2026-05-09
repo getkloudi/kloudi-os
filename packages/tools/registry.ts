@@ -5,12 +5,12 @@
  * Tools can be built-in (filesystem, shell, github) or custom.
  */
 
-import { Logger } from '@kloudi/shared/logger';
+import { Logger } from '@kloudi-os/shared/logger';
 import type {
   ToolDefinition,
   ToolParameters,
   ToolContext,
-} from '@kloudi/shared/types';
+} from '@kloudi-os/shared/types';
 
 const logger = Logger.getInstance('tools');
 

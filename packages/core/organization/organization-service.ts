@@ -2,8 +2,8 @@
  * OrganizationService — creates orgs, memberships, and looks up org context.
  */
 
-import { Database } from '@kloudi/infrastructure/database';
-import { Logger } from '@kloudi/shared/logger';
+import { Database } from '@kloudi-os/infrastructure/database';
+import { Logger } from '@kloudi-os/shared/logger';
 
 const logger = Logger.getInstance('organization-service');
 

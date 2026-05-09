@@ -1,5 +1,5 @@
 {
-  "name": "@kloudi/shared",
+  "name": "@kloudi-os/shared",
   "version": "0.1.0",
   "type": "module",
   "description": "Shared types, utilities, and constants for the Kloudi platform",

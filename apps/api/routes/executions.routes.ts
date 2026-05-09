@@ -9,8 +9,8 @@
  */
 
 import type { Application, Request, Response } from 'express';
-import { Database } from '@kloudi/infrastructure/database';
-import { Logger } from '@kloudi/shared/logger';
+import { Database } from '@kloudi-os/infrastructure/database';
+import { Logger } from '@kloudi-os/shared/logger';
 import { emitExecutionProgress } from '../lib/websocket.js';
 
 const logger = Logger.getInstance('executions-routes');

@@ -1,8 +1,8 @@
 import type { Request, Response, RequestHandler } from 'express';
-import { Cache } from '@kloudi/infrastructure/cache';
-import { Database } from '@kloudi/infrastructure/database'; // TODO: Uncomment when schema has models
-import { EventBus } from '@kloudi/infrastructure/events';
-import { Logger } from '@kloudi/shared/logger';
+import { Cache } from '@kloudi-os/infrastructure/cache';
+import { Database } from '@kloudi-os/infrastructure/database'; // TODO: Uncomment when schema has models
+import { EventBus } from '@kloudi-os/infrastructure/events';
+import { Logger } from '@kloudi-os/shared/logger';
 
 const logger = Logger.getInstance('health-endpoint');
 

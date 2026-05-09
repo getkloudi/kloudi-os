@@ -8,7 +8,7 @@
 import type { Server } from 'http';
 import type { IncomingMessage } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
-import { Logger } from '@kloudi/shared/logger';
+import { Logger } from '@kloudi-os/shared/logger';
 
 const logger = Logger.getInstance('websocket');
 

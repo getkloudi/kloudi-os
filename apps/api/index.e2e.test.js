@@ -675,7 +675,7 @@ describe('API Server E2E Tests', () => {
     test(
       'should perform cache operations via Cache class (Real Redis)',
       async () => {
-        const { Cache } = await import('@kloudi/infrastructure/cache');
+        const { Cache } = await import('@kloudi-os/infrastructure/cache');
         const cache = Cache.getInstance();
 
         const testKey = 'e2e-test-cache-class-key';
@@ -701,7 +701,7 @@ describe('API Server E2E Tests', () => {
     test(
       'should handle cache TTL via Cache class',
       async () => {
-        const { Cache } = await import('@kloudi/infrastructure/cache');
+        const { Cache } = await import('@kloudi-os/infrastructure/cache');
         const cache = Cache.getInstance();
 
         const testKey = 'e2e-test-ttl-key';
@@ -727,7 +727,7 @@ describe('API Server E2E Tests', () => {
     test(
       'should cache complex objects via Cache class',
       async () => {
-        const { Cache } = await import('@kloudi/infrastructure/cache');
+        const { Cache } = await import('@kloudi-os/infrastructure/cache');
         const cache = Cache.getInstance();
 
         const testKey = 'e2e-test-object-key';
@@ -755,7 +755,7 @@ describe('API Server E2E Tests', () => {
     test(
       'should handle concurrent cache operations',
       async () => {
-        const { Cache } = await import('@kloudi/infrastructure/cache');
+        const { Cache } = await import('@kloudi-os/infrastructure/cache');
         const cache = Cache.getInstance();
 
         const operations = Array(10)
@@ -839,7 +839,7 @@ describe('API Server E2E Tests', () => {
     test(
       'should publish and subscribe to events via EventBus class (Real Redis Pub/Sub)',
       async () => {
-        const { EventBus } = await import('@kloudi/infrastructure/events');
+        const { EventBus } = await import('@kloudi-os/infrastructure/events');
         const eventBus = EventBus.getInstance();
 
         const testEvent = 'e2e-test-event';
@@ -870,7 +870,7 @@ describe('API Server E2E Tests', () => {
     test(
       'should handle multiple subscribers to same event via EventBus',
       async () => {
-        const { EventBus } = await import('@kloudi/infrastructure/events');
+        const { EventBus } = await import('@kloudi-os/infrastructure/events');
         const eventBus = EventBus.getInstance();
 
         const testEvent = 'e2e-test-multi-subscriber';
@@ -902,7 +902,7 @@ describe('API Server E2E Tests', () => {
     test(
       'should handle event with complex payload via EventBus',
       async () => {
-        const { EventBus } = await import('@kloudi/infrastructure/events');
+        const { EventBus } = await import('@kloudi-os/infrastructure/events');
         const eventBus = EventBus.getInstance();
 
         const testEvent = 'e2e-test-complex-event';
@@ -1037,8 +1037,8 @@ describe('API Server E2E Tests', () => {
     test(
       'should integrate cache and events in workflow',
       async () => {
-        const { Cache } = await import('@kloudi/infrastructure/cache');
-        const { EventBus } = await import('@kloudi/infrastructure/events');
+        const { Cache } = await import('@kloudi-os/infrastructure/cache');
+        const { EventBus } = await import('@kloudi-os/infrastructure/events');
 
         const cache = Cache.getInstance();
         const eventBus = EventBus.getInstance();

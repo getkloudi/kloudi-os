@@ -1,7 +1,7 @@
 import type { Application } from 'express';
 import type { Server } from 'http';
-import initializeInfrastructure from '@kloudi/infrastructure';
-import { Logger } from '@kloudi/shared/logger';
+import initializeInfrastructure from '@kloudi-os/infrastructure';
+import { Logger } from '@kloudi-os/shared/logger';
 import express from 'express';
 import { setupMiddleware, setupErrorHandling } from './lib/middleware.js';
 import { opsAuthMiddleware } from './lib/ops-auth.js';

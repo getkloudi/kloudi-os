@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { Config } from '@kloudi/shared/config';
-import { Logger } from '@kloudi/shared/logger';
+import { Config } from '@kloudi-os/shared/config';
+import { Logger } from '@kloudi-os/shared/logger';
 
 /** Logger interface from shared package */
 interface LoggerInstance {

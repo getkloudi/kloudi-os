@@ -7,9 +7,9 @@
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
-import { Logger } from '@kloudi/shared/logger';
+import { Logger } from '@kloudi-os/shared/logger';
 import type { ToolRegistry } from '../registry.js';
-import type { ToolContext } from '@kloudi/shared/types';
+import type { ToolContext } from '@kloudi-os/shared/types';
 
 const logger = Logger.getInstance('tools:mcp-adapter');
 

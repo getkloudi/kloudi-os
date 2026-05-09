@@ -1,5 +1,5 @@
 /**
- * @kloudi/infrastructure
+ * @kloudi-os/infrastructure
  *
  * Production-grade infrastructure components for domain-driven development
  *
@@ -12,11 +12,11 @@
  * - File System (File operations with logging)
  *
  * Usage (named exports only):
- *   import { Database } from '@kloudi/infrastructure/database';
- *   import { Cache } from '@kloudi/infrastructure/cache';
- *   import { EventBus } from '@kloudi/infrastructure/events';
- *   import { JwtManager } from '@kloudi/infrastructure/auth';
- *   import { AIClient } from '@kloudi/infrastructure/ai';
+ *   import { Database } from '@kloudi-os/infrastructure/database';
+ *   import { Cache } from '@kloudi-os/infrastructure/cache';
+ *   import { EventBus } from '@kloudi-os/infrastructure/events';
+ *   import { JwtManager } from '@kloudi-os/infrastructure/auth';
+ *   import { AIClient } from '@kloudi-os/infrastructure/ai';
  *
  *   // Get singleton instances
  *   const db = Database.getInstance();
@@ -25,12 +25,12 @@
  *   const auth = JwtManager.getInstance();
  *
  * For initialization, import the default from main entry:
- *   import initializeInfrastructure from '@kloudi/infrastructure';
+ *   import initializeInfrastructure from '@kloudi-os/infrastructure';
  *   await initializeInfrastructure();  // Connects to PostgreSQL, Redis, etc.
  */
 
-import { Config } from '@kloudi/shared/config';
-import { Logger } from '@kloudi/shared/logger';
+import { Config } from '@kloudi-os/shared/config';
+import { Logger } from '@kloudi-os/shared/logger';
 import { RedisAdapter } from './cache/redis-adapter.js';
 import { PrismaManager } from './database/prisma-manager.js';
 import { EventBus } from './events/event-bus.js';

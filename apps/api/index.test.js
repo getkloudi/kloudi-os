@@ -29,19 +29,19 @@ const mockEventBus = {
 const mockInitializeInfrastructure = jest.fn().mockResolvedValue(undefined);
 
 // Mock infrastructure to avoid real DB/Redis/Auth connections in tests
-jest.unstable_mockModule('@kloudi/infrastructure', () => ({
+jest.unstable_mockModule('@kloudi-os/infrastructure', () => ({
   default: mockInitializeInfrastructure,
 }));
 
 // Mock Logger to avoid console output during tests
-jest.unstable_mockModule('@kloudi/shared/logger', () => ({
+jest.unstable_mockModule('@kloudi-os/shared/logger', () => ({
   Logger: {
     getInstance: jest.fn(() => mockLogger),
   },
 }));
 
 // Mock Config for middleware tests
-jest.unstable_mockModule('@kloudi/shared/config', () => ({
+jest.unstable_mockModule('@kloudi-os/shared/config', () => ({
   Config: {
     get: jest.fn((key, defaultValue) => {
       if (key === 'NODE_ENV') return 'test';
@@ -56,19 +56,19 @@ jest.unstable_mockModule('@kloudi/shared/config', () => ({
 }));
 
 // Mock infrastructure components for health check
-jest.unstable_mockModule('@kloudi/infrastructure/database', () => ({
+jest.unstable_mockModule('@kloudi-os/infrastructure/database', () => ({
   Database: {
     getInstance: jest.fn(() => mockDatabase),
   },
 }));
 
-jest.unstable_mockModule('@kloudi/infrastructure/cache', () => ({
+jest.unstable_mockModule('@kloudi-os/infrastructure/cache', () => ({
   Cache: {
     getInstance: jest.fn(() => mockCache),
   },
 }));
 
-jest.unstable_mockModule('@kloudi/infrastructure/events', () => ({
+jest.unstable_mockModule('@kloudi-os/infrastructure/events', () => ({
   EventBus: {
     getInstance: jest.fn(() => mockEventBus),
   },

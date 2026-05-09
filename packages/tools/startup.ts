@@ -4,7 +4,7 @@
  * Registers all built-in and external tools with the ToolRegistry.
  */
 
-import { Logger } from '@kloudi/shared/logger';
+import { Logger } from '@kloudi-os/shared/logger';
 import type { ToolRegistry } from './registry.js';
 import { registerBuiltinTools } from './builtin/index.js';
 import { registerGitHubCLITools } from './builtin/github-cli.js';

@@ -12,8 +12,8 @@ import type {
   SopEntityData,
   SopMaturityType,
 } from '@kloudi/core';
-import type { Graph } from '@kloudi/shared/types';
-import { Logger } from '@kloudi/shared/logger';
+import type { Graph } from '@kloudi-os/shared/types';
+import { Logger } from '@kloudi-os/shared/logger';
 
 const logger = Logger.getInstance('sops-routes');
 

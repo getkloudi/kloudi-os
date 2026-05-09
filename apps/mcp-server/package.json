@@ -15,9 +15,9 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "@kloudi/core": "workspace:*",
-    "@kloudi/infrastructure": "workspace:*",
+    "@kloudi-os/infrastructure": "workspace:*",
     "@kloudi/sdk": "workspace:*",
-    "@kloudi/shared": "workspace:*",
+    "@kloudi-os/shared": "workspace:*",
     "zod": "^3.25.0"
   }
 }

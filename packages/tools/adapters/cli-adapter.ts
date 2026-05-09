@@ -6,9 +6,9 @@
  */
 
 import { execFile } from 'node:child_process';
-import { Logger } from '@kloudi/shared/logger';
+import { Logger } from '@kloudi-os/shared/logger';
 import type { ToolRegistry } from '../registry.js';
-import type { ToolContext, ToolParameters } from '@kloudi/shared/types';
+import type { ToolContext, ToolParameters } from '@kloudi-os/shared/types';
 
 const logger = Logger.getInstance('tools:cli-adapter');
 

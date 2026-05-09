@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { Config } from '@kloudi/shared/config';
-import { Logger } from '@kloudi/shared/logger';
+import { Config } from '@kloudi-os/shared/config';
+import { Logger } from '@kloudi-os/shared/logger';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { setupCommands } from './core/command-discovery.js';

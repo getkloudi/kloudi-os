@@ -5,8 +5,8 @@ if (process.env['NODE_ENV'] === 'test') {
 
 import type { Application } from 'express';
 import type { Server } from 'http';
-import initializeInfrastructure from '@kloudi/infrastructure';
-import { Logger } from '@kloudi/shared/logger';
+import initializeInfrastructure from '@kloudi-os/infrastructure';
+import { Logger } from '@kloudi-os/shared/logger';
 import express from 'express';
 import { createHealthEndpoint } from './lib/health-endpoint.js';
 import { setupErrorHandling, setupMiddleware } from './lib/middleware.js';
