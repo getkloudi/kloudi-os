@@ -37,7 +37,7 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.29",
     "@ai-sdk/openai": "^3.0.21",
-    "@kloudi/shared": "workspace:*",
+    "@kloudi/shared": "workspace:^",
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "ai": "^6.0.59",
@@ -59,8 +59,22 @@
     "database",
     "cache",
     "ai",
-    "production"
+    "production",
+    "kloudi"
   ],
   "author": "nitishmehrotra@gmail.com",
-  "license": "SEE LICENSE IN ../../LICENSE"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/getkloudi/kloudi-os.git",
+    "directory": "packages/infrastructure"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
 }

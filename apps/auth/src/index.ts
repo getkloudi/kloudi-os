@@ -1,15 +1,9 @@
 import express from 'express';
 import { toNodeHandler } from 'better-auth/node';
-import pino from 'pino';
+import { Logger } from '@kloudi/shared/logger';
 import { createAuth, prisma } from './auth.js';
 
-const logger = pino({
-  name: 'auth',
-  level: process.env['LOG_LEVEL'] ?? 'info',
-  ...(process.env['NODE_ENV'] === 'development'
-    ? { transport: { target: 'pino-pretty', options: { colorize: true } } }
-    : {}),
-});
+const logger = Logger.getInstance('auth');
 
 const PORT = parseInt(process.env['PORT'] ?? '3004', 10);
 
@@ -24,12 +18,12 @@ async function start() {
   app.all('/api/auth/{*splat}', toNodeHandler(auth));
 
   const server = app.listen(PORT, () => {
-    logger.info({ port: PORT }, 'auth listening');
+    logger.info('auth listening', { port: PORT });
   });
 
   // Graceful shutdown — drain in-flight requests, close DB
   const shutdown = async (signal: string) => {
-    logger.info({ signal }, 'received signal, shutting down');
+    logger.info('received signal, shutting down', { signal });
     server.close(async () => {
       await prisma.$disconnect();
       logger.info('shutdown complete');
@@ -45,7 +39,7 @@ async function start() {
   process.on('SIGINT', () => void shutdown('SIGINT'));
 }
 
-start().catch((err) => {
-  logger.error({ err }, 'failed to start auth service');
+start().catch((err: Error) => {
+  logger.error('failed to start auth service', err);
   process.exit(1);
 });
