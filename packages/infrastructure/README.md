@@ -1,171 +1,140 @@
-# Infrastructure Package
+# @kloudi-os/infrastructure
 
-Production-grade infrastructure services providing AI, caching, database, events, and observability capabilities.
+Production-ready service clients for kloudi services: PostgreSQL via Prisma, Redis cache, Redis Pub/Sub event bus, and a multi-provider AI client. Singleton-managed with graceful shutdown, health checks, and connection pooling.
 
-## 📦 Components Overview
+For pure utilities (logger, config, crypto), see [`@kloudi-os/shared`](https://www.npmjs.com/package/@kloudi-os/shared).
 
-### 🤖 AI & LLM Integration
+## Installation
 
-- **Multi-provider support** (OpenAI, Anthropic, etc.)
-- **Business context tracking** with cost monitoring
-- **Built-in telemetry** with automatic trace flushing
-- **[→ Full AI Documentation](./ai/README.md)**
-
-### 📊 Observability
-
-- **OpenTelemetry integration** (Jaeger, SigNoz, Datadog)
-- **Automatic telemetry flushing** for reliable tracing
-- **Health monitoring** and performance metrics
-
-### 📡 Event Management
-
-- **EventBus** - Redis Pub/Sub event system for domain events
-- **Distributed messaging** with Redis for scalable event handling
-- **Decoupled communication** between application components
-- **Async event processing** with subscriber management
-- **Dead letter queue** for failed events (Redis list)
-- **Event store** with TTL for event replay (Redis list)
-
-### Data & Storage
-
-- **Database** - Prisma ORM with connection management
-- **Caching** - Redis adapter (requires Redis to be available)
-
-## ⚡ Quick Start
-
-### Import Pattern (Named Exports Only)
-
-All infrastructure components use **named exports only** (consistent with `@kloudi/shared`):
-
-```javascript
-// ✅ Correct - Named imports (use either full or aliased names)
-import { AIClient } from '@kloudi/infrastructure/ai';
-import { Database } from '@kloudi/infrastructure/database'; // or PrismaManager
-import { Cache } from '@kloudi/infrastructure/cache'; // or RedisAdapter
-import { EventBus } from '@kloudi/infrastructure/events';
+```bash
+npm install @kloudi-os/infrastructure
+# or
+pnpm add @kloudi-os/infrastructure
 ```
 
-### Initialization
+**Requires:**
 
-```javascript
-import initializeInfrastructure from '@kloudi/infrastructure';
+- Node.js ≥ 20
+- A running PostgreSQL instance (for `database`)
+- A running Redis instance (for `cache` and `events`)
+- `prisma` as a peer dependency: `npm install -D prisma`
+
+`@kloudi-os/shared` is a transitive dependency — installed automatically.
+
+## What's in the box
+
+| Subpath                              | Use it for                                                                                         | Singleton?                    |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------- | ----------------------------- |
+| `@kloudi-os/infrastructure/database` | Prisma client wrapper. Connection pooling (50 max), graceful shutdown, transactions, health checks | Yes                           |
+| `@kloudi-os/infrastructure/cache`    | Redis adapter (ioredis): `set/get/delete` with TTL, namespacing                                    | Yes                           |
+| `@kloudi-os/infrastructure/events`   | Redis Pub/Sub event bus: `publish/subscribe`, dead-letter queue, event store with TTL              | Yes                           |
+| `@kloudi-os/infrastructure/ai`       | Multi-provider AI client (OpenAI, Anthropic) with telemetry and cost tracking                      | No — instantiate per use case |
+
+## Quick start
+
+### Initialize once at app boot
+
+```typescript
+import initializeInfrastructure from '@kloudi-os/infrastructure';
 
 async function startApp() {
-  // Initialize all infrastructure (config, cache, database, AI)
   await initializeInfrastructure();
-
-  // Now ready to use components
-  const db = Database.getInstance();
-  const cache = Cache.getInstance();
-
-  // Your app logic...
+  // Connects in order: cache → database → events.
+  // Throws if any required service is unavailable.
 }
 ```
 
-### Using Components
-
-```javascript
-// Database (singleton) - use either Database or PrismaManager
-import { Database } from '@kloudi/infrastructure/database';
-const db = Database.getInstance();
-await db.initialize();
-const client = await db.getClient();
-
-// With transactions
-await db.withTransaction(async (tx) => {
-  await tx.user.create({ data: { email: 'test@example.com' } });
-});
-
-// Cache (singleton) - use either Cache or RedisAdapter
-import { Cache } from '@kloudi/infrastructure/cache';
-const cache = Cache.getInstance();
-await cache.set('key', { data: 'value' }, 3600);
-const value = await cache.get('key');
-
-// AI (create per use case - NOT a singleton)
-import { AIClient } from '@kloudi/infrastructure/ai';
-const ai = new AIClient({
-  context: 'chat-bot',
-  provider: 'openai',
-  model: 'gpt-4',
-  businessDomain: 'customer-support',
-});
-
-const result = await ai.generateText([{ role: 'user', content: 'Hello!' }]);
-
-// Events (singleton)
-import { EventBus } from '@kloudi/infrastructure/events';
-await EventBus.publish('user.created', {
-  userId: '123',
-  email: 'user@example.com',
-});
-
-// Subscribe to events
-EventBus.subscribe('user.created', (event) => {
-  console.log('User created:', event.data);
-});
-```
-
-### Environment Setup
-
-```bash
-# AI Providers
-export OPENAI_API_KEY="your-openai-key"
-export ANTHROPIC_API_KEY="your-anthropic-key"
-
-# Observability (choose one)
-export JAEGER_ENDPOINT="http://localhost:14268/api/traces"  # Local
-export SIGNOZ_OTLP_ENDPOINT="https://ingest.us.signoz.cloud:443"  # Cloud
-```
+`initializeInfrastructure()` reads connection strings from env vars (see below), creates singletons, and verifies connectivity. Call this before any `getInstance()`.
 
 ### Database
 
-```bash
-export DATABASE_URL="postgresql://user:pass@localhost/db"
-export DATABASE_MAX_CONNECTIONS=20
+```typescript
+import { Database } from '@kloudi-os/infrastructure/database';
+
+const db = Database.getInstance();
+const client = await db.getClient(); // Prisma client
+
+const user = await client.user.findUnique({ where: { id: '123' } });
+
+// Transactions
+await db.withTransaction(async (tx) => {
+  await tx.user.create({ data: { email: 'test@example.com' } });
+  await tx.session.create({ data: { userId: 'new', token: 'abc' } });
+});
 ```
 
-### Cache & Events
+### Cache
 
-```bash
-export REDIS_URL="redis://localhost:6379"  # Used by Cache and EventBus
-export CACHE_TTL=3600
+```typescript
+import { Cache } from '@kloudi-os/infrastructure/cache';
+
+const cache = Cache.getInstance();
+
+await cache.set('user:123', { name: 'Sarah' }, 3600); // TTL in seconds
+const user = await cache.get('user:123');
+await cache.delete('user:123');
 ```
 
-## 🌟 Key Features
+### Events
 
-- ✅ **Automatic telemetry flushing** - Reliable tracing for short-lived processes
-- ✅ **Business context tracking** - Cost centers and compliance by domain
-- ✅ **Multi-provider AI** - OpenAI, Anthropic with seamless switching
-- ✅ **Production-ready** - Error handling, retries, health checks
-- ✅ **Zero-config observability** - Works with Jaeger, SigNoz, Datadog
+```typescript
+import { EventBus } from '@kloudi-os/infrastructure/events';
 
-## 🎯 Singleton vs Non-Singleton
+const bus = EventBus.getInstance();
 
-Components that use **singleton pattern** (one instance per app):
+await bus.publish('user.created', { userId: '123', email: 'a@b.com' });
 
-- ✅ **Database** (PrismaManager) - One database connection pool to PostgreSQL
-- ✅ **Cache** (RedisAdapter) - One Redis connection (requires Redis)
-- ✅ **EventBus** - One event bus instance for pub/sub messaging
-
-Components that **don't use singleton** (create per use case):
-
-- ❌ **AIClient** - Create new instance per context/model
-
-## 📖 Detailed Documentation
-
-- **[AI & LLM Integration](./ai/README.md)** - Complete AI infrastructure guide
-- **[Event Bus](./events//README.md)** = Complete Event Bus guide
-
-## 🏗️ Architecture
-
+bus.subscribe('user.created', async (event) => {
+  console.log('new user:', event.data);
+});
 ```
-@kloudi/infrastructure/
-├── ai/                    # AI infrastructure with telemetry
-│   ├── telemetry/        # OpenTelemetry configuration
-│   ├── monitoring/       # Usage tracking
-│   └── providers/        # Multi-provider support
-├── database/             # Prisma ORM integration
-├── cache/                # Redis caching
-└── events/               # Event bus for pub/sub messaging
+
+Failed handlers go to a dead-letter queue (Redis list); events are persisted with TTL for replay.
+
+### AI (per-instance, not singleton)
+
+```typescript
+import { AIClient } from '@kloudi-os/infrastructure/ai';
+
+const ai = new AIClient({
+  context: 'support-bot',
+  provider: 'anthropic',
+  model: 'claude-sonnet-4-6',
+  businessDomain: 'customer-support',
+});
+
+const result = await ai.generateText([
+  { role: 'user', content: 'How do I reset my password?' },
+]);
 ```
+
+Built-in telemetry tracks token usage, latency, and cost per `businessDomain` for chargeback.
+
+## Environment
+
+| Var                        | Required for              | Notes                                                         |
+| -------------------------- | ------------------------- | ------------------------------------------------------------- |
+| `DATABASE_URL`             | `database`                | `postgresql://user:pass@host:5432/db`                         |
+| `DATABASE_MAX_CONNECTIONS` | `database` (optional)     | default `50`                                                  |
+| `REDIS_URL`                | `cache`, `events`         | `redis://host:6379` or `rediss://` for TLS                    |
+| `CACHE_TTL`                | `cache` (optional)        | default TTL in seconds for `set()` calls without explicit TTL |
+| `OPENAI_API_KEY`           | `ai` (if using OpenAI)    | —                                                             |
+| `ANTHROPIC_API_KEY`        | `ai` (if using Anthropic) | —                                                             |
+| `LOG_LEVEL`                | all                       | inherited from `@kloudi-os/shared`                            |
+
+## Singleton vs per-instance
+
+| Component                       | Why                                                                                                             |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `Database`, `Cache`, `EventBus` | Shared connection pools — one per process                                                                       |
+| `AIClient`                      | Each context (e.g., support-bot vs code-reviewer) wants its own model, telemetry namespace, and business domain |
+
+## Companion package
+
+For logging, config, types, and crypto utilities, see [`@kloudi-os/shared`](https://www.npmjs.com/package/@kloudi-os/shared).
+
+## License
+
+MIT — see [LICENSE](https://github.com/getkloudi/kloudi-os/blob/main/LICENSE).
+
+Source: https://github.com/getkloudi/kloudi-os/tree/main/packages/infrastructure
