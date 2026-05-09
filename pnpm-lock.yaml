@@ -114,19 +114,19 @@ importers:
 
   apps/api:
     dependencies:
+      '@kloudi-os/auth':
+        specifier: workspace:*
+        version: link:../auth
+      '@kloudi-os/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@kloudi-os/infrastructure':
         specifier: workspace:*
         version: link:../../packages/infrastructure
       '@kloudi-os/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-      '@kloudi/auth':
-        specifier: workspace:*
-        version: link:../auth
-      '@kloudi/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@kloudi/tools':
+      '@kloudi-os/tools':
         specifier: workspace:*
         version: link:../../packages/tools
       '@prisma/client':
@@ -215,12 +215,12 @@ importers:
       '@kloudi-os/infrastructure':
         specifier: workspace:*
         version: link:../../packages/infrastructure
+      '@kloudi-os/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@kloudi-os/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-      '@kloudi/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk
       chalk:
         specifier: ^5.6.2
         version: 5.6.2
@@ -274,18 +274,18 @@ importers:
 
   apps/mcp-server:
     dependencies:
+      '@kloudi-os/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@kloudi-os/infrastructure':
         specifier: workspace:*
         version: link:../../packages/infrastructure
+      '@kloudi-os/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@kloudi-os/shared':
         specifier: workspace:*
         version: link:../../packages/shared
-      '@kloudi/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@kloudi/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.0
         version: 1.25.3(hono@4.11.4)(zod@3.25.76)
@@ -455,12 +455,12 @@ importers:
       '@kloudi-os/infrastructure':
         specifier: workspace:*
         version: link:../infrastructure
+      '@kloudi-os/platform':
+        specifier: workspace:*
+        version: link:../platform
       '@kloudi-os/shared':
         specifier: workspace:*
         version: link:../shared
-      '@kloudi/platform':
-        specifier: workspace:*
-        version: link:../platform
       '@upstash/ratelimit':
         specifier: ^2.0.8
         version: 2.0.8(@upstash/redis@1.37.0)

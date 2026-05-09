@@ -1,5 +1,5 @@
 {
-  "name": "@kloudi/cli",
+  "name": "@kloudi-os/cli",
   "version": "0.1.0",
   "type": "module",
   "description": "Universal CLI for all Kloudi agents and tools",
@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@kloudi-os/infrastructure": "workspace:*",
-    "@kloudi/sdk": "workspace:*",
+    "@kloudi-os/sdk": "workspace:*",
     "@kloudi-os/shared": "workspace:*",
     "chalk": "^5.6.2",
     "commander": "^14.0.2",

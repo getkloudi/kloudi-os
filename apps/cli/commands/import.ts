@@ -6,7 +6,7 @@
 
 import { Command } from 'commander';
 import { readFileSync } from 'fs';
-import { KloudiClient } from '@kloudi/sdk';
+import { KloudiClient } from '@kloudi-os/sdk';
 import chalk from 'chalk';
 
 export function registerImportCommand(program: Command): void {

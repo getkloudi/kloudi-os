@@ -14,7 +14,7 @@ RUN corepack enable && pnpm install --frozen-lockfile
 RUN npx prisma generate
 
 # Build internal-api and all its dependencies
-RUN pnpm exec turbo run build --filter=@kloudi/internal-api...
+RUN pnpm exec turbo run build --filter=@kloudi-os/internal-api...
 
 EXPOSE 3002
-CMD ["pnpm", "--filter", "@kloudi/internal-api", "start"]
+CMD ["pnpm", "--filter", "@kloudi-os/internal-api", "start"]

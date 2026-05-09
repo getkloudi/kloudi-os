@@ -1,5 +1,5 @@
 {
-  "name": "@kloudi/sdk",
+  "name": "@kloudi-os/sdk",
   "version": "0.1.0",
   "type": "module",
   "description": "Typed HTTP client for the kloudi.os API — used by CLI, MCP server, and external integrations",

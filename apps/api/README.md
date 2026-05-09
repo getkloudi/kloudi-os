@@ -690,7 +690,7 @@ app.get('/data', async (req, res, next) => {
 ### Logging
 
 ```javascript
-import { Logger } from '@kloudi/shared/logger';
+import { Logger } from '@kloudi-os/shared/logger';
 
 const logger = Logger.getInstance('users');
 

@@ -1,5 +1,5 @@
 {
-  "name": "@kloudi/api",
+  "name": "@kloudi-os/api",
   "version": "0.1.0",
   "type": "module",
   "description": "REST API server for the Kloudi platform",
@@ -25,11 +25,11 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@kloudi/auth": "workspace:*",
-    "@kloudi/core": "workspace:*",
+    "@kloudi-os/auth": "workspace:*",
+    "@kloudi-os/core": "workspace:*",
     "@kloudi-os/infrastructure": "workspace:*",
     "@kloudi-os/shared": "workspace:*",
-    "@kloudi/tools": "workspace:*",
+    "@kloudi-os/tools": "workspace:*",
     "@prisma/client": "^7.3.0",
     "express": "5.2.1",
     "ws": "^8.19.0"

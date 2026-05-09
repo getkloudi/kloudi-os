@@ -1,5 +1,5 @@
 {
-  "name": "@kloudi/tools",
+  "name": "@kloudi-os/tools",
   "version": "0.1.0",
   "type": "module",
   "description": "Tool registry and built-in tool adapters for lore.dev",

@@ -1,6 +1,6 @@
 import { Command } from 'commander';
-import { KloudiClient } from '@kloudi/sdk';
-import type { ExecutionNodeDetail } from '@kloudi/sdk';
+import { KloudiClient } from '@kloudi-os/sdk';
+import type { ExecutionNodeDetail } from '@kloudi-os/sdk';
 import { loadToken } from '../lib/token.js';
 import chalk from 'chalk';
 
