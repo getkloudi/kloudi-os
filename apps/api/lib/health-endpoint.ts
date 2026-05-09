@@ -111,26 +111,6 @@ export function createHealthEndpoint(
         };
       }
 
-      // Check auth service
-      try {
-        const authUrl =
-          process.env['AUTH_SERVICE_URL'] ?? 'http://localhost:3004';
-        const res = await fetch(`${authUrl}/health`, {
-          signal: AbortSignal.timeout(3000),
-        });
-        results.components['auth'] = {
-          status: res.ok ? 'healthy' : 'unhealthy',
-          timestamp: new Date().toISOString(),
-        };
-      } catch (error) {
-        const err = error as Error;
-        results.components['auth'] = {
-          status: 'unhealthy',
-          error: err.message,
-          timestamp: new Date().toISOString(),
-        };
-      }
-
       // Check events
       try {
         const events = EventBus.getInstance();
